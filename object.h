@@ -5,18 +5,33 @@
 
 #include <stdint.h>
 
-/// Main Structure Constants ///
+/** `obj_phys_t` --- prerequisite constants **/
 
-#define MAX_CKSUM_SIZE      8
+#define MAX_CKSUM_SIZE  8
 
-/// Object Identifier Constants ///
+/** `obj_phys_t` --- structure definition **/
+
+typedef struct obj_phys {
+    uint8_t     o_cksum[MAX_CKSUM_SIZE];
+    oid_t       o_oid;
+    xid_t       o_xid;
+    uint32_t    o_type;
+    uint32_t    o_subtype;
+} obj_phys_t;
+
+/** Supporting Data Types **/
+
+typedef uint64_t    oid_t;
+typedef uint64_t    xid_t;
+
+/** Object Identifier Constants **/
 
 #define OID_NX_SUPERBLOCK   1
 
 #define OID_INVALID         0ULL
 #define OID_RESERVED_COUNT  1024
 
-/// Object Type Masks ///
+/** Object Type Masks **/
 
 #define OBJECT_TYPE_MASK                0X0000ffff
 #define OBJECT_TYPE_FLAGS_MASK          0xffff0000
@@ -24,7 +39,7 @@
 #define OBJ_STORAGETYPE_MASK            0xc0000000
 #define OBJECT_TYPE_FLAGS_DEFINED_MASK  0Xf8000000
 
-/// Object Types ///
+/** Object Types **/
 
 #define OBJECT_TYPE_NX_SUPERBLOCK       0x00000001
 
@@ -65,7 +80,7 @@
 #define OBJECT_TYPE_CONTAINER_KEYBAG    'keys'
 #define OBJECT_TYPE_VOLUME_KEYBAG       'recs'
 
-/// Object Type Flags ///
+/** Object Type Flags **/
 
 #define OBJ_VIRTUAL                     0x00000000
 #define OBJ_EPHEMERAL                   0x80000000
@@ -74,18 +89,3 @@
 #define OBJ_NOHEADER                    0x20000000
 #define OBJ_ENCRYPTED                   0x10000000
 #define OBJ_NONPERSISTENT               0x08000000
-
-/// Supporting Data Types ///
-
-typedef uint64_t    oid_t;
-typedef uint64_t    xid_t;
-
-/// Main Structure ///
-
-typedef struct obj_phys {
-    uint8_t     o_cksum[MAX_CKSUM_SIZE];
-    oid_t       o_oid;
-    xid_t       o_xid;
-    uint32_t    o_type;
-    uint32_t    o_subtype;
-} obj_phys_t;

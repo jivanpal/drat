@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-typedef int64_t     paddr_t;
+typedef int64_t         paddr_t;
 
 typedef struct prange {
     paddr_t     pr_start_paddr;

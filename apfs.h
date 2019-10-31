@@ -7,13 +7,74 @@
 #include "general.h"    // for `uuid_t`
 #include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
 
-/// Main Structure Constants ///
+typedef struct apfs_superblock {
+    obj_phys_t      apfs_o;
+
+    uint32_t        apfs_magic;
+    uint32_t        apfs_fs_index;
+
+    uint64_t    apfs_features;
+    uint64_t    apfs_readonly_compatible_features;
+    uint64_t    apfs_incompatible_features;
+
+    uint64_t    apfs_unmount_time;
+
+    uint64_t    apfs_fs_reserve_block_count;
+    uint64_t    apfs_fs_quota_block_count;
+    uint64_t    apfs_fs_alloc_count;
+    
+    wrapped_meta_crypto_state_t     apfs_meta_crypto;
+
+    uint32_t    apfs_root_tree_type;
+    uint32_t    apfs_extentref_tree_type;
+    uint32_t    apfs_snap_meta_tree_type;
+    
+    oid_t       apfs_omap_oid;
+    oid_t       apfs_root_tree_oid;
+    oid_t       apfs_extentref_tree_oid;
+    oid_t       apfs_snap_meta_tree_oid;
+    
+    xid_t       apfs_revert_to_xid;
+    oid_t       apfs_revert_to_sblock_oid;
+
+    uint64_t    apfs_next_obj_id;
+    
+    uint64_t    apfs_num_files;
+    uint64_t    apfs_num_directories;
+    uint64_t    apfs_num_symlinks;
+    uint64_t    apfs_num_other_fsobjects;
+    uint64_t    apfs_num_snapshots;
+
+    uint64_t    apfs_total_block_alloced;
+    uint64_t    apfs_total_blocks_freed;
+
+    uuid_t      apfs_vol_uuid;
+    uint64_t    apfs_last_mod_time;
+
+    uint64_t    apfs_fs_flags;
+
+    apfs_modified_by_t      apfs_formatted_by;
+    apfs_modified_by_t      apfs_modified_by[APFS_MAX_HIST];
+
+    uint8_t     apfs_volname[APFS_VOLNAME_LEN];
+    uint32_t    apfs_next_doc_id;
+
+    uint16_t    apfs_role;
+    uint16_t    apfs_reserved;
+
+    xid_t       apfs_root_to_xid;
+    oid_t       apfs_er_state_oid;
+} apfs_superblock_t;
 
 #define APFS_MAGIC          'BSPA'
 #define APFS_MAX_HIST       8
 #define APFS_VOLNAME_LEN    256
 
-/// Supporting Data Type Constants ///
+typedef struct apfs_modified_by {
+    uint8_t     id[APFS_MODIFIED_NAMELEN];
+    uint64_t    timestamp;
+    xid_t       last_xid;
+} apfs_modified_by_t;
 
 #define APFS_MODIFIED_NAMELEN   32
 
@@ -88,72 +149,3 @@
     | APFS_INCOMPAT_ENC_ROLLED                  \
     | APFS_INCOMPAT_NORMALIZATION_INSENSITIVE   \
 )
-
-/// Supporting Data Types ///
-
-typedef struct apfs_modified_by {
-    uint8_t     id[APFS_MODIFIED_NAMELEN];
-    uint64_t    timestamp;
-    xid_t       last_xid;
-} apfs_modified_by_t;
-
-/// Main Structure ///
-
-typedef struct apfs_superblock {
-    obj_phys_t      apfs_o;
-
-    uint32_t        apfs_magic;
-    uint32_t        apfs_fs_index;
-
-    uint64_t    apfs_features;
-    uint64_t    apfs_readonly_compatible_features;
-    uint64_t    apfs_incompatible_features;
-
-    uint64_t    apfs_unmount_time;
-
-    uint64_t    apfs_fs_reserve_block_count;
-    uint64_t    apfs_fs_quota_block_count;
-    uint64_t    apfs_fs_alloc_count;
-    
-    wrapped_meta_crypto_state_t     apfs_meta_crypto;
-
-    uint32_t    apfs_root_tree_type;
-    uint32_t    apfs_extentref_tree_type;
-    uint32_t    apfs_snap_meta_tree_type;
-    
-    oid_t       apfs_omap_oid;
-    oid_t       apfs_root_tree_oid;
-    oid_t       apfs_extentref_tree_oid;
-    oid_t       apfs_snap_meta_tree_oid;
-    
-    xid_t       apfs_revert_to_xid;
-    oid_t       apfs_revert_to_sblock_oid;
-
-    uint64_t    apfs_next_obj_id;
-    
-    uint64_t    apfs_num_files;
-    uint64_t    apfs_num_directories;
-    uint64_t    apfs_num_symlinks;
-    uint64_t    apfs_num_other_fsobjects;
-    uint64_t    apfs_num_snapshots;
-
-    uint64_t    apfs_total_block_alloced;
-    uint64_t    apfs_total_blocks_freed;
-
-    uuid_t      apfs_vol_uuid;
-    uint64_t    apfs_last_mod_time;
-
-    uint64_t    apfs_fs_flags;
-
-    apfs_modified_by_t      apfs_formatted_by;
-    apfs_modified_by_t      apfs_modified_by[APFS_MAX_HIST];
-
-    uint8_t     apfs_volname[APFS_VOLNAME_LEN];
-    uint32_t    apfs_next_doc_id;
-
-    uint16_t    apfs_role;
-    uint16_t    apfs_reserved;
-
-    xid_t       apfs_root_to_xid;
-    oid_t       apfs_er_state_oid;
-} apfs_superblock_t;

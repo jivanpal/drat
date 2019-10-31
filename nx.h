@@ -5,9 +5,18 @@
 
 #include <stdint.h>
 #include "general.h"    // for `prange_t`, `uuid_t`
-#include "object.h"    // for `obj_phys_t`, `oid_t`, `xid_t`
+#include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
 
-/// Main Structure Constants ///
+/** `nx_counter_id_t` --- dependency of `nx_superblock_t` **/
+
+typedef enum {
+    NX_CNTR_OBJ_CKSUM_SET   = 0,
+    NX_CNTR_OBJ_CKSUM_FAIL  = 1,
+
+    NX_NUM_COUNTERS = 32,
+} nx_counter_id_t;
+
+/** `nx_superblock_t` --- prerequisite constants **/
 
 #define NX_MAGIC                        'BSXN'
 #define NX_MAX_FILE_SYSTEMS             100
@@ -18,72 +27,7 @@
 #define NX_TX_MIN_CHECKPOINT_COUNT      4
 #define NX_EPH_INFO_VERSION             1
 
-/// Container Flags ///
-
-#define NX_RESERVED_1       0x00000001LL
-#define NX_RESERVED_2       0x00000002LL
-#define NX_CRYPTO_SW        0x00000004LL
-
-/// Optional Container Feature Flags ///
-
-#define NX_FEATURE_DEFRAG           0x0000000000000001ULL
-#define NX_FEATURE_LCFD             0x0000000000000002ULL
-#define NX_SUPPORTED_FEATURES_MASK  (NX_FEATURE_DEFRAG | NX_FEATURE_LCFD)
-
-/// Read-Only Compatible Container Feature Flags ///
-
-#define NX_SUPPORTED_ROCOMPAT_MASK  0x0ULL
-
-/// Incompatible Container Feature Flags ///
-
-#define NX_INCOMPAT_VERSION1        0x0000000000000001ULL
-#define NX_INCOMPAT_VERSION2        0x0000000000000002ULL
-#define NX_INCOMPAT_FUSION          0x0000000000000100ULL
-#define NX_SUPPORTED_INCOMPAT_MASK  (NX_INCOMPAT_VERSION2 | NX_INCOMPAT_FUSION)
-
-/// Block and Container Size ///
-
-#define NX_MINIMUM_BLOCK_SIZE       4096        // =    4 Ki
-#define NX_DEFAULT_BLOCK_SIZE       4096        // =    4 Ki
-#define NX_MAXIMUM_BLOCK_SIZE       65536       // =   64 Ki
-#define NX_MINIMUM_CONTAINER_SIZE   1048576     // = 1024 Ki = 1 Mi
-
-/// Checkpoint Flags ///
-
-#define CHECKPOINT_MAP_LAST 0x00000001
-
-/// Supporting Data Types ///
-
-typedef enum {
-    NX_CNTR_OBJ_CKSUM_SET   = 0,
-    NX_CNTR_OBJ_CKSUM_FAIL  = 1,
-
-    NX_NUM_COUNTERS = 32,
-} nx_counter_id_t;
-
-typedef struct checkpoint_mapping {
-    uint32_t    cpm_type;
-    uint32_t    cpm_subtype;
-    uint32_t    cpm_size;
-    uint32_t    cpm_pad;
-    oid_t       cpm_fs_oid;
-    oid_t       cpm_oid;
-    oid_t       cpm_paddr;
-} checkpoint_mapping_t;
-
-typedef struct checkpoint_map_phys {
-    obj_phys_t              cpm_o;
-    uint32_t                cpm_flags;
-    uint32_t                cpm_count;
-    checkpoint_mapping_t    cpm_map[];
-} checkpoint_map_phys_t;
-
-typedef struct evict_mapping_val {
-    paddr_t     dst_paddr;
-    uint64_t    len;
-} __attribute__((packed))   evict_mapping_val_t;
-
-/// Main Structures ///
+/** `nx_superblock_t` --- structure definition **/
 
 typedef struct nx_superblock {
     obj_phys_t  nx_o;
@@ -134,3 +78,65 @@ typedef struct nx_superblock {
     oid_t       nx_fusion_wbc_oid;
     prange_t    nx_fusion_wbc;
 } nx_superblock_t;
+
+/** Container Flags **/
+
+#define NX_RESERVED_1       0x00000001LL
+#define NX_RESERVED_2       0x00000002LL
+#define NX_CRYPTO_SW        0x00000004LL
+
+/** Optional Container Feature Flags **/
+
+#define NX_FEATURE_DEFRAG           0x0000000000000001ULL
+#define NX_FEATURE_LCFD             0x0000000000000002ULL
+#define NX_SUPPORTED_FEATURES_MASK  (NX_FEATURE_DEFRAG | NX_FEATURE_LCFD)
+
+/** Read-Only Compatible Container Feature Flags **/
+
+#define NX_SUPPORTED_ROCOMPAT_MASK  0x0ULL
+
+/** Incompatible Container Feature Flags **/
+
+#define NX_INCOMPAT_VERSION1        0x0000000000000001ULL
+#define NX_INCOMPAT_VERSION2        0x0000000000000002ULL
+#define NX_INCOMPAT_FUSION          0x0000000000000100ULL
+#define NX_SUPPORTED_INCOMPAT_MASK  (NX_INCOMPAT_VERSION2 | NX_INCOMPAT_FUSION)
+
+/** Block and Container Size **/
+
+#define NX_MINIMUM_BLOCK_SIZE       4096        // =    4 Ki
+#define NX_DEFAULT_BLOCK_SIZE       4096        // =    4 Ki
+#define NX_MAXIMUM_BLOCK_SIZE       65536       // =   64 Ki
+#define NX_MINIMUM_CONTAINER_SIZE   1048576     // = 1024 Ki = 1 Mi
+
+/** `checkpoint_mapping_t` **/
+
+typedef struct checkpoint_mapping {
+    uint32_t    cpm_type;
+    uint32_t    cpm_subtype;
+    uint32_t    cpm_size;
+    uint32_t    cpm_pad;
+    oid_t       cpm_fs_oid;
+    oid_t       cpm_oid;
+    oid_t       cpm_paddr;
+} checkpoint_mapping_t;
+
+/** `checkpoint_map_phys_t` **/
+
+typedef struct checkpoint_map_phys {
+    obj_phys_t              cpm_o;
+    uint32_t                cpm_flags;
+    uint32_t                cpm_count;
+    checkpoint_mapping_t    cpm_map[];
+} checkpoint_map_phys_t;
+
+/** Checkpoint Flags **/
+
+#define CHECKPOINT_MAP_LAST 0x00000001
+
+/** `evict_mapping_val_t` **/
+
+typedef struct evict_mapping_val {
+    paddr_t     dst_paddr;
+    uint64_t    len;
+} __attribute__((packed))   evict_mapping_val_t;
