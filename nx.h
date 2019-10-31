@@ -58,7 +58,7 @@ typedef enum {
     NX_CNTR_OBJ_CKSUM_SET   = 0,
     NX_CNTR_OBJ_CKSUM_FAIL  = 1,
 
-    NX_NUM_COUNTERS = 32
+    NX_NUM_COUNTERS = 32,
 } nx_counter_id_t;
 
 typedef struct checkpoint_mapping {
