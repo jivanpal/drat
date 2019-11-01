@@ -4,6 +4,7 @@
  */
 
 #include <stdint.h>
+#include "j_const.h"    // for `mode_t`
 
 /** `j_key_t` **/
 
@@ -23,6 +24,9 @@ typedef struct j_inode_key {
 
 /** `j_inode_val_t` **/
 
+typedef uint32_t    uid_t;
+typedef uint32_t    gid_t;
+
 typedef struct j_inode_val {
     uint64_t        parent_id;
     uint64_t        private_id;
@@ -39,6 +43,7 @@ typedef struct j_inode_val {
         int32_t     nlink;
     };
 
+    // TODO: define `cp_key_class_t`
     cp_key_class_t  default_protection_class;
     uint32_t        write_generation_counter;
     uint32_t        bsd_flags;
@@ -49,9 +54,6 @@ typedef struct j_inode_val {
     uint64_t        pad2;
     uint8_t         xfields[];
 } __attribute__((packed))   j_inode_val_t;
-
-typedef uint32_t    uid_t;
-typedef uint32_t    gid_t;
 
 /** `j_drec_key_t` **/
 

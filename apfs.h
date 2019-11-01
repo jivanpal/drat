@@ -7,6 +7,22 @@
 #include "general.h"    // for `uuid_t`
 #include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
 
+/** `apfs_modified_by_t` --- forward declared for `apfs_superblock_t` **/
+
+#define APFS_MODIFIED_NAMELEN   32
+
+typedef struct apfs_modified_by {
+    uint8_t     id[APFS_MODIFIED_NAMELEN];
+    uint64_t    timestamp;
+    xid_t       last_xid;
+} apfs_modified_by_t;
+
+/** `apfs_superblock_t` **/
+
+#define APFS_MAGIC          'BSPA'
+#define APFS_MAX_HIST       8
+#define APFS_VOLNAME_LEN    256
+
 typedef struct apfs_superblock {
     obj_phys_t      apfs_o;
 
@@ -23,6 +39,7 @@ typedef struct apfs_superblock {
     uint64_t    apfs_fs_quota_block_count;
     uint64_t    apfs_fs_alloc_count;
     
+    // TODO: define `wrapped_meta_crypto_state_t` :: crypto.h ?
     wrapped_meta_crypto_state_t     apfs_meta_crypto;
 
     uint32_t    apfs_root_tree_type;
@@ -66,19 +83,7 @@ typedef struct apfs_superblock {
     oid_t       apfs_er_state_oid;
 } apfs_superblock_t;
 
-#define APFS_MAGIC          'BSPA'
-#define APFS_MAX_HIST       8
-#define APFS_VOLNAME_LEN    256
-
-typedef struct apfs_modified_by {
-    uint8_t     id[APFS_MODIFIED_NAMELEN];
-    uint64_t    timestamp;
-    xid_t       last_xid;
-} apfs_modified_by_t;
-
-#define APFS_MODIFIED_NAMELEN   32
-
-/// Volume Flags ///
+/** Volume Flags **/
 
 #define APFS_FS_UNENCRYPTED             0x00000001LL
 #define APFS_FS_RESERVED_2              0x00000002LL
@@ -104,7 +109,7 @@ typedef struct apfs_modified_by {
     | APFS_FS_ONEKEY            \
 )
 
-/// Volume Roles ///
+/** Volume Roles **/
 
 #define APFS_VOL_ROLE_NONE          0x0000
 
@@ -120,7 +125,7 @@ typedef struct apfs_modified_by {
 
 #define APFS_VOL_ROLE_RESERVED_200  0x0200
 
-/// Optional Volume Feature Flags ///
+/** Optional Volume Feature Flags **/
 
 #define APFS_FEATURE_DEFRAG_PRERELEASE      0x00000001LL
 #define APFS_FEATURE_HARDLINK_MAP_RECORDS   0x00000002LL
@@ -132,11 +137,11 @@ typedef struct apfs_modified_by {
     | APFS_FEATURE_HARDLINK_MAP_RECORDS \
 )
 
-/// Read-Only Comaptible Volume Feature Flags
+/** Read-Only Comaptible Volume Feature Fl**s
 
 #define APFS_SUPPORTED_ROCOMPAT_MASK    0x0ULL
 
-/// Incompatible Volume Feature Flags ///
+/** Incompatible Volume Feature Flags **/
 
 #define APFS_INCOMPAT_CASE_INSENSITIVE          0x000000001LL
 #define APFS_INCOMPAT_DATALESS_SNAPS            0x000000002LL

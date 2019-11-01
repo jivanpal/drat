@@ -6,6 +6,13 @@
 #include <stdint.h>
 #include "object.h"     // for `obj_phys_t`
 
+/** `nloc_t` --- forward declared for `btree_node_phys_t` **/
+
+typedef struct nloc {
+    uint16_t    off;
+    uint16_t    len;
+} nloc_t;
+
 /** `btree_node_phys_t` **/
 
 typedef struct btree_node_phys {
@@ -38,13 +45,6 @@ typedef struct btree_info {
     uint64_t            bt_key_count;
     uint64_t            bt_node_count;
 } btree_info_t;
-
-/** `nloc_t` **/
-
-typedef struct nloc {
-    uint16_t    off;
-    uint16_t    len;
-} nloc_t;
 
 /** `kvloc_t` **/
 

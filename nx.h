@@ -47,12 +47,12 @@ typedef struct nx_superblock {
     uint32_t    nx_xp_desc_blocks;
     uint32_t    nx_xp_data_blocks;
     paddr_t     nx_xp_desc_base;
-    paddr_t     nx_xp_desc_base;
+    paddr_t     nx_xp_data_base;
     uint32_t    nx_xp_desc_next;
     uint32_t    nx_xp_data_next;
     uint32_t    nx_xp_desc_index;
     uint32_t    nx_xp_desc_len;
-    uint32_t    nx_xp_desc_index;
+    uint32_t    nx_xp_data_index;
     uint32_t    nx_xp_data_len;
 
     oid_t       nx_spaceman_oid;

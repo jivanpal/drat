@@ -55,14 +55,7 @@ typedef struct j_dstream_id_val {
     uint32_t    refcnt;
 } __attribute__((packed))   j_dstream_id_val_t;
 
-/** `j_xattr_dstream` **/
-
-typedef struct j_xattr_dstream {
-    uint64_t        xattr_obj_id;
-    j_dstream_t     dstream;
-} j_xattr_dstream_t;
-
-/** `j_dstream_t` **/
+/** `j_dstream_t` --- forward declared for `j_xattr_dstream` **/
 
 typedef struct j_dstream {
     uint64_t    size;
@@ -71,3 +64,10 @@ typedef struct j_dstream {
     uint64_t    total_bytes_written;
     uint64_t    total_bytes_read;
 } __attribute__((aligned(8),packed))   j_dstream_t;
+
+/** `j_xattr_dstream` **/
+
+typedef struct j_xattr_dstream {
+    uint64_t        xattr_obj_id;
+    j_dstream_t     dstream;
+} j_xattr_dstream_t;

@@ -5,11 +5,14 @@
 
 #include <stdint.h>
 
-/** `obj_phys_t` --- prerequisite constants **/
+/** Supporting Data Types --- forward declared for `obj_phys_t` **/
+
+typedef uint64_t    oid_t;
+typedef uint64_t    xid_t;
+
+/** `obj_phys_t` **/
 
 #define MAX_CKSUM_SIZE  8
-
-/** `obj_phys_t` --- structure definition **/
 
 typedef struct obj_phys {
     uint8_t     o_cksum[MAX_CKSUM_SIZE];
@@ -18,11 +21,6 @@ typedef struct obj_phys {
     uint32_t    o_type;
     uint32_t    o_subtype;
 } obj_phys_t;
-
-/** Supporting Data Types **/
-
-typedef uint64_t    oid_t;
-typedef uint64_t    xid_t;
 
 /** Object Identifier Constants **/
 
