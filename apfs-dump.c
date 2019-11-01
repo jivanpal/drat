@@ -500,21 +500,25 @@ int main(int argc, char** argv) {
         fprintf(stderr, "ABORT: Could not allocate sufficient memory to read block.\n");
         return -1;
     }
+
+    printf("Reading block 0x0 into buffer.\n");
     read_block(block_buf, 0x0, 1);
 
-    // if (!is_cksum_valid(block_buf)) {
-    //     printf("END: Checksum of block 0x0 is invalid.\n\n");
-    //     return 0;
-    // }
-    // printf("Checksum of block 0x0 is valid.\n");
-
-    // if (!is_nx_superblock(block_buf)) {
-    //     printf("END: Block 0x0 is not a container superblock.\n\n");
-    //     return 0;
-    // }
-    // printf("Block 0x0 is a container superblock.\n");
-    // nx_superblock_t* nxsb = malloc(sizeof(nx_superblock_t));
-    // memcpy(nxsb, block_buf, sizeof(*nxsb));
-
+    printf("\n- Details of block 0x0:\n");
     print_obj_hdr_info(block_buf);
+    printf("\n");
+
+    if (!is_cksum_valid(block_buf)) {
+        printf("END: Checksum of block 0x0 is invalid.\n\n");
+        return 0;
+    }
+    printf("Checksum of block 0x0 is valid.\n");
+
+    if (!is_nx_superblock(block_buf)) {
+        printf("END: Block 0x0 is not a container superblock.\n\n");
+        return 0;
+    }
+    printf("Block 0x0 is a container superblock.\n");
+    nx_superblock_t* nxsb = malloc(sizeof(nx_superblock_t));
+    memcpy(nxsb, block_buf, sizeof(*nxsb));
 }
