@@ -51,7 +51,7 @@ typedef struct obj_phys {
 #define OBJECT_TYPE_SPACEMAN_FREE_QUEUE 0x00000009
 
 #define OBJECT_TYPE_EXTENT_LIST_TREE    0x0000000a
-#define OBJECT_TYPE_TYPE_OMAP           0x0000000b
+#define OBJECT_TYPE_OMAP                0x0000000b
 #define OBJECT_TYPE_CHECKPOINT_MAP      0x0000000c
 
 #define OBJECT_TYPE_FS                  0x0000000d
