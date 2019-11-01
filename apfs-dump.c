@@ -199,10 +199,10 @@ char* o_type_to_string(uint32_t o_type) {
             type_string = "Container superblock";
             break;
         case OBJECT_TYPE_BTREE:
-            type_string = "B-tree";
+            type_string = "B-tree (root node)";
             break;
         case OBJECT_TYPE_BTREE_NODE:
-            type_string = "B-tree node";
+            type_string = "B-tree (non-root) node";
             break;
         case OBJECT_TYPE_SPACEMAN:
             type_string = "Space manager";
