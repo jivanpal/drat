@@ -603,7 +603,7 @@ int main(int argc, char** argv) {
         printf("- Reached the end of the checkpoint descriptor area. Found %lu container superblocks and successfully read them into memory.\n", num_read);
     } else {
         printf("- The area is not contiguous.\n");
-        printf("- The OID of the B-tree representing the area is 0x%016llx.\n", nxsb->nx_xp_desc_base);
+        printf("- The physical OID of the B-tree representing the area is 0x%016llx.\n", nxsb->nx_xp_desc_base);
         printf("END: The ability to handle this case has not yet been implemented.\n\n");   // TODO: implement case when xp_desc area is not contiguous
         return 0;
     }
