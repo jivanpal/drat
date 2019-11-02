@@ -8,7 +8,6 @@ FILE*   nx;
 size_t  nx_block_size = 4096;
 
 void report_fopen_error() {
-    fprintf(stderr, "ABORT: main: ");
     switch (errno) {
         case ENOMEM:
             fprintf(stderr, "Unable to allocate sufficient memory to buffer file.\n");

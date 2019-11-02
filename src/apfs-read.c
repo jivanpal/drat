@@ -38,10 +38,10 @@ int main(int argc, char** argv) {
     // Open (device special) file corresponding to an APFS container, read-only
     printf("Opening file at `%s`.\n", nx_path);
     nx = fopen(nx_path, "rb");
-
-    // Error handling and reporting if file cannot be opened
     if (!nx) {
+        fprintf(stderr, "ABORT: main: ");
         report_fopen_error();
+        printf("\n");
         return -errno;
     }
     printf("Opened file successfully.\n\n");
@@ -50,5 +50,5 @@ int main(int argc, char** argv) {
     read_blocks(block_buf, nx_block_addr, 1);
     printf("- Details for block 0x%016llx\n", nx_block_addr);
     print_obj_hdr_info(block_buf);
-
+    printf("\n");
 }

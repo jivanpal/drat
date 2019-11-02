@@ -28,10 +28,10 @@ int main(int argc, char** argv) {
     // Open (device special) file corresponding to an APFS container, read-only
     printf("Opening file at `%s`.\n", nx_path);
     nx = fopen(nx_path, "rb");
-
-    // Error handling and reporting if file cannot be opened
     if (!nx) {
+        fprintf(stderr, "ABORT: main: ");
         report_fopen_error();
+        printf("\n");
         return -errno;
     }
     printf("Opened file successfully.\n\n");
@@ -178,5 +178,5 @@ int main(int argc, char** argv) {
     printf("----\n");
     printf("Number of blocks in corresponding checkpoint:   %u\n", nxsb->nx_xp_desc_len);
     printf("desc_index:     0x%x\n", nxsb->nx_xp_desc_index);
-
+    printf("\n");
 }
