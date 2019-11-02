@@ -11,3 +11,9 @@ to [Apple's official APFS specification (PDF)](https://developer.apple.com/suppo
 A copy of this spec as it appeared on 2019-10-31, namely the version published
 on 2019-02-07, is included in this repository in case the online version of the
 document changes.
+
+## Build instructions
+
+Ensure that `gcc` is in your `$PATH`, then run `make` from the directory where
+the `Makefile` resides. Run `make clean` to remove the compiled binaries and
+object files.
