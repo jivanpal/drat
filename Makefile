@@ -38,7 +38,7 @@ $(BINARIES):	$(BINDIR)/%:	$(OBJDIR)/%.o
 	@$(LD) $^ $(LDFLAGS) -o $@
 	@echo "$^\t==> $@"
 
-$(OBJECTS): $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
+$(OBJECTS):		$(OBJDIR)/%.o:	$(SRCDIR)/%.c $(HEADERS)
 	@[ -d $(OBJDIR) ] || (mkdir -p $(OBJDIR) && echo "Created directory \`$(OBJDIR)\`.")
 	@$(CC) $(CFLAGS) -c $< -o $@
 	@echo "$<\t==> $@ "
