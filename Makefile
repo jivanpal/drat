@@ -13,7 +13,7 @@ BINDIR=bin
 ### Target paths ###
 TARGETS		:= apfs-read apfs-dump
 SOURCES		:= $(wildcard $(SRCDIR)/*.c)
-HEADERS		:= $(wildcard $(SRCDIR)/apfs/*.h)
+HEADERS		:= $(wildcard $(SRCDIR)/*.h $(SRCDIR)/**/*.h)
 OBJECTS		:= $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 BINARIES	:= $(TARGETS:%=$(BINDIR)/%)
 
