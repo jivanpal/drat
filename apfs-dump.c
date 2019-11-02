@@ -507,24 +507,26 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    printf("\nReading block 0x0 into buffer.\n");
+    printf("\nReading block 0x0 into buffer ... ");
     read_blocks(block_buf, 0x0, 1);
+    printf("OK.\n");
 
-    printf("- Details of block 0x0:\n");
-    print_obj_hdr_info(block_buf);
-    printf("\n");
+    printf("Validating block checksum ... ");
 
     if (!is_cksum_valid(block_buf)) {
-        printf("END: Checksum of block 0x0 is invalid.\n\n");
+        printf("FAILED.\nEND: Checksum of block 0x0 is invalid.\n\n");
         return 0;
     }
-    printf("Checksum of block 0x0 is valid.\n");
+    printf("OK.\n");
+
+    printf("\n- Details of block 0x0:\n");
+    print_obj_hdr_info(block_buf);
+    printf("\n");
 
     if (!is_nx_superblock(block_buf)) {
         printf("END: Block 0x0 is not a container superblock.\n\n");
         return 0;
     }
-    printf("Block 0x0 is a container superblock.\n");
 
     nx_superblock_t* nxsb = malloc(sizeof(nx_superblock_t));
     if (!nxsb) {
@@ -533,29 +535,41 @@ int main(int argc, char** argv) {
     }
     memcpy(nxsb, block_buf, sizeof(*nxsb));
 
-    printf("\nLocating the checkpoint descriptor area.\n");
+    printf("Preparing to read container superblocks from the checkpoint descriptor area:\n");
+    printf("- Allocating memory for array of container superblocks ... ");
+    
+    size_t num_read = 0;
+    size_t num_alloced = MALLOC_INCREMENT;
+
+    /**
+     * Simple struct used only in this scope. Allows us to keep track of the
+     * physical block address of the ephemeral NXSBs along with each NXSB.
+     */
+    typedef struct paddr_nxsb {
+        paddr_t         paddr;
+        nx_superblock_t nxsb;
+    } paddr_nxsb_t;
+
+    paddr_nxsb_t* nx_blocks = malloc(num_alloced * sizeof(paddr_nxsb_t));
+    if (!nx_blocks) {
+        fprintf(stderr, "\nABORT: main: Could not allocate sufficient memory for %lu container superblocks.\n", num_alloced);
+        return -1;
+    }
+    printf("OK.\n");
+
+    printf("Locating the checkpoint descriptor area:\n");
     if (nxsb->nx_xp_desc_blocks >> 31 == 0) {
-        printf("The area is contiguous.\n");
-        printf("The address of its first block is 0x%016llx.\n", nxsb->nx_xp_desc_base);
+        printf("- The area is contiguous.\n");
+        printf("- The address of its first block is 0x%016llx.\n", nxsb->nx_xp_desc_base);
 
-        printf("Allocating memory for array of superblocks found in the checkpoint descriptor area.\n");
-        size_t num_alloced = MALLOC_INCREMENT;
-        nx_superblock_t* nx_blocks = malloc(num_alloced * sizeof(nx_superblock_t));
-        if (!nx_blocks) {
-            fprintf(stderr, "ABORT: main: Could not allocate sufficient memory for %lu instances of `nx_superblock_t` in `xp_desc_nx_blocks`.\n", num_alloced);
-            return -1;
-        }
-
-        printf("Reading the blocks into memory.\n\n");
+        printf("Reading blocks from the checkpoint descriptor area into memory:\n");
         paddr_t current_block_addr = nxsb->nx_xp_desc_base;
-        size_t num_read = 0;
 
         while (1) {
             read_blocks(block_buf, current_block_addr, 1);
-
-            printf("Read block 0x%llx into buffer.\n- Details of block 0x%llx:\n", current_block_addr, current_block_addr);
-            print_obj_hdr_info(block_buf);
-            printf("\n");
+            if (!is_cksum_valid(block_buf)) {
+                printf("- Block 0x%llx failed checksum validation. Reading it anyway.\n", current_block_addr);
+            }
 
             if (!is_nx_superblock(block_buf) && !is_checkpoint_map_phys(block_buf)) {
                 // We have reached the end of the checkpoint descriptor area.
@@ -566,31 +580,48 @@ int main(int argc, char** argv) {
                 if (num_read >= num_alloced) {
                     // Need more memory
                     num_alloced += MALLOC_INCREMENT;
-                    printf("Allocating more memory for array ... ");
-                    nx_blocks = realloc(nx_blocks, num_alloced * sizeof(nx_superblock_t));
+                    printf("- Read %lu container superblocks into memory so far. Allocating more memory for more container superblocks ... ", num_read);
+                    nx_blocks = realloc(nx_blocks, num_alloced * sizeof(paddr_nxsb_t));
                     if (!nx_blocks) {
                         fprintf(stderr, "\nABORT: main: Could not allocate sufficient memory for %lu instances of `nx_superblock_t` in `xp_desc_nx_blocks`.\n", num_alloced);
                         return -1;
                     }
-                    printf("done.\n");
+                    printf("OK.\n");
                 }
 
                 // Copy the buffered NXSB into the array
-                memcpy(nx_blocks + num_read, block_buf, sizeof(nx_superblock_t));
+                nx_blocks[num_read].paddr = current_block_addr;
+                memcpy(&(nx_blocks[num_read].nxsb), block_buf, sizeof(nx_superblock_t));
                 num_read++;
             }
 
             current_block_addr++;
         }
         // De-allocate excess memory.
-        nx_blocks = realloc(nx_blocks, num_read * sizeof(nx_superblock_t));
+        nx_blocks = realloc(nx_blocks, num_read * sizeof(paddr_nxsb_t));
 
-        printf("Reached the end of the checkpoint descriptor area.\n");
-        printf("Found %lu container superblocks and read them into memory.\n", num_read);
-
+        printf("- Reached the end of the checkpoint descriptor area. Found %lu container superblocks and successfully read them into memory.\n", num_read);
     } else {
-        printf("The area is not contiguous.\n");
-        printf("The OID of the B-tree representing the area if 0x%016llx.\n", nxsb->nx_xp_desc_base);
+        printf("- The area is not contiguous.\n");
+        printf("- The OID of the B-tree representing the area is 0x%016llx.\n", nxsb->nx_xp_desc_base);
         printf("END: The ability to handle this case has not yet been implemented.\n\n");   // TODO: implement case when xp_desc area is not contiguous
+        return 0;
     }
+
+    printf("Searching array for the container superblock with the highest XID:\n");
+    
+    // We find the latest NXSB from array `nx_blocks`, pointing `latest_nx` to it.
+    paddr_nxsb_t* latest_nx = nx_blocks;
+    paddr_nxsb_t* nx_end    = nx_blocks + num_read;
+    paddr_nxsb_t* nx_cursor = latest_nx + 1;
+    while (nx_cursor < nx_end) {
+        if (nx_cursor->nxsb.nx_o.o_xid > latest_nx->nxsb.nx_o.o_xid) {
+            latest_nx = nx_cursor;
+        }
+        nx_cursor++;
+    }
+    printf("- Block 0x%llx has the highest XID.\n", latest_nx->paddr);
+    printf("\n- Details of block 0x%llx:\n", latest_nx->paddr);
+    print_obj_hdr_info(&(latest_nx->nxsb.nx_o));
+
 }
