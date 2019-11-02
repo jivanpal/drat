@@ -638,5 +638,8 @@ int main(int argc, char** argv) {
     printf("- Block 0x%llx has the highest XID.\n", nx_latest->paddr);
     printf("\n- Details of block 0x%llx:\n", nx_latest->paddr);
     print_obj_hdr_info(nxsb);
+    printf("----\n");
+    printf("Number of blocks in corresponding checkpoint:   %u\n", nxsb->nx_xp_desc_len);
+    printf("desc_index:     0x%x\n", nxsb->nx_xp_desc_index);
 
 }
