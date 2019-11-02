@@ -6,6 +6,8 @@
 
 #include "nx.h"
 
+#define MALLOC_INCREMENT     64
+
 char*   nx_path;
 FILE*   nx;
 size_t  nx_block_size = 4096;
@@ -18,7 +20,7 @@ void print_usage(char* program_name) {
 }
 
 /**
- * Read a block from the APFS container.
+ * Read given number of blocks from the APFS container.
  * 
  * - buffer:        The location where data that is read will be stored. It is
  *      the caller's responsibility to ensure that sufficient memory is
@@ -29,10 +31,10 @@ void print_usage(char* program_name) {
  * RETURN VALUE:    On success or partial success, the number of blocks read
  *              (a non-negative value). On failure, a negative value.
  */
-size_t read_block(void* restrict buffer, long start_block, size_t num_blocks) {
+size_t read_blocks(void* restrict buffer, long start_block, size_t num_blocks) {
     if (fseek(nx, start_block * nx_block_size, SEEK_SET) == -1) {
         // An error occurred.
-        printf("FAILED: read_block: ");
+        printf("FAILED: read_blocks: ");
         switch (errno) {
             case EBADF:
                 printf("The file `%s` cannot be seeked through.\n", nx_path);
@@ -59,17 +61,17 @@ size_t read_block(void* restrict buffer, long start_block, size_t num_blocks) {
         
         // NOTE: This is intended to act as an `assert` statement with a message
         if (!ferror(nx) && !feof(nx)) {
-            fprintf(stderr, "ABORT: read_block: Unexpected beaviour --- `fread` read fewer blocks than expected, but `feof` did not report EOF and `ferror` did not detect an error.\n\n");
+            fprintf(stderr, "ABORT: read_blocks: Unexpected beaviour --- `fread` read fewer blocks than expected, but `feof` did not report EOF and `ferror` did not detect an error.\n\n");
             exit(-1);
         }
         
         if (ferror(nx)) {
-            printf("FAILED: read_block: An unknown error occurred whilst reading from the stream.\n");
+            printf("FAILED: read_blocks: An unknown error occurred whilst reading from the stream.\n");
             return -1;
         }
 
         assert(feof(nx));
-        printf("read_block: Reached end-of-file after reading %lu blocks.\n", num_blocks_read);
+        printf("read_blocks: Reached end-of-file after reading %lu blocks.\n", num_blocks_read);
     }
     return num_blocks_read;
 }
@@ -426,8 +428,12 @@ void print_obj_hdr_info(obj_phys_t* obj) {
 /**
  * Determine whether a given APFS block is a container superblock.
  */
-char is_nx_superblock(obj_phys_t* object) {
-    return (object->o_type & OBJECT_TYPE_MASK) == OBJECT_TYPE_NX_SUPERBLOCK;
+char is_nx_superblock(obj_phys_t* obj) {
+    return (obj->o_type & OBJECT_TYPE_MASK) == OBJECT_TYPE_NX_SUPERBLOCK;
+}
+
+char is_checkpoint_map_phys(obj_phys_t* obj) {
+    return (obj->o_type & OBJECT_TYPE_MASK) == OBJECT_TYPE_CHECKPOINT_MAP;
 }
 
 int main(int argc, char** argv) {
@@ -501,10 +507,10 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    printf("Reading block 0x0 into buffer.\n");
-    read_block(block_buf, 0x0, 1);
+    printf("\nReading block 0x0 into buffer.\n");
+    read_blocks(block_buf, 0x0, 1);
 
-    printf("\n- Details of block 0x0:\n");
+    printf("- Details of block 0x0:\n");
     print_obj_hdr_info(block_buf);
     printf("\n");
 
@@ -519,6 +525,72 @@ int main(int argc, char** argv) {
         return 0;
     }
     printf("Block 0x0 is a container superblock.\n");
+
     nx_superblock_t* nxsb = malloc(sizeof(nx_superblock_t));
+    if (!nxsb) {
+        fprintf(stderr, "ABORT: main: Could not allocate sufficient memory for `nxsb`.\n");
+        return -1;
+    }
     memcpy(nxsb, block_buf, sizeof(*nxsb));
+
+    printf("\nLocating the checkpoint descriptor area.\n");
+    if (nxsb->nx_xp_desc_blocks >> 31 == 0) {
+        printf("The area is contiguous.\n");
+        printf("The address of its first block is 0x%016llx.\n", nxsb->nx_xp_desc_base);
+
+        printf("Allocating memory for array of superblocks found in the checkpoint descriptor area.\n");
+        size_t num_alloced = MALLOC_INCREMENT;
+        nx_superblock_t* nx_blocks = malloc(num_alloced * sizeof(nx_superblock_t));
+        if (!nx_blocks) {
+            fprintf(stderr, "ABORT: main: Could not allocate sufficient memory for %lu instances of `nx_superblock_t` in `xp_desc_nx_blocks`.\n", num_alloced);
+            return -1;
+        }
+
+        printf("Reading the blocks into memory.\n\n");
+        paddr_t current_block_addr = nxsb->nx_xp_desc_base;
+        size_t num_read = 0;
+
+        while (1) {
+            read_blocks(block_buf, current_block_addr, 1);
+
+            printf("Read block 0x%llx into buffer.\n- Details of block 0x%llx:\n", current_block_addr, current_block_addr);
+            print_obj_hdr_info(block_buf);
+            printf("\n");
+
+            if (!is_nx_superblock(block_buf) && !is_checkpoint_map_phys(block_buf)) {
+                // We have reached the end of the checkpoint descriptor area.
+                break;
+            }
+            
+            if (is_nx_superblock(block_buf)) {
+                if (num_read >= num_alloced) {
+                    // Need more memory
+                    num_alloced += MALLOC_INCREMENT;
+                    printf("Allocating more memory for array ... ");
+                    nx_blocks = realloc(nx_blocks, num_alloced * sizeof(nx_superblock_t));
+                    if (!nx_blocks) {
+                        fprintf(stderr, "\nABORT: main: Could not allocate sufficient memory for %lu instances of `nx_superblock_t` in `xp_desc_nx_blocks`.\n", num_alloced);
+                        return -1;
+                    }
+                    printf("done.\n");
+                }
+
+                // Copy the buffered NXSB into the array
+                memcpy(nx_blocks + num_read, block_buf, sizeof(nx_superblock_t));
+                num_read++;
+            }
+
+            current_block_addr++;
+        }
+        // De-allocate excess memory.
+        nx_blocks = realloc(nx_blocks, num_read * sizeof(nx_superblock_t));
+
+        printf("Reached the end of the checkpoint descriptor area.\n");
+        printf("Found %lu container superblocks and read them into memory.\n", num_read);
+
+    } else {
+        printf("The area is not contiguous.\n");
+        printf("The OID of the B-tree representing the area if 0x%016llx.\n", nxsb->nx_xp_desc_base);
+        printf("END: The ability to handle this case has not yet been implemented.\n\n");   // TODO: implement case when xp_desc area is not contiguous
+    }
 }
