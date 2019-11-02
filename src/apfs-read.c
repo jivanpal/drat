@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "nx.h"
+#include "apfs/nx.h"
 
 #define MALLOC_INCREMENT     64
 
