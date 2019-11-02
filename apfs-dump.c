@@ -545,12 +545,12 @@ int main(int argc, char** argv) {
      * Simple struct used only in this scope. Allows us to keep track of the
      * physical block address of the ephemeral NXSBs along with each NXSB.
      */
-    typedef struct paddr_nxsb {
+    typedef struct paddr_block {
         paddr_t         paddr;
-        nx_superblock_t nxsb;
-    } paddr_nxsb_t;
+        char            block[nx_block_size];
+    } paddr_block_t;
 
-    paddr_nxsb_t* nx_blocks = malloc(num_alloced * sizeof(paddr_nxsb_t));
+    paddr_block_t* nx_blocks = malloc(num_alloced * sizeof(paddr_block_t));
     if (!nx_blocks) {
         fprintf(stderr, "\nABORT: main: Could not allocate sufficient memory for %lu container superblocks.\n", num_alloced);
         return -1;
@@ -581,7 +581,7 @@ int main(int argc, char** argv) {
                     // Need more memory
                     num_alloced += MALLOC_INCREMENT;
                     printf("- Read %lu container superblocks into memory so far. Allocating more memory for more container superblocks ... ", num_read);
-                    nx_blocks = realloc(nx_blocks, num_alloced * sizeof(paddr_nxsb_t));
+                    nx_blocks = realloc(nx_blocks, num_alloced * sizeof(paddr_block_t));
                     if (!nx_blocks) {
                         fprintf(stderr, "\nABORT: main: Could not allocate sufficient memory for %lu instances of `nx_superblock_t` in `xp_desc_nx_blocks`.\n", num_alloced);
                         return -1;
@@ -591,14 +591,14 @@ int main(int argc, char** argv) {
 
                 // Copy the buffered NXSB into the array
                 nx_blocks[num_read].paddr = current_block_addr;
-                memcpy(&(nx_blocks[num_read].nxsb), block_buf, sizeof(nx_superblock_t));
+                memcpy(nx_blocks[num_read].block, block_buf, nx_block_size);
                 num_read++;
             }
 
             current_block_addr++;
         }
         // De-allocate excess memory.
-        nx_blocks = realloc(nx_blocks, num_read * sizeof(paddr_nxsb_t));
+        nx_blocks = realloc(nx_blocks, num_read * sizeof(paddr_block_t));
 
         printf("- Reached the end of the checkpoint descriptor area. Found %lu container superblocks and successfully read them into memory.\n", num_read);
     } else {
@@ -609,19 +609,34 @@ int main(int argc, char** argv) {
     }
 
     printf("Searching array for the container superblock with the highest XID:\n");
+    // We find the latest NXSB from array `nx_blocks`, pointing `nx_latest` to it.
+    paddr_block_t* nx_end           = nx_blocks + num_read;
+    paddr_block_t* nx_latest        = nx_blocks;
+    paddr_block_t* nx_cursor        = nx_latest + 1;
     
-    // We find the latest NXSB from array `nx_blocks`, pointing `latest_nx` to it.
-    paddr_nxsb_t* latest_nx = nx_blocks;
-    paddr_nxsb_t* nx_end    = nx_blocks + num_read;
-    paddr_nxsb_t* nx_cursor = latest_nx + 1;
+    // Don't need the block zero NXSB anymore, which is stored in `nxsb`;
+    // use it for something else. These pointers are being used to avoid lots
+    // of messy casting to `nx_superblock_t*`.
+    nxsb = nx_latest->block;
+    nx_superblock_t* nxsb_cursor;
+
     while (nx_cursor < nx_end) {
-        if (nx_cursor->nxsb.nx_o.o_xid > latest_nx->nxsb.nx_o.o_xid) {
-            latest_nx = nx_cursor;
+        if (!is_cksum_valid(nx_cursor->block)) {
+            printf("- Block 0x%llx is malformed; failed checksum validation. Ignoring that block.\n", nx_cursor->paddr);
+        } else {
+            nxsb_cursor = nx_cursor->block;
+            if (nxsb_cursor->nx_magic != NX_MAGIC) {
+                printf("- Block 0x%llx is malformed; magic value is not as expected. Ignoring that block.\n", nx_cursor->paddr);
+            } else if (nxsb_cursor->nx_o.o_xid > nxsb->nx_o.o_xid) {
+                nx_latest = nx_cursor;
+                nxsb = nx_latest->block;
+            }
         }
+
         nx_cursor++;
     }
-    printf("- Block 0x%llx has the highest XID.\n", latest_nx->paddr);
-    printf("\n- Details of block 0x%llx:\n", latest_nx->paddr);
-    print_obj_hdr_info(&(latest_nx->nxsb.nx_o));
+    printf("- Block 0x%llx has the highest XID.\n", nx_latest->paddr);
+    printf("\n- Details of block 0x%llx:\n", nx_latest->paddr);
+    print_obj_hdr_info(nxsb);
 
 }
