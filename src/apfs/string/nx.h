@@ -225,7 +225,7 @@ char* get_nx_incompatible_features_string(nx_superblock_t* nxsb) {
  * Print a nicely formatted string describing the data contained in a container
  * superblock, including the data in its header.
  */
-void print_nxsb_info(nx_superblock_t* nxsb) {
+void print_nx_superblock_info(nx_superblock_t* nxsb) {
     print_obj_hdr_info(nxsb); // `nxsb` is equivalent to `&(nxsb->nx_o)`.
 
     char magic_string[] = {
