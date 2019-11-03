@@ -36,19 +36,22 @@ int main(int argc, char** argv) {
     }
     
     // Open (device special) file corresponding to an APFS container, read-only
-    printf("Opening file at `%s`.\n", nx_path);
+    printf("Opening file at `%s` in read-only mode ... ", nx_path);
     nx = fopen(nx_path, "rb");
     if (!nx) {
-        fprintf(stderr, "ABORT: main: ");
+        fprintf(stderr, "\nABORT: main: ");
         report_fopen_error();
         printf("\n");
         return -errno;
     }
-    printf("Opened file successfully.\n\n");
+    printf("OK.\n\n");
 
     char* block_buf = malloc(nx_block_size);
     read_blocks(block_buf, nx_block_addr, 1);
     printf("- Details for block 0x%016llx\n", nx_block_addr);
     print_obj_hdr_info(block_buf);
     printf("\n");
+
+    fclose(nx);
+    return 0;
 }

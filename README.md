@@ -61,8 +61,7 @@ bytes.
 ```
 $ sudo ./bin/apfs-read /dev/disk0s2 0x3af2
 
-Opening file at `/dev/disk0s2`.
-Opened file successfully.
+Opening file at `/dev/disk0s2` in read-only mode ... OK.
 
 - Details for block 0x0000000000003af2
 Stored checksum:  0x8fb5c6176f907f7e
@@ -96,8 +95,7 @@ process.
 ```
 $ sudo ./bin/apfs-inspect /dev/disk0s2
 
-Opening file at `/dev/disk0s2`.
-Opened file successfully.
+Opening file at `/dev/disk0s2` in read-only mode ... OK.
 
 Simulating a mount of the APFS container.
 

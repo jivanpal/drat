@@ -26,15 +26,15 @@ int main(int argc, char** argv) {
     nx_path = argv[1];
     
     // Open (device special) file corresponding to an APFS container, read-only
-    printf("Opening file at `%s`.\n", nx_path);
+    printf("Opening file at `%s` in read-only mode ... ", nx_path);
     nx = fopen(nx_path, "rb");
     if (!nx) {
-        fprintf(stderr, "ABORT: main: ");
+        fprintf(stderr, "\nABORT: main: ");
         report_fopen_error();
         printf("\n");
         return -errno;
     }
-    printf("Opened file successfully.\n\n");
+    printf("OK.\n\n");
 
     // Is this actually an APFS container? Attempt to mount it.
     printf("Simulating a mount of the APFS container.\n");
@@ -179,4 +179,7 @@ int main(int argc, char** argv) {
     printf("Number of blocks in corresponding checkpoint:   %u\n", nxsb->nx_xp_desc_len);
     printf("desc_index:     0x%x\n", nxsb->nx_xp_desc_index);
     printf("\n");
+
+    fclose(nx);
+    return 0;
 }
