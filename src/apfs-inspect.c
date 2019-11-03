@@ -18,7 +18,7 @@
  * Print usage info for this program.
  */
 void print_usage(char* program_name) {
-    printf("Usage: %s <path to APFS container>\nExample: %s /dev/disk0s2\n\n", program_name, program_name);
+    printf("Usage:   %s <container>\nExample: %s /dev/disk0s2\n\n", program_name, program_name);
 }
 
 int main(int argc, char** argv) {
