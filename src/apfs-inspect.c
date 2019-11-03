@@ -29,52 +29,49 @@ int main(int argc, char** argv) {
     printf("Opening file at `%s` in read-only mode ... ", nx_path);
     nx = fopen(nx_path, "rb");
     if (!nx) {
-        fprintf(stderr, "\nABORT: main: ");
+        fprintf(stderr, "\nABORT: ");
         report_fopen_error();
         printf("\n");
         return -errno;
     }
-    printf("OK.\n\n");
-
-    // Is this actually an APFS container? Attempt to mount it.
-    printf("Simulating a mount of the APFS container.\n");
+    printf("OK.\nSimulating a mount of the APFS container.\n");
+    
     char* block_buf = malloc(nx_block_size);
     if (!block_buf) {
-        fprintf(stderr, "ABORT: Could not allocate sufficient memory to read block.\n");
+        fprintf(stderr, "ABORT: Could not allocate sufficient memory to create `block_buf`.\n");
         return -1;
     }
 
-    printf("\nReading block 0x0 into buffer ... ");
-    read_blocks(block_buf, 0x0, 1);
-    printf("OK.\n");
-
-    printf("Validating block checksum ... ");
-
-    if (!is_cksum_valid(block_buf)) {
-        printf("FAILED.\nEND: Checksum of block 0x0 is invalid.\n\n");
-        return 0;
+    if (read_blocks(block_buf, 0x0, 1) != 1) {
+        fprintf(stderr, "ABORT: Failed to successfully read block 0x0.\n");
+        return -1;
     }
-    printf("OK.\n");
+
+    printf("Validating checksum of block 0x0 ... ");
+    if (is_cksum_valid(block_buf)) {
+        printf("OK.\n");
+    } else {
+        printf("FAILED.\n!! APFS ERROR !! Checksum of block 0x0 should validate, but it doesn't. Proceeding as if it does.\n");
+    }
 
     printf("\n- Details of block 0x0:\n");
     print_obj_hdr_info(block_buf);
     printf("\n");
 
     if (!is_nx_superblock(block_buf)) {
-        printf("END: Block 0x0 is not a container superblock.\n\n");
-        return 0;
+        printf("!! APFS ERROR !! Block 0x0 should be a container superblock, but it isn't. Proceeding as if it is.\n\n");
+    }
+    if (((nx_superblock_t*)block_buf)->nx_magic != NX_MAGIC) {
+        printf("!! APFS ERROR !! Container superblock at 0x0 should have magic string '%s', but it doesn't. Proceeding as if it does.\n", magic_to_string(NX_MAGIC));
     }
 
     nx_superblock_t* nxsb = malloc(sizeof(nx_superblock_t));
     if (!nxsb) {
-        fprintf(stderr, "ABORT: main: Could not allocate sufficient memory for `nxsb`.\n");
+        fprintf(stderr, "ABORT: Could not allocate sufficient memory for `nxsb`.\n");
         return -1;
     }
     memcpy(nxsb, block_buf, sizeof(*nxsb));
 
-    printf("Preparing to read container superblocks from the checkpoint descriptor area:\n");
-    printf("- Allocating memory for array of container superblocks ... ");
-    
     size_t num_read = 0;
     size_t num_alloced = MALLOC_INCREMENT;
 
@@ -89,23 +86,23 @@ int main(int argc, char** argv) {
 
     paddr_block_t* nx_blocks = malloc(num_alloced * sizeof(paddr_block_t));
     if (!nx_blocks) {
-        fprintf(stderr, "\nABORT: main: Could not allocate sufficient memory for %lu container superblocks.\n", num_alloced);
+        fprintf(stderr, "\nABORT: Attempted to create array `nx_blocks` with space for %lu entries, but could not allocate sufficient memory.\n", num_alloced);
         return -1;
     }
-    printf("OK.\n");
 
     printf("Locating the checkpoint descriptor area:\n");
     if (nxsb->nx_xp_desc_blocks >> 31 == 0) {
         printf("- The area is contiguous.\n");
         printf("- The address of its first block is 0x%016llx.\n", nxsb->nx_xp_desc_base);
 
-        printf("Reading blocks from the checkpoint descriptor area into memory:\n");
+        printf("Locating the latest well-formed container superblock in the checkpoint descriptor area:\n");
         paddr_t current_block_addr = nxsb->nx_xp_desc_base;
 
         while (1) {
             read_blocks(block_buf, current_block_addr, 1);
             if (!is_cksum_valid(block_buf)) {
-                printf("- Block 0x%llx failed checksum validation. Reading it anyway.\n", current_block_addr);
+                printf("- !! APFS WARNING !! Block 0x%llx failed checksum validation. Skipping it.\n", current_block_addr);
+                continue;
             }
 
             if (!is_nx_superblock(block_buf) && !is_checkpoint_map_phys(block_buf)) {
@@ -114,15 +111,19 @@ int main(int argc, char** argv) {
             }
             
             if (is_nx_superblock(block_buf)) {
+                if (((nx_superblock_t*)block_buf)->nx_magic != NX_MAGIC) {
+                    printf("- !! APFS WARNING !! Container superblock at 0x%llx should have magic string '%s', but it doesn't. Skipping it.\n", current_block_addr, magic_to_string(NX_MAGIC));
+                    continue;
+                }
+
                 if (num_read >= num_alloced) {
                     // Need a larger array; allocate more memory
                     num_alloced += MALLOC_INCREMENT;
                     nx_blocks = realloc(nx_blocks, num_alloced * sizeof(paddr_block_t));
                     if (!nx_blocks) {
-                        fprintf(stderr, "\nABORT: main: Array `nx_blocks` needed to contain more than %lu entries, but could not allocate sufficient memory.\n", num_alloced);
+                        fprintf(stderr, "\nABORT: Array `nx_blocks` needs more than %lu entries; attempted to increase this to %lu entries, but could not allocate sufficient memory.\n", num_read, num_alloced);
                         return -1;
                     }
-                    printf("OK.\n");
                 }
 
                 // Copy the buffered NXSB into the array
@@ -135,50 +136,50 @@ int main(int argc, char** argv) {
         }
         // De-allocate excess memory.
         nx_blocks = realloc(nx_blocks, num_read * sizeof(paddr_block_t));
-
-        printf("- Found %lu container superblocks in this area successfully read them into memory.\n", num_read);
     } else {
         printf("- The area is not contiguous.\n");
         printf("- The physical OID of the B-tree representing the area is 0x%016llx.\n", nxsb->nx_xp_desc_base);
         printf("END: The ability to handle this case has not yet been implemented.\n\n");   // TODO: implement case when xp_desc area is not contiguous
         return 0;
     }
+    printf("- Found %lu well-formed container superblocks in this area.\n", num_read);
 
-    printf("Searching array for the container superblock with the highest XID:\n");
+    printf("- Determining which of these superblocks has the highest XID ... ");
     // We find the latest NXSB from array `nx_blocks`, pointing `nx_latest` to it.
     paddr_block_t* nx_end           = nx_blocks + num_read;
     paddr_block_t* nx_latest        = nx_blocks;
     paddr_block_t* nx_cursor        = nx_latest + 1;
     
-    // Don't need the block zero NXSB anymore, which is stored in `nxsb`;
-    // use it for something else. These pointers are being used to avoid lots
-    // of messy casting to `nx_superblock_t*`.
-    nxsb = nx_latest->block;
+    // The following two pointers are used to avoid cluttering the code with explicit casts to `nx_superblock_t*`.
+    nx_superblock_t* nxsb_latest = nx_latest->block;
     nx_superblock_t* nxsb_cursor;
 
     while (nx_cursor < nx_end) {
-        if (!is_cksum_valid(nx_cursor->block)) {
-            printf("- Block 0x%llx is malformed; failed checksum validation. Ignoring that block.\n", nx_cursor->paddr);
-        } else {
-            nxsb_cursor = nx_cursor->block;
-            if (nxsb_cursor->nx_magic != NX_MAGIC) {
-                printf("- Block 0x%llx is malformed; magic value is not as expected. Ignoring that block.\n", nx_cursor->paddr);
-            } else if (nxsb_cursor->nx_o.o_xid > nxsb->nx_o.o_xid) {
-                nx_latest = nx_cursor;
-                nxsb = nx_latest->block;
-            }
+        nxsb_cursor = nx_cursor->block;
+        if (nxsb_cursor->nx_o.o_xid > nxsb_latest->nx_o.o_xid) {
+            nx_latest   = nx_cursor;
+            nxsb_latest = nx_latest->block;
         }
-
         nx_cursor++;
     }
-    printf("- Block 0x%llx has the highest XID.\n", nx_latest->paddr);
-    printf("\n- Details of block 0x%llx:\n", nx_latest->paddr);
+
+    // Don't need the block 0x0 NXSB anymore, which is stored in `nxsb`.
+    // Copy the latest NXSB there instead, then we can discard the rest of the
+    // NXSBs that we found in the checkpoint descriptor area with `free()`.
+    paddr_t nxsb_paddr = nx_latest->paddr;
+    memcpy(nxsb, nxsb_latest, sizeof(nx_superblock_t));
+    free(nx_blocks);
+
+    printf("block 0x%llx with XID 0x%llx.\n", nxsb_paddr, nxsb->nx_o.o_xid);
+    
+    printf("\n- Details of block 0x%llx:\n", nxsb_paddr);
     print_obj_hdr_info(nxsb);
     printf("----\n");
     printf("Number of blocks in corresponding checkpoint:   %u\n", nxsb->nx_xp_desc_len);
     printf("desc_index:     0x%x\n", nxsb->nx_xp_desc_index);
     printf("\n");
 
+    free(block_buf);
     fclose(nx);
     return 0;
 }

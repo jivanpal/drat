@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
     print_obj_hdr_info(block_buf);
     printf("\n");
 
+    free(block_buf);
     fclose(nx);
     return 0;
 }
