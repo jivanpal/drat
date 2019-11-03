@@ -93,14 +93,11 @@ process.
 #### Example output
 
 ```
-$ sudo ./bin/apfs-inspect /dev/disk0s2
+% sudo ./bin/apfs-inspect /dev/disk0s2
 
 Opening file at `/dev/disk0s2` in read-only mode ... OK.
-
 Simulating a mount of the APFS container.
-
-Reading block 0x0 into buffer ... OK.
-Validating block checksum ... OK.
+Validating checksum of block 0x0 ... OK.
 
 - Details of block 0x0:
 Stored checksum:  0x8e71ca425670c5f1
@@ -111,25 +108,22 @@ Type flags:       (none)
 Type:             Container superblock
 Subtype:          Invalid type
 
-Preparing to read container superblocks from the checkpoint descriptor area:
-- Allocating memory for array of container superblocks ... OK.
 Locating the checkpoint descriptor area:
 - The area is contiguous.
 - The address of its first block is 0x0000000000000001.
-Reading blocks from the checkpoint descriptor area into memory:
-- Found 140 container superblocks in this area and successfully read them into memory.
-Searching array for the container superblock with the highest XID:
-- Block 0xf6 has the highest XID.
+Locating the latest well-formed container superblock in the checkpoint descriptor area:
+- Found 140 well-formed container superblocks in this area.
+- Determining which of these superblocks has the highest XID ... block 0x116 with XID 0xca57.
 
-- Details of block 0xf6:
-Stored checksum:  0xed0e18abf7b1cee1
+- Details of block 0x116:
+Stored checksum:  0xece475b3f7db4eac
 OID:              0x0000000000000001
-XID:              0x000000000000c3b7
+XID:              0x000000000000ca57
 Storage type:     Ephemeral
 Type flags:       (none)
 Type:             Container superblock
 Subtype:          Invalid type
 ----
 Number of blocks in corresponding checkpoint:   2
-desc_index:     0xf4
+desc_index:     0x114
 ```
