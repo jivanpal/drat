@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <sys/errno.h>
 
-#define MALLOC_INCREMENT     64
-
 char*   nx_path;
 FILE*   nx;
 size_t  nx_block_size = 4096;
