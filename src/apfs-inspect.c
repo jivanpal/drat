@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
         printf("!! APFS ERROR !! Block 0x0 should be a container superblock, but it isn't. Proceeding as if it is.\n\n");
     }
     if (((nx_superblock_t*)block_buf)->nx_magic != NX_MAGIC) {
-        printf("!! APFS ERROR !! Container superblock at 0x0 should have magic string '%s', but it doesn't. Proceeding as if it does.\n", magic_to_string(NX_MAGIC));
+        printf("!! APFS ERROR !! Container superblock at 0x0 doesn't have the correct magic number. Proceeding as if it does.\n");
     }
 
     nx_superblock_t* nxsb = malloc(sizeof(nx_superblock_t));
@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
             
             if (is_nx_superblock(block_buf)) {
                 if (((nx_superblock_t*)block_buf)->nx_magic != NX_MAGIC) {
-                    printf("- !! APFS WARNING !! Container superblock at 0x%llx should have magic string '%s', but it doesn't. Skipping it.\n", current_block_addr, magic_to_string(NX_MAGIC));
+                    printf("- !! APFS WARNING !! Container superblock at 0x%llx doesn't have the correct magic number. Skipping it.\n", current_block_addr);
                     continue;
                 }
 

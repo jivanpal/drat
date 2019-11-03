@@ -3,26 +3,6 @@
  */
 
 /**
- * Get a string representation of a 32-bit magic number, e.g. for the value
- * 'BSXN' stored in the `nx_magic` field of an instance of `nx_superblock_t`,
- * get the string "NXSB".
- * 
- * RETURN VALUE:    A pointer to a C-string with the string representation of
- *      `magic`. It is the caller's responsibility to free this pointer with
- *      `free()` when it is no longer needed.
- */
-char* magic_to_string(uint32_t magic) {
-    char* string = malloc(5);
-
-    for (int i = 0; i < 4; i++) {
-        string[i] = (char)(magic >> (8 * i));
-    }
-    string[4] = '\0';
-
-    return string;
-}
-
-/**
  * Get a human-readable string with a given object's storage type.
  * 
  * RETURN VALUE:
