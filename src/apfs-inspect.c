@@ -144,18 +144,35 @@ int main(int argc, char** argv) {
 
     // Copy the contents of the corresponding checkpoint somewhere else so that
     // we can discard the rest of the checkpoint descriptor area.
+    // 
+    // The checkpoint descriptor area is a ring buffer stored as an array, so
+    // this copying process also allows us to store the latest checkpoint
+    // contiguously in memory in the event that the checkpoint wraps around the
+    // from the end of the array to the start.
     printf("Loading the corresponding checkpoint:\n");
+    
     char (*xp)[nx_block_size] = malloc(nxsb->nx_xp_desc_len * nx_block_size);
     if (!xp) {
         fprintf(stderr, "ABORT: Couldn't allocate sufficient memory.\n");
         return -1;
     }
-    memcpy(xp, xp_desc[nxsb->nx_xp_desc_index], nxsb->nx_xp_desc_len * nx_block_size);
+
+    if (nxsb->nx_xp_desc_index + nxsb->nx_xp_desc_len <= xp_desc_blocks) {
+        // The simple case: the checkpoint is already contiguous in `xp_desc`.
+        memcpy(xp, xp_desc[nxsb->nx_xp_desc_index], nxsb->nx_xp_desc_len * nx_block_size);
+    } else {
+        // The case where the checkpoint wraps around the array.
+        uint32_t segment_1_len = xp_desc_blocks - nxsb->nx_xp_desc_index;
+        uint32_t segment_2_len = nxsb->nx_xp_desc_len - segment_1_len;
+        memcpy(xp,                 xp_desc + nxsb->nx_xp_desc_index, segment_1_len * nx_block_size);
+        memcpy(xp + segment_1_len, xp_desc,                          segment_2_len * nx_block_size);
+    }
+    
     free(xp_desc);
 
     printf("\n- Details for each block in this checkpoint:\n\n");
     for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
-        print_obj_hdr_info(xp_desc[nxsb->nx_xp_desc_index + i]);
+        print_obj_hdr_info(xp[i]);
         printf("\n");
     }
 
