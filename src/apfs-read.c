@@ -48,11 +48,15 @@ int main(int argc, char** argv) {
     printf("OK.\n\n");
 
     char* block_buf = malloc(nx_block_size);
-    read_blocks(block_buf, nx_block_addr, 1);
+    if (read_blocks(block_buf, nx_block_addr, 1) == 0) {
+        printf("END: Block index %s does not exist in `%s`.\n", argv[2], nx_path);
+        goto cleanup;
+    }
     printf("- Details of block 0x%llx:\n", nx_block_addr);
     print_obj_hdr_info(block_buf);
-    printf("\n");
+    printf("\nEND: All done.\n");
 
+cleanup:
     free(block_buf);
     fclose(nx);
     return 0;
