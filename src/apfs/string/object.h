@@ -1,6 +1,14 @@
 /**
- * Functions that generate nice human-readable strings from given data.
+ * Functions that generate nicely formatted strings
+ * representing data found in APFS objects.
  */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "../struct/object.h"
 
 /**
  * Get a human-readable string with a given object's storage type.
@@ -89,7 +97,8 @@ char* get_obj_type_flags_string(obj_phys_t* obj) {
 
 /**
  * Get a human-readable string describing a given `o_type` value. This is a
- * helper function for `get_obj_type_string()` and `get_obj_subtype_string()`.
+ * helper function for `get_obj_type_string()`, `get_obj_subtype_string()`,
+ * and `get_xp_mapping_string()`.
  */
 char* o_type_to_string(uint32_t o_type) {
     switch (o_type & OBJECT_TYPE_MASK) {
@@ -143,38 +152,20 @@ char* o_type_to_string(uint32_t o_type) {
 }
 
 /**
- * Get a human-readable string with a given object's type.
- * 
- * obj:     A pointer to the object in question.
- * 
- * RETURN VALUE:
- *      A pointer to the first character of the string; or `NULL` if the type
- *      is unrecognised. The caller needn't free this pointer.
+ * Get a human-readable string describing a given `o_subtype` value. This is a
+ * helper function for `get_obj_subtype_string()` and `get_xp_mapping_string()`.
  */
-char* get_obj_type_string(obj_phys_t* obj) {
-    return o_type_to_string(obj->o_type);
-}
-
-/**
- * Get a human-readable string with an object's subtype.
- * 
- * obj:     A pointer to the object in question.
- * 
- * RETURN VALUE:
- *      A pointer to the first character of the string; or `NULL` if the subtype
- *      is unrecognised. This pointer needn't be freed by the caller.
- */
-char* get_obj_subtype_string(obj_phys_t* obj) {
-    // Type values are also used as subtype values; see if the subtype is one
-    // of the valid regular types first.
-    char* type_string = o_type_to_string(obj->o_subtype);
+char* o_subtype_to_string(uint32_t o_subtype) {
+    // Check if `o_subtype` is a value representing a regular type.
+    char* type_string = o_type_to_string(o_subtype);
 
     if (type_string) {
         return type_string;
     }
 
-    // If not, then go through subtype-exclusive cases.
-    switch (obj->o_subtype & OBJECT_TYPE_MASK) {
+    // We didn't match against a regular type, so go through the
+    // values that are exclusively used to represent subtypes.
+    switch (o_subtype & OBJECT_TYPE_MASK) {
         case OBJECT_TYPE_SPACEMAN_FREE_QUEUE:
             return "Space manager free-space queue";
         case OBJECT_TYPE_EXTENT_LIST_TREE:
@@ -197,8 +188,34 @@ char* get_obj_subtype_string(obj_phys_t* obj) {
 }
 
 /**
- * Print the information stored in an APFS object's
- * header in a human-readable form.
+ * Get a human-readable string with a given object's type.
+ * 
+ * obj:     A pointer to the object in question.
+ * 
+ * RETURN VALUE:
+ *      A pointer to the first character of the string; or `NULL` if the type
+ *      is unrecognised. The caller needn't free this pointer.
+ */
+char* get_obj_type_string(obj_phys_t* obj) {
+    return o_type_to_string(obj->o_type);
+}
+
+/**
+ * Get a human-readable string with an object's subtype.
+ * 
+ * obj:     A pointer to the object in question.
+ * 
+ * RETURN VALUE:
+ *      A pointer to the first character of the string; or `NULL` if the subtype
+ *      is unrecognised. This pointer needn't be freed by the caller.
+ */
+char* get_obj_subtype_string(obj_phys_t* obj) {
+    return o_subtype_to_string(obj->o_subtype);
+}
+
+/**
+ * Print a nicely formatted string describing the data contained in the header
+ * of an APFS object.
  */
 void print_obj_hdr_info(obj_phys_t* obj) {
     char* type_flags_string = get_obj_type_flags_string(obj);
