@@ -100,13 +100,27 @@ Simulating a mount of the APFS container.
 Validating checksum of block 0x0 ... OK.
 
 - Details of block 0x0:
-Stored checksum:  0xe25ef5e409032d45
-OID:              0x0000000000000001
-XID:              0x00000000001bca24
-Storage type:     Ephemeral
-Type flags:       (none)
-Type:             Container superblock
-Subtype:          Invalid type
+Stored checksum:    0xe25ef5e409032d45
+OID:                0x0000000000000001
+XID:                0x00000000001bca24
+Storage type:       Ephemeral
+Type flags:         (none)
+Type:               Container superblock
+Subtype:            Invalid type
+Magic string:       NXSB
+Block size:         4096 bytes
+Block count:        117161676
+Supported features:
+- No feature flags are set.
+Supported read-only compatible features:
+- No read-only compatible feature flags are set.
+Backward-incompatible features:
+- No backward-incompatible feature flags are set.
+UUID:               0x07531d831bda8f8c9944ee600d55fd37
+Next OID:           0x000000000028709a
+Next XID:           0x00000000001bca25
+Space manager OID:  0x0000000000087d46
+Object map OID:     0x00000000000cfc19
 
 Locating the checkpoint descriptor area:
 - Its length is 280 blocks.
@@ -119,33 +133,61 @@ Locating the most recent well-formed container superblock in the checkpoint desc
 
 - Details of this container superblock:
 
-Stored checksum:  0xe25eecc609033666
-OID:              0x0000000000000001
-XID:              0x00000000001bca24
-Storage type:     Ephemeral
-Type flags:       (none)
-Type:             Container superblock
-Subtype:          Invalid type
+Stored checksum:    0xe25eecc609033666
+OID:                0x0000000000000001
+XID:                0x00000000001bca24
+Storage type:       Ephemeral
+Type flags:         (none)
+Type:               Container superblock
+Subtype:            Invalid type
+Magic string:       NXSB
+Block size:         4096 bytes
+Block count:        117161676
+Supported features:
+- No feature flags are set.
+Supported read-only compatible features:
+- No read-only compatible feature flags are set.
+Backward-incompatible features:
+- No backward-incompatible feature flags are set.
+UUID:               0x07531d831bda8f8c9944ee600d55fd37
+Next OID:           0x000000000028709a
+Next XID:           0x00000000001bca25
+Space manager OID:  0x0000000000087d46
+Object map OID:     0x00000000000cfc19
 
 Loading the corresponding checkpoint:
 
 - Details for each block in this checkpoint:
 
-Stored checksum:  0xe63bc1554547b687
-OID:              0x000000000362a0f2
-XID:              0x00000000001bca24
-Storage type:     Physical
-Type flags:       (none)
-Type:             Checkpoint map
-Subtype:          Invalid type
+Stored checksum:    0xe63bc1554547b687
+OID:                0x000000000362a0f2
+XID:                0x00000000001bca24
+Storage type:       Physical
+Type flags:         (none)
+Type:               Checkpoint map
+Subtype:            Invalid type
 
-Stored checksum:  0xe25eecc609033666
-OID:              0x0000000000000001
-XID:              0x00000000001bca24
-Storage type:     Ephemeral
-Type flags:       (none)
-Type:             Container superblock
-Subtype:          Invalid type
+Stored checksum:    0xe25eecc609033666
+OID:                0x0000000000000001
+XID:                0x00000000001bca24
+Storage type:       Ephemeral
+Type flags:         (none)
+Type:               Container superblock
+Subtype:            Invalid type
+Magic string:       NXSB
+Block size:         4096 bytes
+Block count:        117161676
+Supported features:
+- No feature flags are set.
+Supported read-only compatible features:
+- No read-only compatible feature flags are set.
+Backward-incompatible features:
+- No backward-incompatible feature flags are set.
+UUID:               0x07531d831bda8f8c9944ee600d55fd37
+Next OID:           0x000000000028709a
+Next XID:           0x00000000001bca25
+Space manager OID:  0x0000000000087d46
+Object map OID:     0x00000000000cfc19
 
 END: All done.
 ```
