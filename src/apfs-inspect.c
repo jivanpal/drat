@@ -179,6 +179,7 @@ int main(int argc, char** argv) {
     printf("desc_index:     0x%x\n", nxsb->nx_xp_desc_index);
     printf("\n");
 
+    free(nxsb);
     free(block_buf);
     fclose(nx);
     return 0;

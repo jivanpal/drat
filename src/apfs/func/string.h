@@ -203,30 +203,34 @@ char* get_obj_subtype_string(obj_phys_t* obj) {
 void print_obj_hdr_info(obj_phys_t* obj) {
     char* type_flags_string = get_obj_type_flags_string(obj);
     
+    char malloced_type_string = 0;  // Boolean value
     char* type_string = get_obj_type_string(obj);
     if (!type_string) {
         char* format_string = "Unknown type (0x%08x) --- perhaps this type was introduced in a later version of APFS than that published on 2019-02-27.";
-        size_t type_string_size = strlen(format_string) + 4; // Add 4 to account for `%08x` being replaced with a 16-nibble hex number, and necessary terminating null byte.
+        size_t type_string_size = strlen(format_string) + 5; // Add 4 to account for `%08x` being replaced with an 8-digit hex number; add 1 more for terminating NULL byte.
         
         type_string = malloc(type_string_size);
         if (!type_string) {
             fprintf(stderr, "ABORT: print_obj_hdr_info: Could not allocate sufficient memory when generating `type_string` in the case where the object type is not recognised.\n");
             exit(-1);
         }
+        malloced_type_string = 1;
 
         sprintf(type_string, format_string, obj->o_type & OBJECT_TYPE_MASK);
     }
 
+    char malloced_subtype_string = 0;   // Boolean value
     char* subtype_string = get_obj_subtype_string(obj);
     if (!subtype_string) {
         char* format_string = "Unknown subtype (0x%08x) --- perhaps this subtype was introduced in a later version of APFS than that published on 2019-02-27.";
-        size_t subtype_string_size = strlen(format_string) + 4; // Add 4 to account for `%08x` being replaced with a 16-nibble hex number, and necessary terminating null byte.
+        size_t subtype_string_size = strlen(format_string) + 5; // Add 4 to account for `%08x` being replaced with an 8-digit hex number; add 1 more for terminating NULL byte.
         
         subtype_string = malloc(subtype_string_size);
         if (!subtype_string) {
             fprintf(stderr, "ABORT: print_obj_hdr_info: Could not allocate sufficient memory when generating `subtype_string` in the case where the object subtype is not recognised.\n");
             exit(-1);
         }
+        malloced_subtype_string = 1;
 
         sprintf(subtype_string, format_string, obj->o_subtype);
     }
@@ -241,4 +245,10 @@ void print_obj_hdr_info(obj_phys_t* obj) {
     printf("Subtype:          %s\n",          subtype_string);
 
     free(type_flags_string);
+    if (malloced_type_string) {
+        free(type_string);
+    }
+    if (malloced_subtype_string) {
+        free(subtype_string);
+    }
 }
