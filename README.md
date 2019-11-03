@@ -117,9 +117,7 @@ Locating the checkpoint descriptor area:
 - The area is contiguous.
 - The address of its first block is 0x0000000000000001.
 Reading blocks from the checkpoint descriptor area into memory:
-- Read 64 container superblocks into memory so far. Allocating more memory for more container superblocks ... OK.
-- Read 128 container superblocks into memory so far. Allocating more memory for more container superblocks ... OK.
-- Reached the end of the checkpoint descriptor area. Found 140 container superblocks and successfully read them into memory.
+- Found 140 container superblocks in this area and successfully read them into memory.
 Searching array for the container superblock with the highest XID:
 - Block 0xf6 has the highest XID.
 

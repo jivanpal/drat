@@ -115,12 +115,11 @@ int main(int argc, char** argv) {
             
             if (is_nx_superblock(block_buf)) {
                 if (num_read >= num_alloced) {
-                    // Need more memory
+                    // Need a larger array; allocate more memory
                     num_alloced += MALLOC_INCREMENT;
-                    printf("- Read %lu container superblocks into memory so far. Allocating more memory for more container superblocks ... ", num_read);
                     nx_blocks = realloc(nx_blocks, num_alloced * sizeof(paddr_block_t));
                     if (!nx_blocks) {
-                        fprintf(stderr, "\nABORT: main: Could not allocate sufficient memory for %lu instances of `nx_superblock_t` in `xp_desc_nx_blocks`.\n", num_alloced);
+                        fprintf(stderr, "\nABORT: main: Array `nx_blocks` needed to contain more than %lu entries, but could not allocate sufficient memory.\n", num_alloced);
                         return -1;
                     }
                     printf("OK.\n");
@@ -137,7 +136,7 @@ int main(int argc, char** argv) {
         // De-allocate excess memory.
         nx_blocks = realloc(nx_blocks, num_read * sizeof(paddr_block_t));
 
-        printf("- Reached the end of the checkpoint descriptor area. Found %lu container superblocks and successfully read them into memory.\n", num_read);
+        printf("- Found %lu container superblocks in this area successfully read them into memory.\n", num_read);
     } else {
         printf("- The area is not contiguous.\n");
         printf("- The physical OID of the B-tree representing the area is 0x%016llx.\n", nxsb->nx_xp_desc_base);
