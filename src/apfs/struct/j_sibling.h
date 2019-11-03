@@ -4,7 +4,7 @@
  */
 
 #include <stdint.h>
-#include "j_obj.h"      // for `j_key_t`
+#include "j_object.h"      // for `j_key_t`
 
 /** `j_sibling_key_t` **/
 

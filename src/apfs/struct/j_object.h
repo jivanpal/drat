@@ -3,6 +3,9 @@
  * §8 "File-System Objects"
  */
 
+#ifndef APFS_STRUCT_J_OBJECT_H
+#define APFS_STRUCT_J_OBJECT_H
+
 #include <stdint.h>
 #include "j_const.h"    // for `mode_t`
 
@@ -119,3 +122,5 @@ typedef struct j_xattr_val {
     uint16_t    xdata_len;
     uint8_t     xdata[0];
 } __attribute__((packed))   j_xattr_val_t;
+
+#endif
