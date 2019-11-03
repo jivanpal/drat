@@ -63,7 +63,7 @@ $ sudo ./bin/apfs-read /dev/disk0s2 0x3af2
 
 Opening file at `/dev/disk0s2` in read-only mode ... OK.
 
-- Details for block 0x0000000000003af2
+- Details of block 0x3af2:
 Stored checksum:  0x8fb5c6176f907f7e
 OID:              0x0000000000000403
 XID:              0x000000000000bd46

@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
     char* block_buf = malloc(nx_block_size);
     read_blocks(block_buf, nx_block_addr, 1);
-    printf("- Details for block 0x%016llx\n", nx_block_addr);
+    printf("- Details of block 0x%llx:\n", nx_block_addr);
     print_obj_hdr_info(block_buf);
     printf("\n");
 
