@@ -3,6 +3,9 @@
  * §3 "Objects"
  */
 
+#ifndef APFS_STRUCT_OBJECT_H
+#define APFS_STRUCT_OBJECT_H
+
 #include <stdint.h>
 
 /** Supporting Data Types --- forward declared for `obj_phys_t` **/
@@ -87,3 +90,5 @@ typedef struct obj_phys {
 #define OBJ_NOHEADER                    0x20000000
 #define OBJ_ENCRYPTED                   0x10000000
 #define OBJ_NONPERSISTENT               0x08000000
+
+#endif // APFS_STRUCT_OBJECT_H

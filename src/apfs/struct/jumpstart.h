@@ -3,6 +3,9 @@
  * §4 "EFI Jumpstart"
  */
 
+#ifndef APFS_STRUCT_JUMPSTART_H
+#define APFS_STRUCT_JUMPSTART_H
+
 #include <stdint.h>
 #include "general.h"    // for `prange_t`
 #include "object.h"     // for `obj_phys_t`
@@ -25,3 +28,5 @@ typedef struct nx_efi_jumpstart {
 /** Partition UUIDs **/
 
 #define APFS_GPT_PARTITION_UUID     "7C3457EF-0000-11AA-AA11-00306543ECAC"
+
+#endif // APFS_STRUCT_JUMPSTART_H

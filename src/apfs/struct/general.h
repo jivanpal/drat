@@ -3,6 +3,9 @@
  * §2 "General-Purpose Types"
  */
 
+#ifndef APFS_STRUCT_GENERAL_H
+#define APFS_STRUCT_GENERAL_H
+
 #include <stdint.h>
 
 typedef int64_t         paddr_t;
@@ -13,3 +16,5 @@ typedef struct prange {
 } prange_t;
 
 typedef unsigned char   uuid_t[16];
+
+#endif // APFS_STRUCT_GENERAL_H

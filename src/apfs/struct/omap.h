@@ -3,6 +3,9 @@
  * §6 "Object Maps"
  */
 
+#ifndef APFS_STRUCT_OMAP_H
+#define APFS_STRUCT_OMAP_H
+
 #include <stdint.h>
 #include "general.h"    // for `paddr_t`
 #include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
@@ -74,3 +77,5 @@ typedef struct omap_snapshot {
 
 #define OMAP_REAP_PHASE_MAP_TREE        1
 #define OMAP_REAP_PHASE_SNAPSHOT_TREE   2
+
+#endif // APFS_STRUCT_OMAP_H

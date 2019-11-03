@@ -3,6 +3,9 @@
  * §12 "Siblings"
  */
 
+#ifndef APFS_STRUCT_J_SIBLING_H
+#define APFS_STRUCT_J_SIBLING_H
+
 #include <stdint.h>
 #include "j_object.h"      // for `j_key_t`
 
@@ -32,3 +35,5 @@ typedef struct j_sibling_map_key {
 typedef struct j_sibling_map_val {
     uint64_t    file_id;
 } __attribute__((packed))   j_sibling_map_val_t;
+
+#endif // APFS_STRUCT_J_SIBLING_H

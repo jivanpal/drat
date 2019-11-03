@@ -123,4 +123,4 @@ typedef struct j_xattr_val {
     uint8_t     xdata[0];
 } __attribute__((packed))   j_xattr_val_t;
 
-#endif
+#endif // APFS_STRUCT_J_OBJECT_H

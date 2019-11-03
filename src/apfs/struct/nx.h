@@ -1,13 +1,16 @@
 /**
- * Structures and related item as defined in
+ * Structures and related items as defined in
  * §5 "Container"
  */
+
+#ifndef APFS_STRUCT_NX_H
+#define APFS_STRUCT_NX_H
 
 #include <stdint.h>
 #include "general.h"    // for `prange_t`, `uuid_t`
 #include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
 
-/** `nx_counter_id_t` --- dependency of `nx_superblock_t` **/
+/** `nx_counter_id_t` --- forward declared for `nx_superblock_t` **/
 
 typedef enum {
     NX_CNTR_OBJ_CKSUM_SET   = 0,
@@ -16,7 +19,7 @@ typedef enum {
     NX_NUM_COUNTERS = 32,
 } nx_counter_id_t;
 
-/** `nx_superblock_t` --- prerequisite constants **/
+/** `nx_superblock_t` **/
 
 #define NX_MAGIC                        'BSXN'
 #define NX_MAX_FILE_SYSTEMS             100
@@ -26,8 +29,6 @@ typedef enum {
 #define NX_MAX_FILE_SYSTEM_EPH_STRUCTS  4
 #define NX_TX_MIN_CHECKPOINT_COUNT      4
 #define NX_EPH_INFO_VERSION             1
-
-/** `nx_superblock_t` --- structure definition **/
 
 typedef struct nx_superblock {
     obj_phys_t  nx_o;
@@ -140,3 +141,5 @@ typedef struct evict_mapping_val {
     paddr_t     dst_paddr;
     uint64_t    len;
 } __attribute__((packed))   evict_mapping_val_t;
+
+#endif // APFS_STRUCT_NX_H

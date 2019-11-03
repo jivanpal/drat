@@ -3,6 +3,9 @@
  * §11 "Extended Fields"
  */
 
+#ifndef APFS_STRUCT_XF_H
+#define APFS_STRUCT_XF_H
+
 #include <stdint.h>
 
 typedef struct xf_blob {
@@ -47,3 +50,5 @@ typedef struct x_field {
 #define XF_SYSTEM_FIELD         0x0020
 #define XF_RESERVED_40          0x0040
 #define XF_RESERVED_80          0x0080
+
+#endif // APFS_STRUCT_XF_H

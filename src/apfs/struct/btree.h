@@ -3,6 +3,9 @@
  * §13 "B-Trees"
  */
 
+#ifndef APFS_STRUCT_BTREE_H
+#define APFS_STRUCT_BTREE_H
+
 #include <stdint.h>
 #include "object.h"     // for `obj_phys_t`
 
@@ -86,3 +89,5 @@ typedef struct kvoff {
 
 #define BTREE_NODE_SIZE_DEFAULT     4096    // = 4 Ki
 #define BTREE_NODE_MIN_ENTRY_COUNT  4
+
+#endif // APFS_STRUCT_BTREE_H

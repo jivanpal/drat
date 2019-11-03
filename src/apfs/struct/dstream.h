@@ -3,6 +3,9 @@
  * §10 "Data Streams"
  */
 
+#ifndef APFS_STRUCT_DSTREAM_H
+#define APFS_STRUCT_DSTREAM_H
+
 #include <stdint.h>
 #include "j_object.h"      // for `j_key_t`
 
@@ -71,3 +74,5 @@ typedef struct j_xattr_dstream {
     uint64_t        xattr_obj_id;
     j_dstream_t     dstream;
 } j_xattr_dstream_t;
+
+#endif // APFS_STRUCT_DSTREAM_H

@@ -3,6 +3,9 @@
  * §7 "Volumes"
  */
 
+#ifndef APFS_STRUCT_FS_H
+#define APFS_STRUCT_FS_H
+
 #include <stdint.h>
 #include "general.h"    // for `uuid_t`
 #include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
@@ -154,3 +157,5 @@ typedef struct apfs_superblock {
     | APFS_INCOMPAT_ENC_ROLLED                  \
     | APFS_INCOMPAT_NORMALIZATION_INSENSITIVE   \
 )
+
+#endif // APFS_STRUCT_FS_H
