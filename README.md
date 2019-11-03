@@ -93,37 +93,59 @@ process.
 #### Example output
 
 ```
-% sudo ./bin/apfs-inspect /dev/disk0s2
+% sudo ./bin/apfs-inspect /dev/disk2s2
 
-Opening file at `/dev/disk0s2` in read-only mode ... OK.
+Opening file at `/dev/disk2s2` in read-only mode ... OK.
 Simulating a mount of the APFS container.
 Validating checksum of block 0x0 ... OK.
 
 - Details of block 0x0:
-Stored checksum:  0x8e71ca425670c5f1
+Stored checksum:  0xe25ef5e409032d45
 OID:              0x0000000000000001
-XID:              0x000000000000b79b
+XID:              0x00000000001bca24
 Storage type:     Ephemeral
 Type flags:       (none)
 Type:             Container superblock
 Subtype:          Invalid type
 
 Locating the checkpoint descriptor area:
-- The area is contiguous.
-- The address of its first block is 0x0000000000000001.
-Locating the latest well-formed container superblock in the checkpoint descriptor area:
-- Found 140 well-formed container superblocks in this area.
-- Determining which of these superblocks has the highest XID ... block 0x116 with XID 0xca57.
+- Its length is 280 blocks.
+- It is contiguous.
+- The address of its first block is 0x3629fe4.
+Loading the checkpoint descriptor area into memory ... OK.
+Locating the most recent well-formed container superblock in the checkpoint descriptor area:
+- It lies at index 271 within the checkpoint descriptor area.
+- The corresponding checkpoint starts at index 270 within the checkpoint descriptor area, and spans 2 blocks.
 
-- Details of block 0x116:
-Stored checksum:  0xece475b3f7db4eac
+- Details of this container superblock:
+
+Stored checksum:  0xe25eecc609033666
 OID:              0x0000000000000001
-XID:              0x000000000000ca57
+XID:              0x00000000001bca24
 Storage type:     Ephemeral
 Type flags:       (none)
 Type:             Container superblock
 Subtype:          Invalid type
-----
-Number of blocks in corresponding checkpoint:   2
-desc_index:     0x114
+
+Loading the corresponding checkpoint:
+
+- Details for each block in this checkpoint:
+
+Stored checksum:  0xe63bc1554547b687
+OID:              0x000000000362a0f2
+XID:              0x00000000001bca24
+Storage type:     Physical
+Type flags:       (none)
+Type:             Checkpoint map
+Subtype:          Invalid type
+
+Stored checksum:  0xe25eecc609033666
+OID:              0x0000000000000001
+XID:              0x00000000001bca24
+Storage type:     Ephemeral
+Type flags:       (none)
+Type:             Container superblock
+Subtype:          Invalid type
+
+END: All done.
 ```
