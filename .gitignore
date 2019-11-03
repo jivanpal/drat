@@ -1,4 +1,7 @@
 .DS_Store
 .vscode/
-/bin
-/obj
+
+/bin/
+/obj/
+
+*.gch

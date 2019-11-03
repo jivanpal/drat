@@ -6,7 +6,7 @@
 #ifndef APFS_STRUCT_J_SIBLING_H
 #define APFS_STRUCT_J_SIBLING_H
 
-#include <stdint.h>
+// #include <stdint.h>
 #include "j_object.h"      // for `j_key_t`
 
 /** `j_sibling_key_t` **/

@@ -3,12 +3,14 @@
  * representing data found in APFS objects.
  */
 
+#ifndef APFS_STRING_OBJECT_H
+#define APFS_STRING_OBJECT_H
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 
-#include "../struct/object.h"
+#include "../struct/object.h"   // for `obj_phys_t`
 
 /**
  * Get a human-readable string with a given object's storage type.
@@ -58,8 +60,12 @@ char* get_obj_type_flags_string(obj_phys_t* obj) {
     size_t max_mem_required = 0;
     for (int i = 0; i < 3; i++) {
         max_mem_required += strlen(flag_strings[i]) + 2;
+        // `+ 2` accounts for appending ", " to each string
     }
     char* result_string = malloc(max_mem_required);
+    if (!result_string) {
+        fprintf(stderr, "\nABORT: get_obj_type_flags_string: Could not allocate sufficient memory for `result_string`.\n");
+    }
     
     char* cursor = result_string;
 
@@ -71,27 +77,24 @@ char* get_obj_type_flags_string(obj_phys_t* obj) {
                 *cursor++ = ',';
                 *cursor++ = ' ';
             }
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
+            size_t flag_string_len = strlen(flag_strings[i]);
+            memcpy(cursor, flag_strings[i], flag_string_len);
+            cursor += flag_string_len;
         }
     }
 
     if (cursor == result_string) {
-        // No strings were added, so it must be that no flags were set.
-        // As such, return "(none)".
-        *cursor++ = '(';
-        *cursor++ = 'n';
-        *cursor++ = 'o';
-        *cursor++ = 'n';
-        *cursor++ = 'e';
-        *cursor++ = ')';
+        // No strings were added, so it must be that no flags are set.
+        char* no_flags_string = "(none)";
+        size_t no_flags_string_len = strlen(no_flags_string);
+        memcpy(cursor, no_flags_string, no_flags_string_len);
+        cursor += no_flags_string_len;
     }
 
     *cursor = '\0';
     
     // Free up excess allocated memory.
     result_string = realloc(result_string, strlen(result_string) + 1);
-
     return result_string;
 }
 
@@ -253,13 +256,13 @@ void print_obj_hdr_info(obj_phys_t* obj) {
     }
 
     // Print the info
-    printf("Stored checksum:  0x%016llx\n",   *(uint64_t*)obj);
-    printf("OID:              0x%016llx\n",   obj->o_oid);
-    printf("XID:              0x%016llx\n",   obj->o_xid);
-    printf("Storage type:     %s\n",          get_obj_storage_type_string(obj));
-    printf("Type flags:       %s\n",          type_flags_string);
-    printf("Type:             %s\n",          type_string);
-    printf("Subtype:          %s\n",          subtype_string);
+    printf("Stored checksum:    0x%016llx\n",   *(uint64_t*)obj);
+    printf("OID:                0x%016llx\n",   obj->o_oid);
+    printf("XID:                0x%016llx\n",   obj->o_xid);
+    printf("Storage type:       %s\n",          get_obj_storage_type_string(obj));
+    printf("Type flags:         %s\n",          type_flags_string);
+    printf("Type:               %s\n",          type_string);
+    printf("Subtype:            %s\n",          subtype_string);
 
     free(type_flags_string);
     if (malloced_type_string) {
@@ -269,3 +272,5 @@ void print_obj_hdr_info(obj_phys_t* obj) {
         free(subtype_string);
     }
 }
+
+#endif // APFS_STRING_OBJECT_H

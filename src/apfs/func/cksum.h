@@ -2,6 +2,12 @@
  * Functions related to Fletcher-64 checksums.
  */
 
+#ifndef APFS_FUNC_CKSUM_H
+#define APFS_FUNC_CKSUM_H
+
+#include <stdint.h>
+#include "../io.h"
+
 /**
  * Compute or validate the checksum of a given APFS block. This is a helper
  * function for `compute_block_cksum()` and `is_cksum_valid()`.
@@ -83,9 +89,11 @@ uint64_t compute_block_cksum(uint32_t* block) {
  * Determine whether a given APFS block has a valid checksum.
  */
 char is_cksum_valid(uint32_t* block) {
-    // TODO: The "simple" implementation doesn't appear to work.
+    // TODO: The following "simple" implementation doesn't appear to work.
     // return fletcher_cksum(block, 0) == 0;
 
     // The following gives the correct result.
-    return compute_block_cksum(block) == *(uint64_t*)block;
+    return compute_block_cksum(block) == *(uint64_t*)block; // dereference of cast give
 }
+
+#endif // APFS_FUNC_CKSUM_H

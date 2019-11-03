@@ -6,7 +6,6 @@
 #ifndef APFS_STRUCT_FS_H
 #define APFS_STRUCT_FS_H
 
-#include <stdint.h>
 #include "general.h"    // for `uuid_t`
 #include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
 

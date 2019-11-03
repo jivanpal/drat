@@ -6,8 +6,7 @@
 #ifndef APFS_STRUCT_J_SNAP_H
 #define APFS_STRUCT_J_SNAP_H
 
-#include <stdint.h>
-#include "j_object.h"      // for `j_key_t`
+#include "j_object.h"   // for `j_key_t`
 #include "object.h"     // for `oid_t`, `xid_t`
 
 /** `j_snap_metadata_key_t` **/

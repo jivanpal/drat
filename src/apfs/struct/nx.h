@@ -6,8 +6,7 @@
 #ifndef APFS_STRUCT_NX_H
 #define APFS_STRUCT_NX_H
 
-#include <stdint.h>
-#include "general.h"    // for `prange_t`, `uuid_t`
+#include "general.h"    // for `paddr_t`, `prange_t`, `uuid_t`
 #include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
 
 /** `nx_counter_id_t` --- forward declared for `nx_superblock_t` **/

@@ -6,7 +6,6 @@
 #ifndef APFS_STRUCT_J_OBJECT_H
 #define APFS_STRUCT_J_OBJECT_H
 
-#include <stdint.h>
 #include "j_const.h"    // for `mode_t`
 
 /** `j_key_t` **/

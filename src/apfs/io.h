@@ -1,13 +1,19 @@
+/**
+ * Functions, structures, and global variables related to I/O involving the
+ * APFS container that the user specifies.
+ */
+
+#ifndef APFS_IO_H
+#define APFS_IO_H
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 #include <sys/errno.h>
 
 char*   nx_path;
 FILE*   nx;
 size_t  nx_block_size = 4096;
-
-#include "../apfs/func/cksum.h"
-#include "../apfs/func/boolean.h"
-#include "../apfs/func/string.h"
 
 void report_fopen_error() {
     switch (errno) {
@@ -65,7 +71,7 @@ void report_fopen_error() {
  * RETURN VALUE:    On success or partial success, the number of blocks read
  *              (a non-negative value). On failure, a negative value.
  */
-size_t read_blocks(void* restrict buffer, long start_block, size_t num_blocks) {
+size_t read_blocks(void* buffer, long start_block, size_t num_blocks) {
     if (fseek(nx, start_block * nx_block_size, SEEK_SET) == -1) {
         // An error occurred.
         printf("FAILED: read_blocks: ");
@@ -109,3 +115,5 @@ size_t read_blocks(void* restrict buffer, long start_block, size_t num_blocks) {
     }
     return num_blocks_read;
 }
+
+#endif // APFS_IO_H

@@ -6,7 +6,6 @@
 #ifndef APFS_STRUCT_JUMPSTART_H
 #define APFS_STRUCT_JUMPSTART_H
 
-#include <stdint.h>
 #include "general.h"    // for `prange_t`
 #include "object.h"     // for `obj_phys_t`
 

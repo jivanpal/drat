@@ -4,8 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "apfs/struct/nx.h"
-#include "misc/func.h"
+#include "apfs/io.h"
+#include "apfs/struct/general.h"
+#include "apfs/string/object.h"
 
 /**
  * Print usage info for this program.

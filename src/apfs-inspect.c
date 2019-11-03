@@ -4,8 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "apfs/io.h"
+#include "apfs/func/boolean.h"
+#include "apfs/func/cksum.h"
+
+#include "apfs/struct/object.h"
 #include "apfs/struct/nx.h"
-#include "misc/func.h"
+
+#include "apfs/string/object.h"
+#include "apfs/string/nx.h"
 
 /**
  * Print usage info for this program.
@@ -55,7 +62,7 @@ int main(int argc, char** argv) {
     }
 
     printf("\n- Details of block 0x0:\n");
-    print_obj_hdr_info(block_buf);
+    print_nxsb_info(block_buf);
     printf("\n");
 
     if (!is_nx_superblock(block_buf)) {
@@ -139,7 +146,7 @@ int main(int argc, char** argv) {
     printf("- The corresponding checkpoint starts at index %u within the checkpoint descriptor area, and spans %u blocks.\n", nxsb->nx_xp_desc_index, nxsb->nx_xp_desc_len);
 
     printf("\n- Details of this container superblock:\n\n");
-    print_obj_hdr_info(nxsb);
+    print_nxsb_info(nxsb);
     printf("\n");
 
     // Copy the contents of the corresponding checkpoint somewhere else so that
@@ -177,7 +184,11 @@ int main(int argc, char** argv) {
 
     printf("\n- Details for each block in this checkpoint:\n\n");
     for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
-        print_obj_hdr_info(xp[i]);
+        if (is_nx_superblock(xp[i])) {
+            print_nxsb_info(xp[i]);
+        } else {
+            print_obj_hdr_info(xp[i]);
+        }
         printf("\n");
     }
 
