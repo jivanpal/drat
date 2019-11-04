@@ -240,25 +240,16 @@ void print_nx_superblock_info(nx_superblock_t* nxsb) {
     printf("Block size:         %u bytes\n",    nxsb->nx_block_size);
     printf("Block count:        %llu\n",        nxsb->nx_block_count);
     
-// fprintf(stderr, "\n--- GETTING FEATURES ---\n");
     char* features_string = get_nx_features_string(nxsb);
-// fprintf(stderr, "\n--- GOT FEATURES ---\n");
     printf("Supported features:\n%s", features_string);
-// fprintf(stderr, "\n--- FREEING FEATURES ---\n");
     free(features_string);
 
-// fprintf(stderr, "\n--- GETTING ROCOMPAT FEATURES ---\n");
     char* readonly_compatible_features_string = get_nx_readonly_compatible_features_string(nxsb);
-// fprintf(stderr, "\n--- GOT ROCOMPAT FEATURES ---\n");
     printf("Supported read-only compatible features:\n%s", readonly_compatible_features_string);
-// fprintf(stderr, "\n--- FREEING ROCOMPAT FEATURES ---\n");
     free(readonly_compatible_features_string);
 
-// fprintf(stderr, "\n--- GETTING INCOMPAT FEATURES ---\n");
     char* incompatible_features_string = get_nx_incompatible_features_string(nxsb);
-// fprintf(stderr, "\n--- GOT INCOMPAT FEATURES ---\n");
     printf("Backward-incompatible features:\n%s", incompatible_features_string);
-// fprintf(stderr, "\n--- FREEING INCOMPAT FEATURES ---\n");
     free(incompatible_features_string);
     
     printf("UUID:               0x%016llx%016llx\n",
