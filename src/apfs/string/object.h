@@ -280,8 +280,8 @@ void print_obj_hdr_info(obj_phys_t* obj) {
 
     // Print the info
     printf("Stored checksum:    0x%016llx\n",   *(uint64_t*)obj);
-    printf("OID:                0x%016llx\n",   obj->o_oid);
-    printf("XID:                0x%016llx\n",   obj->o_xid);
+    printf("OID:                0x%llx\n",      obj->o_oid);
+    printf("XID:                0x%llx\n",      obj->o_xid);
     printf("Storage type:       %s\n",          get_obj_storage_type_string(obj));
     printf("Type flags:         %s\n",          type_flags_string);
     printf("Type:               %s\n",          type_string);

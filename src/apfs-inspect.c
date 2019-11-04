@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 
     if (nxsb->nx_xp_desc_blocks >> 31) {
         printf("- It is not contiguous.\n");
-        printf("- The physical OID of the B-tree representing it is 0x%016llx.\n", nxsb->nx_xp_desc_base);
+        printf("- The physical OID of the B-tree representing it is 0x%llx.\n", nxsb->nx_xp_desc_base);
         printf("END: The ability to handle this case has not yet been implemented.\n\n");   // TODO: implement case when xp_desc area is not contiguous
         return 0;
     } else {
