@@ -157,7 +157,7 @@ Object map OID:     0x00000000000cfc19
 
 Loading the corresponding checkpoint:
 
-- Details for each block in this checkpoint:
+- Details of each block in this checkpoint:
 
 Stored checksum:    0xe63bc1554547b687
 OID:                0x000000000362a0f2
@@ -166,6 +166,9 @@ Storage type:       Physical
 Type flags:         (none)
 Type:               Checkpoint map
 Subtype:            Invalid type
+Flags:
+- Last checkpoint-mapping block in the correspondng checkpoint.
+Number of mappings: 5
 
 Stored checksum:    0xe25eecc609033666
 OID:                0x0000000000000001
@@ -189,5 +192,38 @@ Next XID:           0x00000000001bca25
 Space manager OID:  0x0000000000087d46
 Object map OID:     0x00000000000cfc19
 
+
+- Details of each checkpoint-mapping in this checkpoint:
+
+Ephemeral object ID:    0x87d46
+- Address within checkpoint data area:  0x0000000003624379
+- Object type:                          Space manager
+- Object subtype:                       Invalid type
+- Object size:                          4096 bytes
+- Virtual OID of associated volume:     0x0000000000000000
+Ephemeral object ID:    0x87d47
+- Address within checkpoint data area:  0x000000000362437a
+- Object type:                          B-tree (root node)
+- Object subtype:                       Space manager free-space queue
+- Object size:                          4096 bytes
+- Virtual OID of associated volume:     0x0000000000000000
+Ephemeral object ID:    0x405
+- Address within checkpoint data area:  0x000000000362437b
+- Object type:                          B-tree (root node)
+- Object subtype:                       Space manager free-space queue
+- Object size:                          4096 bytes
+- Virtual OID of associated volume:     0x0000000000000000
+Ephemeral object ID:    0x401
+- Address within checkpoint data area:  0x000000000362437c
+- Object type:                          Container reaper
+- Object subtype:                       Invalid type
+- Object size:                          4096 bytes
+- Virtual OID of associated volume:     0x0000000000000000
+Ephemeral object ID:    0x178c0
+- Address within checkpoint data area:  0x000000000362437d
+- Object type:                          Container reaper list
+- Object subtype:                       Invalid type
+- Object size:                          4096 bytes
+- Virtual OID of associated volume:     0x0000000000000000
 END: All done.
 ```
