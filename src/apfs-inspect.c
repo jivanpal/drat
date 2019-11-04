@@ -137,11 +137,12 @@ int main(int argc, char** argv) {
     memcpy(nxsb, xp_desc[i_latest_nx], sizeof(nx_superblock_t));
 
     printf("- It lies at index %u within the checkpoint descriptor area.\n", i_latest_nx);
-    printf("- The corresponding checkpoint starts at index %u within the checkpoint descriptor area, and spans %u blocks.\n", nxsb->nx_xp_desc_index, nxsb->nx_xp_desc_len);
 
     printf("\n- Details of this container superblock:\n\n");
     print_nx_superblock_info(nxsb);
     printf("\n");
+
+    printf("- The corresponding checkpoint starts at index %u within the checkpoint descriptor area, and spans %u blocks.\n\n", nxsb->nx_xp_desc_index, nxsb->nx_xp_desc_len);
 
     // Copy the contents of the corresponding checkpoint somewhere else so that
     // we can discard the rest of the checkpoint descriptor area.
