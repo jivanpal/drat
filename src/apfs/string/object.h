@@ -101,7 +101,15 @@ char* get_obj_type_flags_string(obj_phys_t* obj) {
 /**
  * Get a human-readable string describing a given `o_type` value. This is a
  * helper function for `get_obj_type_string()`, `get_obj_subtype_string()`,
- * and `get_xp_mapping_string()`.
+ * and `print_checkpoint_mapping_string()`.
+ * 
+ * o_type:  A 32-bit bitfield whose lower 16 bits represent an APFS object type.
+ *          Examples include the `o_type` field of `obj_phys_t`,
+ *          and the `cpm_type` field of `checkpoint_mapping_t`.
+ * 
+ * RETURN VALUE:
+ *      A pointer to the first character in the string.
+ *      This pointer needn't be free by the caller.
  */
 char* o_type_to_string(uint32_t o_type) {
     switch (o_type & OBJECT_TYPE_MASK) {
@@ -155,8 +163,23 @@ char* o_type_to_string(uint32_t o_type) {
 }
 
 /**
- * Get a human-readable string describing a given `o_subtype` value. This is a
- * helper function for `get_obj_subtype_string()` and `get_xp_mapping_string()`.
+ * Get a human-readable string describing a given `o_subtype` value.
+ * This is a helper function for `get_obj_subtype_string()`
+ * and `print_checkpoint_mapping_string()`.
+ */
+
+/**
+ * Get a human-readable string describing a given `o_type` value. This is a
+ * helper function for `get_obj_type_string()`, `get_obj_subtype_string()`,
+ * and `print_checkpoint_mapping_string()`.
+ * 
+ * o_subtype:   A 32-bit field that represents an APFS object subtype.
+ *              Examples include the `o_subtype` field of `obj_phys_t`,
+ *              and the `cpm_subtype` field of `checkpoint_mapping_t`.
+ * 
+ * RETURN VALUE:
+ *      A pointer to the first character in the string.
+ *      This pointer needn't be free by the caller.
  */
 char* o_subtype_to_string(uint32_t o_subtype) {
     // Check if `o_subtype` is a value representing a regular type.

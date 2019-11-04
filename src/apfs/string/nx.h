@@ -274,4 +274,127 @@ void print_nx_superblock_info(nx_superblock_t* nxsb) {
     printf("Object map OID:     0x%016llx\n",   nxsb->nx_omap_oid);
 }
 
+/**
+ * Print a nicely formatted string describing the data contained in a
+ * single checkpoint-mapping (that is, a single mapping within a
+ * checkpoint-mapping block).
+ * 
+ * In particular, this function prints the object ID of the epehemeral object
+ * that the checkpoint-mapping relates to, followed by a bulleted list
+ * comprising the location and other details of that ephemeral object.
+ * 
+ * cpm:     A pointer to the checkpoint-mapping in question.
+ */
+void print_checkpoint_mapping_info(checkpoint_mapping_t* cpm) {
+    printf("Ephemeral object ID:    0x%llx\n",   cpm->cpm_oid);
+    printf("- Address within checkpoint data area:  0x%016llx\n",   cpm->cpm_paddr);
+    printf("- Object type:                          %s\n",          o_type_to_string(cpm->cpm_type));
+    printf("- Object subtype:                       %s\n",          o_subtype_to_string(cpm->cpm_subtype));
+    printf("- Object size:                          %u bytes\n",    cpm->cpm_size);
+    printf("- Virtual OID of associated volume:     0x%016llx\n",   cpm->cpm_fs_oid);
+}
+
+/**
+ * Get a human-readable string that lists the incompatible feature flags that
+ * are set on a given container superblock.
+ * 
+ * nxsb:    A pointer to the container superblock in question.
+ * 
+ * RETURN VALUE:
+ *      A pointer to the first character of the string. The caller must free
+ *      this pointer when it is no longer needed.
+ */
+char* get_cpm_flags_string(checkpoint_map_phys_t* cpm) {
+    // String to use if no flags are set    
+    char* no_flags_string = "- No flags are set.\n";
+    size_t no_flags_string_len = strlen(no_flags_string);
+    
+    const int NUM_FLAGS = 1;
+    
+    uint64_t flag_constants[] = {
+        CHECKPOINT_MAP_LAST,
+    };
+
+    char* flag_strings[] = {
+        "Last checkpoint-mapping block in the correspondng checkpoint.",
+    };
+
+    // Allocate sufficient memory for the result string
+    size_t max_mem_required = 0;
+    for (int i = 0; i < NUM_FLAGS; i++) {
+        max_mem_required += strlen(flag_strings[i]) + 3;
+        // `+ 3` accounts for prepending "- " and appending "\n" to each string
+    }
+    if (max_mem_required < no_flags_string_len) {
+        max_mem_required = no_flags_string_len;
+    }
+    max_mem_required++; // Make room for terminating NULL byte
+
+    char* result_string = malloc(max_mem_required);
+    if (!result_string) {
+        fprintf(stderr, "\nABORT: get_cpm_flags_string: Could not allocate sufficient memory for `result_string`.\n");
+        exit(-1);
+    }
+
+    char* cursor = result_string;
+
+    // Go through possible flags, adding corresponding string to result if
+    // that flag is set.
+    for (int i = 0; i < NUM_FLAGS; i++) {
+        if (cpm->cpm_flags & flag_constants[i]) {
+            *cursor++ = '-';
+            *cursor++ = ' ';
+            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
+            cursor += strlen(flag_strings[i]);
+            *cursor++ = '\n';
+        }
+    }
+
+    if (cursor == result_string) {
+        // No strings were added, so it must be that no flags are set.
+        memcpy(cursor, no_flags_string, no_flags_string_len);
+        cursor += no_flags_string_len;
+    }
+
+    *cursor = '\0';
+
+    // Free up excess allocated memory.
+    result_string = realloc(result_string, strlen(result_string) + 1);
+    return result_string;
+}
+
+/**
+ * Print a nicely formatted string describing the data contained in a
+ * checkpoint-mapping block.
+ * 
+ * The details of each of the checkpoint-mappings that exists within the block
+ * will not be printed. For that, see `print_checkpoint_map_phys_mappings()`.
+ * 
+ * cpm:     A pointer to the checkpoint-mapping block in question.
+ */
+void print_checkpoint_map_phys_info(checkpoint_map_phys_t* cpm) {
+    print_obj_hdr_info(cpm);    // `cpm` as the same as `&(cpm->cpm_o)`
+    
+    char* flags_string = get_cpm_flags_string(cpm);
+    printf("Flags:\n%s",    flags_string);
+    free(flags_string);
+
+    printf("Number of mappings: %u\n",  cpm->cpm_count);
+    
+}
+
+/**
+ * Call `print_checkpoint_mapping_info()` once for each checkpoint-mapping
+ * that exists in a given checkpoint-mapping block.
+ */
+void print_checkpoint_map_phys_mappings(checkpoint_map_phys_t* cpm) {
+    checkpoint_mapping_t* cursor = cpm->cpm_map;
+    checkpoint_mapping_t* end = cursor + cpm->cpm_count;
+
+    while (cursor < end) {
+        print_checkpoint_mapping_info(cursor);
+        cursor++;
+    }
+}
+
 #endif // APFS_STRING_NX_H

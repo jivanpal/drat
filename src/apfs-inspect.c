@@ -182,14 +182,22 @@ int main(int argc, char** argv) {
     // retrieve an older checkpoint without having to read the checkpoint
     // descriptor area again.
 
-    printf("\n- Details for each block in this checkpoint:\n\n");
+    printf("\n- Details of each block in this checkpoint:\n\n");
     for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
         if (is_nx_superblock(xp[i])) {
             print_nx_superblock_info(xp[i]);
         } else {
-            print_obj_hdr_info(xp[i]);
+            assert(is_checkpoint_map_phys(xp[i]));
+            print_checkpoint_map_phys_info(xp[i]);
         }
         printf("\n");
+    }
+
+    printf("- Details of each checkpoint-mapping in this checkpoint:\n\n");
+    for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
+        if (is_checkpoint_map_phys(xp[i])) {
+            print_checkpoint_map_phys_mappings(xp[i]);
+        }
     }
 
     // TODO: Read checkpoint data
