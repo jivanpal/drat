@@ -93,137 +93,136 @@ process.
 #### Example output
 
 ```
-% sudo ./bin/apfs-inspect /dev/disk2s2
+$ sudo ./bin/apfs-inspect /dev/disk2s2
 
-Opening file at `/dev/disk2s2` in read-only mode ... OK.
+Opening file at `/dev/disk0s2` in read-only mode ... OK.
 Simulating a mount of the APFS container.
 Validating checksum of block 0x0 ... OK.
 
 - Details of block 0x0:
-Stored checksum:    0xe25ef5e409032d45
-OID:                0x0000000000000001
-XID:                0x00000000001bca24
+Stored checksum:    0x8a15fcbe5b2c44c2
+OID:                0x1
+XID:                0xd90b
 Storage type:       Ephemeral
 Type flags:         (none)
 Type:               Container superblock
-Subtype:            Invalid type
+Subtype:            (none/invalid)
 Magic string:       NXSB
 Block size:         4096 bytes
-Block count:        117161676
+Block count:        122045436
 Supported features:
-- No feature flags are set.
+- The volumes in this container support defragmentation.
 Supported read-only compatible features:
 - No read-only compatible feature flags are set.
 Backward-incompatible features:
-- No backward-incompatible feature flags are set.
-UUID:               0x07531d831bda8f8c9944ee600d55fd37
-Next OID:           0x000000000028709a
-Next XID:           0x00000000001bca25
-Space manager OID:  0x0000000000087d46
-Object map OID:     0x00000000000cfc19
+- This container uses APFS version 1, as implemented in macOS 10.12.
+UUID:               0xee88fe9d0853449d9743805152656b47
+Next OID:           0x13b10
+Next XID:           0xd90c
+Space manager OID:  0x400
+Object map OID:     0x1a2dbd
 
 Locating the checkpoint descriptor area:
 - Its length is 280 blocks.
 - It is contiguous.
-- The address of its first block is 0x3629fe4.
+- The address of its first block is 0x1.
 Loading the checkpoint descriptor area into memory ... OK.
 Locating the most recent well-formed container superblock in the checkpoint descriptor area:
-- It lies at index 271 within the checkpoint descriptor area.
-- The corresponding checkpoint starts at index 270 within the checkpoint descriptor area, and spans 2 blocks.
+- It lies at index 91 within the checkpoint descriptor area.
+- The corresponding checkpoint starts at index 90 within the checkpoint descriptor area, and spans 2 blocks.
 
 - Details of this container superblock:
 
-Stored checksum:    0xe25eecc609033666
-OID:                0x0000000000000001
-XID:                0x00000000001bca24
+Stored checksum:    0x3bf498f4a969bf35
+OID:                0x1
+XID:                0xef2a
 Storage type:       Ephemeral
 Type flags:         (none)
 Type:               Container superblock
-Subtype:            Invalid type
+Subtype:            (none/invalid)
 Magic string:       NXSB
 Block size:         4096 bytes
-Block count:        117161676
+Block count:        122045436
 Supported features:
-- No feature flags are set.
+- The volumes in this container support defragmentation.
 Supported read-only compatible features:
 - No read-only compatible feature flags are set.
 Backward-incompatible features:
-- No backward-incompatible feature flags are set.
-UUID:               0x07531d831bda8f8c9944ee600d55fd37
-Next OID:           0x000000000028709a
-Next XID:           0x00000000001bca25
-Space manager OID:  0x0000000000087d46
-Object map OID:     0x00000000000cfc19
+- This container uses APFS version 1, as implemented in macOS 10.12.
+UUID:               0xee88fe9d0853449d9743805152656b47
+Next OID:           0x13e08
+Next XID:           0xef2b
+Space manager OID:  0x400
+Object map OID:     0x1a3425
 
 Loading the corresponding checkpoint:
 
 - Details of each block in this checkpoint:
 
-Stored checksum:    0xe63bc1554547b687
-OID:                0x000000000362a0f2
-XID:                0x00000000001bca24
+Stored checksum:    0x89c104e6b63c773f
+OID:                0x5b
+XID:                0xef2a
 Storage type:       Physical
 Type flags:         (none)
 Type:               Checkpoint map
-Subtype:            Invalid type
+Subtype:            (none/invalid)
 Flags:
 - Last checkpoint-mapping block in the correspondng checkpoint.
 Number of mappings: 5
 
-Stored checksum:    0xe25eecc609033666
-OID:                0x0000000000000001
-XID:                0x00000000001bca24
+Stored checksum:    0x3bf498f4a969bf35
+OID:                0x1
+XID:                0xef2a
 Storage type:       Ephemeral
 Type flags:         (none)
 Type:               Container superblock
-Subtype:            Invalid type
+Subtype:            (none/invalid)
 Magic string:       NXSB
 Block size:         4096 bytes
-Block count:        117161676
+Block count:        122045436
 Supported features:
-- No feature flags are set.
+- The volumes in this container support defragmentation.
 Supported read-only compatible features:
 - No read-only compatible feature flags are set.
 Backward-incompatible features:
-- No backward-incompatible feature flags are set.
-UUID:               0x07531d831bda8f8c9944ee600d55fd37
-Next OID:           0x000000000028709a
-Next XID:           0x00000000001bca25
-Space manager OID:  0x0000000000087d46
-Object map OID:     0x00000000000cfc19
-
+- This container uses APFS version 1, as implemented in macOS 10.12.
+UUID:               0xee88fe9d0853449d9743805152656b47
+Next OID:           0x13e08
+Next XID:           0xef2b
+Space manager OID:  0x400
+Object map OID:     0x1a3425
 
 - Details of each checkpoint-mapping in this checkpoint:
 
-Ephemeral object ID:    0x87d46
-- Address within checkpoint data area:  0x0000000003624379
+Ephemeral object ID:    0x400
+- Address within checkpoint data area:  0xd60
 - Object type:                          Space manager
-- Object subtype:                       Invalid type
+- Object subtype:                       (none/invalid)
 - Object size:                          4096 bytes
-- Virtual OID of associated volume:     0x0000000000000000
-Ephemeral object ID:    0x87d47
-- Address within checkpoint data area:  0x000000000362437a
-- Object type:                          B-tree (root node)
-- Object subtype:                       Space manager free-space queue
-- Object size:                          4096 bytes
-- Virtual OID of associated volume:     0x0000000000000000
-Ephemeral object ID:    0x405
-- Address within checkpoint data area:  0x000000000362437b
-- Object type:                          B-tree (root node)
-- Object subtype:                       Space manager free-space queue
-- Object size:                          4096 bytes
-- Virtual OID of associated volume:     0x0000000000000000
+- Virtual OID of associated volume:     0x0
 Ephemeral object ID:    0x401
-- Address within checkpoint data area:  0x000000000362437c
+- Address within checkpoint data area:  0xd61
 - Object type:                          Container reaper
-- Object subtype:                       Invalid type
+- Object subtype:                       (none/invalid)
 - Object size:                          4096 bytes
-- Virtual OID of associated volume:     0x0000000000000000
-Ephemeral object ID:    0x178c0
-- Address within checkpoint data area:  0x000000000362437d
+- Virtual OID of associated volume:     0x0
+Ephemeral object ID:    0x403
+- Address within checkpoint data area:  0xd62
+- Object type:                          B-tree (root node)
+- Object subtype:                       Space manager free-space queue
+- Object size:                          4096 bytes
+- Virtual OID of associated volume:     0x0
+Ephemeral object ID:    0x405
+- Address within checkpoint data area:  0xd63
+- Object type:                          B-tree (root node)
+- Object subtype:                       Space manager free-space queue
+- Object size:                          4096 bytes
+- Virtual OID of associated volume:     0x0
+Ephemeral object ID:    0xf10f
+- Address within checkpoint data area:  0xd64
 - Object type:                          Container reaper list
-- Object subtype:                       Invalid type
+- Object subtype:                       (none/invalid)
 - Object size:                          4096 bytes
-- Virtual OID of associated volume:     0x0000000000000000
+- Virtual OID of associated volume:     0x0
 END: All done.
 ```
