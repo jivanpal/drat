@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "../struct/object.h"   // for `obj_phys_t`
@@ -246,7 +247,7 @@ char* get_obj_subtype_string(obj_phys_t* obj) {
 void print_obj_hdr_info(obj_phys_t* obj) {
     char* type_flags_string = get_obj_type_flags_string(obj);
     
-    char malloced_type_string = 0;  // Boolean value
+    bool malloced_type_string = false;
     char* type_string = get_obj_type_string(obj);
     if (!type_string) {
         char* format_string = "Unknown type (0x%08x) --- perhaps this type was introduced in a later version of APFS than that published on 2019-02-27.";
@@ -257,12 +258,12 @@ void print_obj_hdr_info(obj_phys_t* obj) {
             fprintf(stderr, "ABORT: print_obj_hdr_info: Could not allocate sufficient memory when generating `type_string` in the case where the object type is not recognised.\n");
             exit(-1);
         }
-        malloced_type_string = 1;
+        malloced_type_string = true;
 
         sprintf(type_string, format_string, obj->o_type & OBJECT_TYPE_MASK);
     }
 
-    char malloced_subtype_string = 0;   // Boolean value
+    bool malloced_subtype_string = false;
     char* subtype_string = get_obj_subtype_string(obj);
     if (!subtype_string) {
         char* format_string = "Unknown subtype (0x%08x) --- perhaps this subtype was introduced in a later version of APFS than that published on 2019-02-27.";
@@ -273,7 +274,7 @@ void print_obj_hdr_info(obj_phys_t* obj) {
             fprintf(stderr, "ABORT: print_obj_hdr_info: Could not allocate sufficient memory when generating `subtype_string` in the case where the object subtype is not recognised.\n");
             exit(-1);
         }
-        malloced_subtype_string = 1;
+        malloced_subtype_string = true;
 
         sprintf(subtype_string, format_string, obj->o_subtype);
     }

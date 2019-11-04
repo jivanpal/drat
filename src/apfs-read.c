@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     }
     char* nx_path = argv[1];
     paddr_t nx_block_addr = 0x0;
-    char parse_success = sscanf(argv[2], "0x%llx", &nx_block_addr);
+    bool parse_success = sscanf(argv[2], "0x%llx", &nx_block_addr);
     if (!parse_success) {
         parse_success = sscanf(argv[2], "%llu", &nx_block_addr);
     }
