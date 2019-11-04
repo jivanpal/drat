@@ -150,7 +150,7 @@ char* o_type_to_string(uint32_t o_type) {
         case OBJECT_TYPE_GBITMAP_BLOCK:
             return "General purpose bitmap block";
         case OBJECT_TYPE_INVALID:
-            return "Invalid type";
+            return "(none/invalid)";
         case OBJECT_TYPE_TEST:
             return "A type reserved for testing (should never appear on disk --- if it does, file a bug against the APFS implementation that created this object)";
         case OBJECT_TYPE_CONTAINER_KEYBAG:
