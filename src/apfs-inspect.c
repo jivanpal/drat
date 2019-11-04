@@ -187,17 +187,65 @@ int main(int argc, char** argv) {
         printf("\n");
     }
 
+    uint32_t xp_obj_len = 0;    // This variable will equal the number of
+    // checkpoint-mappings = no. of ephemeral objects used by this checkpoint.
     printf("- Details of each checkpoint-mapping in this checkpoint:\n\n");
     for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
         if (is_checkpoint_map_phys(xp[i])) {
             print_checkpoint_map_phys_mappings(xp[i]);
+            xp_obj_len += ((checkpoint_map_phys_t*)xp[i])->cpm_count;
         }
     }
+    printf("\n");
+    printf("- There are %u checkpoint-mappings in this checkpoint.\n\n", xp_obj_len);
 
-    // TODO: Read checkpoint data
+    printf("Reading the ephemeral objects used by this checkpoint from the checkpoint data area ... ");
+
+    char (*xp_obj)[nx_block_size] = malloc(xp_obj_len * nx_block_size);
+    if (!xp_obj) {
+        fprintf(stderr, "ABORT: Could not allocate sufficient memory for `xp_obj`.\n");
+        return -1;
+    }
+
+    uint32_t num_read = 0;
+    for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
+        if (is_checkpoint_map_phys(xp[i])) {
+            checkpoint_map_phys_t* xp_map = xp[i];  // Avoid lots of casting
+            for (uint32_t j = 0; j < xp_map->cpm_count; j++) {
+                if (read_blocks(xp_obj[num_read], xp_map->cpm_map[j].cpm_paddr, 1) != 1) {
+                    fprintf(stderr, "ABORT: Failed to read block 0x%llx.\n", xp_map->cpm_map[j].cpm_paddr);
+                    return -1;
+                }
+                num_read++;
+            }
+        }
+    }
+    printf("OK.\n");
+    assert(num_read = xp_obj_len);
+
+    printf("Validating the ephemeral objects ... ");
+    for (uint32_t i = 0; i < xp_obj_len; i++) {
+        if (!is_cksum_valid(xp_obj[i])) {
+            printf("FAILED.\n");
+            printf("An ephemeral object used by this checkpoint is malformed. Going back to look at the previous checkpoint instead.\n");
+            
+            // TODO: Handle case where data for a given checkpoint is malformed
+            printf("END: Handling of this case has not yet been implemented.\n");
+            return 0;
+        }
+    }
+    printf("OK.\n");
+    free(xp);
+    free(xp_desc);
+
+    printf("\n- Details of the ephemeral objects:\n\n");
+    for (uint32_t i = 0; i < xp_obj_len; i++) {
+        print_obj_hdr_info(xp_obj[i]);
+        printf("\n");
+    }
     
     // Closing statements; de-allocate all memory, close all file descriptors.
-    free(xp_desc);
+    free(xp_obj);
     free(nxsb);
     free(block_buf);
     fclose(nx);
