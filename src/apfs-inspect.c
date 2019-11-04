@@ -99,16 +99,10 @@ int main(int argc, char** argv) {
         printf("- It is contiguous.\n");
         printf("- The address of its first block is 0x%llx.\n", nxsb->nx_xp_desc_base);
 
-        paddr_t xp_desc_end = nxsb->nx_xp_desc_base + xp_desc_blocks;
-
         printf("Loading the checkpoint descriptor area into memory ... ");
-        paddr_t addr;
-        uint32_t i;
-        for (addr = nxsb->nx_xp_desc_base, i = 0; addr < xp_desc_end; addr++, i++) {
-            if (read_blocks(xp_desc[i], addr, 1) != 1) {
-                fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", addr);
-                return -1;
-            }
+        if (read_blocks(xp_desc, nxsb->nx_xp_desc_base, xp_desc_blocks) != xp_desc_blocks) {
+            fprintf(stderr, "\nABORT: Failed to read all blocks in the checkpoint descriptor area.\n");
+            return -1;
         }
         printf("OK.\n");
     }
