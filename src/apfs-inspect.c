@@ -247,19 +247,6 @@ int main(int argc, char** argv) {
     }
     printf("\n");
 
-    uint32_t num_file_systems = 0;
-    for (uint32_t i = 0; i < NX_MAX_FILE_SYSTEMS; i++) {
-        if (nxsb->nx_fs_oid[i] == 0) {
-            break;
-        }
-        num_file_systems++;
-    }
-    printf("The container superblock lists %u APFS volumes, with the following Virtual OIDs:\n", num_file_systems);
-    for (uint32_t i = 0; i < num_file_systems; i++) {
-        printf("- 0x%llx\n", nxsb->nx_fs_oid[i]);
-    }
-    printf("\n");
-
     printf("The container superblock states that the container object map has Physical OID 0x%llx.\n", nxsb->nx_omap_oid);
 
     printf("Loading the container object map ... ");
@@ -285,6 +272,20 @@ int main(int argc, char** argv) {
     printf("--------------------------------------------------------------------------------\n");
     print_omap_phys_info(nx_omap);
     printf("--------------------------------------------------------------------------------\n");
+    printf("\n");
+
+    uint32_t num_file_systems = 0;
+    for (uint32_t i = 0; i < NX_MAX_FILE_SYSTEMS; i++) {
+        if (nxsb->nx_fs_oid[i] == 0) {
+            break;
+        }
+        num_file_systems++;
+    }
+    printf("The container superblock lists %u APFS volumes, with the following Virtual OIDs:\n", num_file_systems);
+    for (uint32_t i = 0; i < num_file_systems; i++) {
+        printf("- 0x%llx\n", nxsb->nx_fs_oid[i]);
+    }
+    printf("\n");
 
     // Closing statements; de-allocate all memory, close all file descriptors.
     free(nx_omap);
