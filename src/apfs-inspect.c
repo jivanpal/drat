@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
     if (nxsb->nx_xp_desc_blocks >> 31) {
         printf("- It is not contiguous.\n");
-        printf("- The physical OID of the B-tree representing it is 0x%llx.\n", nxsb->nx_xp_desc_base);
+        printf("- The Physical OID of the B-tree representing it is 0x%llx.\n", nxsb->nx_xp_desc_base);
         printf("END: The ability to handle this case has not yet been implemented.\n\n");   // TODO: implement case when xp_desc area is not contiguous
         return 0;
     } else {
@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
     printf("OK.\n");
     
     // We could `free(xp_desc)` at this point, but instead, we retain our copy
-    // of the checkpoint descriptor area in case any of the ephemeral objects
+    // of the checkpoint descriptor area in case any of the Ephemeral objects
     // referenced by the current checkpoint are malformed; then, we can
     // retrieve an older checkpoint without having to read the checkpoint
     // descriptor area again.
@@ -188,7 +188,7 @@ int main(int argc, char** argv) {
     }
 
     uint32_t xp_obj_len = 0;    // This variable will equal the number of
-    // checkpoint-mappings = no. of ephemeral objects used by this checkpoint.
+    // checkpoint-mappings = no. of Ephemeral objects used by this checkpoint.
     printf("\nDetails of each checkpoint-mapping in this checkpoint:\n");
     printf("--------------------------------------------------------------------------------\n");
     for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
     }
     printf("- There are %u checkpoint-mappings in this checkpoint.\n\n", xp_obj_len);
 
-    printf("Reading the ephemeral objects used by this checkpoint ... ");
+    printf("Reading the Ephemeral objects used by this checkpoint ... ");
     char (*xp_obj)[nx_block_size] = malloc(xp_obj_len * nx_block_size);
     if (!xp_obj) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `xp_obj`.\n");
@@ -221,11 +221,11 @@ int main(int argc, char** argv) {
     printf("OK.\n");
     assert(num_read = xp_obj_len);
 
-    printf("Validating the ephemeral objects ... ");
+    printf("Validating the Ephemeral objects ... ");
     for (uint32_t i = 0; i < xp_obj_len; i++) {
         if (!is_cksum_valid(xp_obj[i])) {
             printf("FAILED.\n");
-            printf("An ephemeral object used by this checkpoint is malformed. Going back to look at the previous checkpoint instead.\n");
+            printf("An Ephemeral object used by this checkpoint is malformed. Going back to look at the previous checkpoint instead.\n");
             
             // TODO: Handle case where data for a given checkpoint is malformed
             printf("END: Handling of this case has not yet been implemented.\n");
@@ -237,7 +237,7 @@ int main(int argc, char** argv) {
     free(xp);
     free(xp_desc);
 
-    printf("\nDetails of the ephemeral objects:\n");
+    printf("\nDetails of the Ephemeral objects:\n");
     printf("--------------------------------------------------------------------------------\n");
     for (uint32_t i = 0; i < xp_obj_len; i++) {
         print_obj_hdr_info(xp_obj[i]);

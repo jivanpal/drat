@@ -334,9 +334,9 @@ void print_nx_superblock_info(nx_superblock_t* nxsb) {
 
     // TODO: Maybe print `xp_desc` and `xp_data` fields.
 
-    printf("Space manager OID (ephemeral):  0x%llx\n",  nxsb->nx_spaceman_oid);
-    printf("Object map OID (physical):      0x%llx\n",  nxsb->nx_omap_oid);
-    printf("Reaper OID (ephemeral):         0x%llx\n",  nxsb->nx_reaper_oid);
+    printf("Space manager Ephemeral OID:    0x%llx\n",  nxsb->nx_spaceman_oid);
+    printf("Object map Physical OID:        0x%llx\n",  nxsb->nx_omap_oid);
+    printf("Reaper Ephemeral OID:           0x%llx\n",  nxsb->nx_reaper_oid);
 
     char* flags_string = get_nx_flags_string(nxsb);
     printf("Other flags:\n%s", flags_string);
@@ -350,12 +350,12 @@ void print_nx_superblock_info(nx_superblock_t* nxsb) {
  * 
  * In particular, this function prints the object ID of the epehemeral object
  * that the checkpoint-mapping relates to, followed by a bulleted list
- * comprising the location and other details of that ephemeral object.
+ * comprising the location and other details of that Ephemeral object.
  * 
  * cpm:     A pointer to the checkpoint-mapping in question.
  */
 void print_checkpoint_mapping_info(checkpoint_mapping_t* cpm) {
-    printf("OID (ephemeral):                    0x%llx\n",   cpm->cpm_oid);
+    printf("Ephemeral OID:                      0x%llx\n",      cpm->cpm_oid);
     printf("Logical block address on disk:      0x%llx\n",      cpm->cpm_paddr);
     printf("Object type:                        %s\n",          o_type_to_string(cpm->cpm_type));
     printf("Object subtype:                     %s\n",          o_subtype_to_string(cpm->cpm_subtype));
