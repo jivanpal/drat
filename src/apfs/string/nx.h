@@ -252,17 +252,17 @@ void print_nx_superblock_info(nx_superblock_t* nxsb) {
     printf("Backward-incompatible features:\n%s", incompatible_features_string);
     free(incompatible_features_string);
     
-    printf("UUID:               0x%016llx%016llx\n",
+    printf("UUID:       0x%016llx%016llx\n",
         *((uint64_t*)(nxsb->nx_uuid) + 1),
         * (uint64_t*)(nxsb->nx_uuid)
     );
-    printf("Next OID:           0x%llx\n",  nxsb->nx_next_oid);
-    printf("Next XID:           0x%llx\n",  nxsb->nx_next_xid);
+    printf("Next OID:                       0x%llx\n",  nxsb->nx_next_oid);
+    printf("Next XID:                       0x%llx\n",  nxsb->nx_next_xid);
 
     // TODO: Maybe print `xp_desc` and `xp_data` fields.
 
-    printf("Space manager OID:  0x%llx\n",  nxsb->nx_spaceman_oid);
-    printf("Object map OID:     0x%llx\n",  nxsb->nx_omap_oid);
+    printf("Space manager OID (ephemeral):  0x%llx\n",  nxsb->nx_spaceman_oid);
+    printf("Object map OID (physical):      0x%llx\n",  nxsb->nx_omap_oid);
 }
 
 /**
@@ -277,12 +277,12 @@ void print_nx_superblock_info(nx_superblock_t* nxsb) {
  * cpm:     A pointer to the checkpoint-mapping in question.
  */
 void print_checkpoint_mapping_info(checkpoint_mapping_t* cpm) {
-    printf("Ephemeral object ID:    0x%llx\n",   cpm->cpm_oid);
-    printf("- Address within checkpoint data area:  0x%llx\n",      cpm->cpm_paddr);
-    printf("- Object type:                          %s\n",          o_type_to_string(cpm->cpm_type));
-    printf("- Object subtype:                       %s\n",          o_subtype_to_string(cpm->cpm_subtype));
-    printf("- Object size:                          %u bytes\n",    cpm->cpm_size);
-    printf("- Virtual OID of associated volume:     0x%llx\n",      cpm->cpm_fs_oid);
+    printf("OID (ephemeral):                    0x%llx\n",   cpm->cpm_oid);
+    printf("Logical block address on disk:      0x%llx\n",      cpm->cpm_paddr);
+    printf("Object type:                        %s\n",          o_type_to_string(cpm->cpm_type));
+    printf("Object subtype:                     %s\n",          o_subtype_to_string(cpm->cpm_subtype));
+    printf("Object size:                        %u bytes\n",    cpm->cpm_size);
+    printf("Associated volume OID (virtual):    0x%llx\n",      cpm->cpm_fs_oid);
 }
 
 /**

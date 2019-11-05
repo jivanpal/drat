@@ -61,8 +61,10 @@ int main(int argc, char** argv) {
         printf("FAILED.\n!! APFS ERROR !! Checksum of block 0x0 should validate, but it doesn't. Proceeding as if it does.\n");
     }
 
-    printf("\n- Details of block 0x0:\n");
+    printf("\nDetails of block 0x0:\n");
+    printf("--------------------------------------------------------------------------------\n");
     print_nx_superblock_info(block_buf);
+    printf("--------------------------------------------------------------------------------\n");
     printf("\n");
 
     if (!is_nx_superblock(block_buf)) {
@@ -138,24 +140,22 @@ int main(int argc, char** argv) {
 
     printf("- It lies at index %u within the checkpoint descriptor area.\n", i_latest_nx);
 
-    printf("\n- Details of this container superblock:\n\n");
+    printf("\nDetails of this container superblock:\n");
+    printf("--------------------------------------------------------------------------------\n");
     print_nx_superblock_info(nxsb);
-    printf("\n");
-
+    printf("--------------------------------------------------------------------------------\n");
     printf("- The corresponding checkpoint starts at index %u within the checkpoint descriptor area, and spans %u blocks.\n\n", nxsb->nx_xp_desc_index, nxsb->nx_xp_desc_len);
 
-    // Copy the contents of the corresponding checkpoint somewhere else so that
-    // we can discard the rest of the checkpoint descriptor area.
-    // 
-    // The checkpoint descriptor area is a ring buffer stored as an array.
-    // Copy the checkpoint corresponding to `nxsb` somewhere else, so that we
-    // can read the checkpoint more easily.
-    printf("Loading the corresponding checkpoint:\n");
+    // Copy the contents of the checkpoint we are currently considering to its
+    // own array for easy access. The checkpoint descriptor area is a ring
+    // buffer stored as an array, so doing this also allows us to handle the
+    // case where the checkpoint we're considering wraps around the ring buffer.
+    printf("Loading the corresponding checkpoint ... ");
     
     // The array `xp` will comprise the blocks in the checkpoint, in order.
     char (*xp)[nx_block_size] = malloc(nxsb->nx_xp_desc_len * nx_block_size);
     if (!xp) {
-        fprintf(stderr, "ABORT: Couldn't allocate sufficient memory.\n");
+        fprintf(stderr, "\nABORT: Couldn't allocate sufficient memory.\n");
         return -1;
     }
 
@@ -170,6 +170,7 @@ int main(int argc, char** argv) {
         memcpy(xp,                 xp_desc + nxsb->nx_xp_desc_index, segment_1_len * nx_block_size);
         memcpy(xp + segment_1_len, xp_desc,                          segment_2_len * nx_block_size);
     }
+    printf("OK.\n");
     
     // We could `free(xp_desc)` at this point, but instead, we retain our copy
     // of the checkpoint descriptor area in case any of the ephemeral objects
@@ -177,7 +178,8 @@ int main(int argc, char** argv) {
     // retrieve an older checkpoint without having to read the checkpoint
     // descriptor area again.
 
-    printf("\n- Details of each block in this checkpoint:\n\n");
+    printf("\nDetails of each block in this checkpoint:\n");
+    printf("--------------------------------------------------------------------------------\n");
     for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
         if (is_nx_superblock(xp[i])) {
             print_nx_superblock_info(xp[i]);
@@ -185,36 +187,34 @@ int main(int argc, char** argv) {
             assert(is_checkpoint_map_phys(xp[i]));
             print_checkpoint_map_phys_info(xp[i]);
         }
-        printf("\n");
+        printf("--------------------------------------------------------------------------------\n");
     }
 
     uint32_t xp_obj_len = 0;    // This variable will equal the number of
     // checkpoint-mappings = no. of ephemeral objects used by this checkpoint.
-    printf("- Details of each checkpoint-mapping in this checkpoint:\n\n");
+    printf("\nDetails of each checkpoint-mapping in this checkpoint:\n");
+    printf("--------------------------------------------------------------------------------\n");
     for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
         if (is_checkpoint_map_phys(xp[i])) {
             print_checkpoint_map_phys_mappings(xp[i]);
             xp_obj_len += ((checkpoint_map_phys_t*)xp[i])->cpm_count;
         }
     }
-    printf("\n");
     printf("- There are %u checkpoint-mappings in this checkpoint.\n\n", xp_obj_len);
 
-    printf("Reading the ephemeral objects used by this checkpoint from the checkpoint data area ... ");
-
+    printf("Reading the ephemeral objects used by this checkpoint ... ");
     char (*xp_obj)[nx_block_size] = malloc(xp_obj_len * nx_block_size);
     if (!xp_obj) {
-        fprintf(stderr, "ABORT: Could not allocate sufficient memory for `xp_obj`.\n");
+        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `xp_obj`.\n");
         return -1;
     }
-
     uint32_t num_read = 0;
     for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
         if (is_checkpoint_map_phys(xp[i])) {
             checkpoint_map_phys_t* xp_map = xp[i];  // Avoid lots of casting
             for (uint32_t j = 0; j < xp_map->cpm_count; j++) {
                 if (read_blocks(xp_obj[num_read], xp_map->cpm_map[j].cpm_paddr, 1) != 1) {
-                    fprintf(stderr, "ABORT: Failed to read block 0x%llx.\n", xp_map->cpm_map[j].cpm_paddr);
+                    fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", xp_map->cpm_map[j].cpm_paddr);
                     return -1;
                 }
                 num_read++;
@@ -236,13 +236,15 @@ int main(int argc, char** argv) {
         }
     }
     printf("OK.\n");
+
     free(xp);
     free(xp_desc);
 
-    printf("\n- Details of the ephemeral objects:\n\n");
+    printf("\nDetails of the ephemeral objects:\n");
+    printf("--------------------------------------------------------------------------------\n");
     for (uint32_t i = 0; i < xp_obj_len; i++) {
         print_obj_hdr_info(xp_obj[i]);
-        printf("\n");
+        printf("--------------------------------------------------------------------------------\n");
     }
     
     // Closing statements; de-allocate all memory, close all file descriptors.
