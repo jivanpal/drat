@@ -10,9 +10,11 @@
 
 #include "apfs/struct/object.h"
 #include "apfs/struct/nx.h"
+#include "apfs/struct/omap.h"
 
 #include "apfs/string/object.h"
 #include "apfs/string/nx.h"
+#include "apfs/string/omap.h"
 
 /**
  * Print usage info for this program.
@@ -243,8 +245,49 @@ int main(int argc, char** argv) {
         print_obj_hdr_info(xp_obj[i]);
         printf("--------------------------------------------------------------------------------\n");
     }
+    printf("\n");
+
+    uint32_t num_file_systems = 0;
+    for (uint32_t i = 0; i < NX_MAX_FILE_SYSTEMS; i++) {
+        if (nxsb->nx_fs_oid[i] == 0) {
+            break;
+        }
+        num_file_systems++;
+    }
+    printf("The container superblock lists %u APFS volumes, with the following Virtual OIDs:\n", num_file_systems);
+    for (uint32_t i = 0; i < num_file_systems; i++) {
+        printf("- 0x%llx\n", nxsb->nx_fs_oid[i]);
+    }
+    printf("\n");
+
+    printf("The container superblock states that the container object map has Physical OID 0x%llx.\n", nxsb->nx_omap_oid);
+
+    printf("Loading the container object map ... ");
+    omap_phys_t* nx_omap = malloc(nx_block_size);
+    if (read_blocks(nx_omap, nxsb->nx_omap_oid, 1) != 1) {
+        printf("\nABORT: Could not allocate sufficient memory for `nx_omap`.\n");
+        return -1;
+    }
+    printf("OK.\n");
     
+    printf("Validating the container object map ... ");
+    if (!is_cksum_valid(nx_omap)) {
+        printf("FAILED.\n");
+        printf("This container object map is malformed. Going back to look at the previous checkpoint instead.\n");
+        
+        // TODO: Handle case where a given container object map is malformed
+        printf("END: Handling of this case has not yet been implemented.\n");
+        return 0;
+    }
+    printf("OK.\n");
+
+    printf("\nDetails of the container object map:\n");
+    printf("--------------------------------------------------------------------------------\n");
+    print_omap_phys_info(nx_omap);
+    printf("--------------------------------------------------------------------------------\n");
+
     // Closing statements; de-allocate all memory, close all file descriptors.
+    free(nx_omap);
     free(xp_obj);
     free(nxsb);
     fclose(nx);

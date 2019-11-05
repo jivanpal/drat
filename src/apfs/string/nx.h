@@ -357,8 +357,15 @@ void print_nx_superblock_info(nx_superblock_t* nxsb) {
 void print_checkpoint_mapping_info(checkpoint_mapping_t* cpm) {
     printf("Ephemeral OID:                      0x%llx\n",      cpm->cpm_oid);
     printf("Logical block address on disk:      0x%llx\n",      cpm->cpm_paddr);
-    printf("Object type:                        %s\n",          o_type_to_string(cpm->cpm_type));
-    printf("Object subtype:                     %s\n",          o_subtype_to_string(cpm->cpm_subtype));
+
+    char* type_string = get_o_type_string(cpm->cpm_type);
+    printf("Object type:                        %s\n",          type_string);
+    free(type_string);
+
+    char* subtype_string = get_o_subtype_string(cpm->cpm_subtype);
+    printf("Object subtype:                     %s\n",          subtype_string);
+    free(subtype_string);
+    
     printf("Object size:                        %u bytes\n",    cpm->cpm_size);
     printf("Associated volume OID (virtual):    0x%llx\n",      cpm->cpm_fs_oid);
 }

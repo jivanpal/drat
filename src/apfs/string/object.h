@@ -14,14 +14,19 @@
 #include "../struct/object.h"   // for `obj_phys_t`
 
 /**
- * Get a human-readable string with a given object's storage type.
+ * Get a human-readable string describing the object storage type for a given
+ * type bitfield.
+ * 
+ * o_type:  A 32-bit bitfield whose upper 16 bits represent an APFS storage
+ *          type. Examples include the `o_type` field of `obj_phys_t`,
+ *          and the `om_tree_type` field of `omap_phys_t`.
  * 
  * RETURN VALUE:
  *      A pointer to the first character of the string. This pointer needn't be
  *      freed by the caller.
  */
-char* get_obj_storage_type_string(obj_phys_t* obj) {
-    switch (obj->o_type & OBJ_STORAGETYPE_MASK) {
+char* o_storage_type_to_string(uint32_t o_type) {
+    switch (o_type & OBJ_STORAGETYPE_MASK) {
         case OBJ_VIRTUAL:
             return "Virtual";
         case OBJ_EPHEMERAL:
@@ -36,15 +41,17 @@ char* get_obj_storage_type_string(obj_phys_t* obj) {
 /**
  * Get a human-readable string that lists the type flags that are set on a given
  * object. This list does not include storage types; namely, it does not specify
- * whether the object is physical, virtual, or ephemeral.
+ * whether the object is Physical, Virtual, or Ephemeral.
  * 
- * obj:     A pointer to the object in question.
+ * o_type:     A 32-bit bitfield whose lower 16 bits represent an APFS object type.
+ *          Examples include the `o_type` field of `obj_phys_t`,
+ *          and the `cpm_type` field of `checkpoint_mapping_t`.
  * 
  * RETURN VALUE:
  *      A pointer to the first character of the string. The caller must free
  *      this pointer when it is no longer needed.
  */
-char* get_obj_type_flags_string(obj_phys_t* obj) {
+char* get_o_type_flags_string(uint32_t o_type) {
     uint32_t flag_constants[] = {
         OBJ_NOHEADER,
         OBJ_ENCRYPTED,
@@ -73,7 +80,7 @@ char* get_obj_type_flags_string(obj_phys_t* obj) {
     // Go through possible flags. If a flag is set, append its corresponding
     // string to `result_string`. The flags are comma-delimited.
     for (int i = 0; i < 3; i++) {
-        if (obj->o_type & flag_constants[i]) {
+        if (o_type & flag_constants[i]) {
             if (cursor != result_string) {
                 *cursor++ = ',';
                 *cursor++ = ' ';
@@ -100,144 +107,208 @@ char* get_obj_type_flags_string(obj_phys_t* obj) {
 }
 
 /**
- * Get a human-readable string describing a given `o_type` value. This is a
- * helper function for `get_obj_type_string()`, `get_obj_subtype_string()`,
- * and `print_checkpoint_mapping_string()`.
+ * Get a human-readable string describing a given `o_type` value.
  * 
  * o_type:  A 32-bit bitfield whose lower 16 bits represent an APFS object type.
  *          Examples include the `o_type` field of `obj_phys_t`,
  *          and the `cpm_type` field of `checkpoint_mapping_t`.
  * 
  * RETURN VALUE:
- *      A pointer to the first character in the string.
- *      This pointer needn't be free by the caller.
+ *      A pointer to the first character in the string. This pointer must be
+ *      freed when it is no longer needed.
+ * 
+ *      If the specified type is not recognised, the string returned will begin
+ *      with "Unknown type", i.e. given the return value `return_value`, the
+ *      expression `strstr(return_value, "Unknown type") == return_value` will
+ *      evaluate to `true`.
  */
-char* o_type_to_string(uint32_t o_type) {
-    switch (o_type & OBJECT_TYPE_MASK) {
-        case OBJECT_TYPE_NX_SUPERBLOCK:
-            return "Container superblock";
-        case OBJECT_TYPE_BTREE:
-            return "B-tree (root node)";
-        case OBJECT_TYPE_BTREE_NODE:
-            return "B-tree (non-root) node";
-        case OBJECT_TYPE_SPACEMAN:
-            return "Space manager";
-        case OBJECT_TYPE_SPACEMAN_CAB:
-            return "Space manager chunk-info address block";
-        case OBJECT_TYPE_SPACEMAN_CIB:
-            return "Space manager chunk-info block";
-        case OBJECT_TYPE_SPACEMAN_BITMAP:
-            return "Space manager free-space bitmap";
-        case OBJECT_TYPE_OMAP:
-            return "Object map";
-        case OBJECT_TYPE_CHECKPOINT_MAP:
-            return "Checkpoint map";
-        case OBJECT_TYPE_FS:
-            return "APFS volume";
-        case OBJECT_TYPE_NX_REAPER:
-            return "Container reaper";
-        case OBJECT_TYPE_NX_REAP_LIST:
-            return "Container reaper list";
-        case OBJECT_TYPE_EFI_JUMPSTART:
-            return "EFI jumpstart boot info";
-        case OBJECT_TYPE_NX_FUSION_WBC:
-            return "Fusion device write-back cache state";
-        case OBJECT_TYPE_NX_FUSION_WBC_LIST:
-            return "Fusion device write-back cache list";
-        case OBJECT_TYPE_ER_STATE:
-            return "Encryption-rolling state";
-        case OBJECT_TYPE_GBITMAP:
-            return "General-purpose bitmap";
-        case OBJECT_TYPE_GBITMAP_BLOCK:
-            return "General purpose bitmap block";
-        case OBJECT_TYPE_INVALID:
-            return "(none/invalid)";
-        case OBJECT_TYPE_TEST:
-            return "A type reserved for testing (should never appear on disk --- if it does, file a bug against the APFS implementation that created this object)";
-        case OBJECT_TYPE_CONTAINER_KEYBAG:
-            return "Container keybag";
-        case OBJECT_TYPE_VOLUME_KEYBAG:
-            return "Volume keybag";
-        default:
-            return NULL;
+char* get_o_type_string(uint32_t o_type) {
+    // This function is implemented this way so that the caller receives a
+    // pointer that is allocated using `malloc()` rather than a stack pointer.
+
+    // This string is a legal `sprintf()` format string.
+    char* default_string = "Unknown type (0x%08x) --- perhaps this type was introduced in a later version of APFS than that published on 2019-02-27.";
+    
+    // Add 8 to account for `%x` being replaced with up to 8 characters.
+    size_t max_mem_required = strlen(default_string) + 8;
+
+    size_t NUM_FLAGS = 22;
+    uint32_t flag_constants[] = {
+        OBJECT_TYPE_NX_SUPERBLOCK,
+        OBJECT_TYPE_BTREE,
+        OBJECT_TYPE_BTREE_NODE,
+        OBJECT_TYPE_SPACEMAN,
+        OBJECT_TYPE_SPACEMAN_CAB,
+        OBJECT_TYPE_SPACEMAN_CIB,
+        OBJECT_TYPE_SPACEMAN_BITMAP,
+        OBJECT_TYPE_OMAP,
+        OBJECT_TYPE_CHECKPOINT_MAP,
+        OBJECT_TYPE_FS,
+        OBJECT_TYPE_NX_REAPER,
+        OBJECT_TYPE_NX_REAP_LIST,
+        OBJECT_TYPE_EFI_JUMPSTART,
+        OBJECT_TYPE_NX_FUSION_WBC,
+        OBJECT_TYPE_NX_FUSION_WBC_LIST,
+        OBJECT_TYPE_ER_STATE,
+        OBJECT_TYPE_GBITMAP,
+        OBJECT_TYPE_GBITMAP_BLOCK,
+        OBJECT_TYPE_INVALID,
+        OBJECT_TYPE_TEST,
+        OBJECT_TYPE_CONTAINER_KEYBAG,
+        OBJECT_TYPE_VOLUME_KEYBAG,
+    };
+    char* flag_strings[] = {
+        "Container superblock",
+        "B-tree (root node)",
+        "B-tree (non-root) node",
+        "Space manager",
+        "Space manager chunk-info address block",
+        "Space manager chunk-info block",
+        "Space manager free-space bitmap",
+        "Object map",
+        "Checkpoint map",
+        "APFS volume",
+        "Container reaper",
+        "Container reaper list",
+        "EFI jumpstart boot info",
+        "Fusion device write-back cache state",
+        "Fusion device write-back cache list",
+        "Encryption-rolling state",
+        "General-purpose bitmap",
+        "General purpose bitmap block",
+        "(none/invalid)",
+        "A type reserved for testing (should never appear on disk --- if it does, file a bug against the APFS implementation that created this object)",
+        "Container keybag",
+        "Volume keybag",
+    };
+
+    // Allocate sufficient memory to store the longest flag string.
+    for (uint32_t i = 0; i < NUM_FLAGS; i++) {
+        size_t flag_string_length = strlen(flag_strings[i]);
+        if (max_mem_required < flag_string_length) {
+            max_mem_required = flag_string_length;
+        }
     }
+    max_mem_required++; // Account for terminating NULL byte
+
+    char* result_string = malloc(max_mem_required);
+    if (!result_string) {
+        fprintf(stderr, "\nABORT: get_o_type_string: Could not allocate sufficient memory for `result_string`.\n");
+        exit(-1);
+    }
+    
+    // Set the right string
+    memcpy(result_string, default_string, strlen(default_string) + 1);
+    uint32_t masked_o_type = o_type & OBJECT_TYPE_MASK;
+    for (size_t i = 0; i < NUM_FLAGS; i++) {
+        if (masked_o_type == flag_constants[i]) {
+            memcpy(result_string, flag_strings[i], strlen(flag_strings[i]) + 1);
+        }
+    }
+
+    // If no string set (due to no flags present), then report "Unknown type".
+    if (strlen(result_string) == 0) {
+        sprintf(result_string, default_string, masked_o_type);
+    }
+
+    // De-allocate excess memory
+    result_string = realloc(result_string, strlen(result_string) + 1);
+
+    return result_string;
 }
 
 /**
  * Get a human-readable string describing a given `o_subtype` value.
- * This is a helper function for `get_obj_subtype_string()`
- * and `print_checkpoint_mapping_string()`.
- */
-
-/**
- * Get a human-readable string describing a given `o_type` value. This is a
- * helper function for `get_obj_type_string()`, `get_obj_subtype_string()`,
- * and `print_checkpoint_mapping_string()`.
  * 
  * o_subtype:   A 32-bit field that represents an APFS object subtype.
  *              Examples include the `o_subtype` field of `obj_phys_t`,
  *              and the `cpm_subtype` field of `checkpoint_mapping_t`.
  * 
  * RETURN VALUE:
- *      A pointer to the first character in the string.
- *      This pointer needn't be free by the caller.
+ *      A pointer to the first character in the string. This pointer must be
+ *      freed when it is no longer needed.
+ * 
+ *      If the specified subtype is not recognised, the string returned will
+ *      begin with "Unknown subtype", i.e. given the return value `return_value`,
+ *      the expression `strstr(return_value, "Unknown subtype") == return_value`
+ *      will evaluate to `true`.
  */
-char* o_subtype_to_string(uint32_t o_subtype) {
+char* get_o_subtype_string(uint32_t o_subtype) {
+    // This function is implemented this way so that the caller receives a
+    // pointer that is allocated using `malloc()` rather than a stack pointer.
+
     // Check if `o_subtype` is a value representing a regular type.
-    char* type_string = o_type_to_string(o_subtype);
-
-    if (type_string) {
-        return type_string;
+    char* result_string = get_o_type_string(o_subtype);
+    if (strstr(result_string, "Unknown type") != result_string) {
+        return result_string;
     }
 
-    // We didn't match against a regular type, so go through the
-    // values that are exclusively used to represent subtypes.
-    switch (o_subtype & OBJECT_TYPE_MASK) {
-        case OBJECT_TYPE_SPACEMAN_FREE_QUEUE:
-            return "Space manager free-space queue";
-        case OBJECT_TYPE_EXTENT_LIST_TREE:
-            return "Extents-list tree";
-        case OBJECT_TYPE_FSTREE:
-            return "File-system records tree";
-        case OBJECT_TYPE_BLOCKREFTREE:
-            return "Extent references tree";
-        case OBJECT_TYPE_SNAPMETATREE:
-            return "Volume snapshot metadata tree";
-        case OBJECT_TYPE_OMAP_SNAPSHOT:
-            return "Object map snapshots tree";
-        case OBJECT_TYPE_FUSION_MIDDLE_TREE:
-            return "Fusion inter-drive block-mapping tree";
-        case OBJECT_TYPE_GBITMAP_TREE:
-            return "B-tree of general-purpose bitmaps";
-        default:
-            return NULL;
+    // Set `result_string` to an empty string,
+    // so that `strlen(result_string) == 0`.
+    result_string = '\0';
+
+    // This string is a legal `sprintf()` format string.
+    char* default_string = "Unknown subtype (0x%08x) --- perhaps this subtype was introduced in a later version of APFS than that published on 2019-02-27.";
+    
+    // Add 8 to account for `%x` being replaced with up to 8 characters.
+    size_t max_mem_required = strlen(default_string) + 8;
+
+    size_t NUM_FLAGS = 8;
+
+    uint32_t flag_constants[] = {
+        OBJECT_TYPE_SPACEMAN_FREE_QUEUE,
+        OBJECT_TYPE_EXTENT_LIST_TREE,
+        OBJECT_TYPE_FSTREE,
+        OBJECT_TYPE_BLOCKREFTREE,
+        OBJECT_TYPE_SNAPMETATREE,
+        OBJECT_TYPE_OMAP_SNAPSHOT,
+        OBJECT_TYPE_FUSION_MIDDLE_TREE,
+        OBJECT_TYPE_GBITMAP_TREE,
+
+    };
+
+    char* flag_strings[] = {
+        "Space manager free-space queue",
+        "Extents-list tree",
+        "File-system records tree",
+        "Extent references tree",
+        "Volume snapshot metadata tree",
+        "Object map snapshots tree",
+        "Fusion inter-drive block-mapping tree",
+        "B-tree of general-purpose bitmaps",
+    };
+
+    // Allocate sufficient memory to store the longest flag string.
+    for (uint32_t i = 0; i < NUM_FLAGS; i++) {
+        size_t flag_string_length = strlen(flag_strings[i]);
+        if (max_mem_required < flag_string_length) {
+            max_mem_required = flag_string_length;
+        }
     }
-}
+    max_mem_required++; // Account for terminating NULL byte
+    result_string = realloc(result_string, max_mem_required);
+    if (!result_string) {
+        fprintf(stderr, "\nABORT: get_o_subtype_string: Could not allocate sufficient memory for `result_string`.\n");
+        exit(-1);
+    }
 
-/**
- * Get a human-readable string with a given object's type.
- * 
- * obj:     A pointer to the object in question.
- * 
- * RETURN VALUE:
- *      A pointer to the first character of the string; or `NULL` if the type
- *      is unrecognised. The caller needn't free this pointer.
- */
-char* get_obj_type_string(obj_phys_t* obj) {
-    return o_type_to_string(obj->o_type);
-}
+    // Set the right string
+    uint32_t masked_o_subtype = o_subtype & OBJECT_TYPE_MASK;
+    for (size_t i = 0; i < NUM_FLAGS; i++) {
+        if (masked_o_subtype == flag_constants[i]) {
+            memcpy(result_string, flag_strings[i], strlen(flag_strings[i]) + 1);
+        }
+    }
 
-/**
- * Get a human-readable string with an object's subtype.
- * 
- * obj:     A pointer to the object in question.
- * 
- * RETURN VALUE:
- *      A pointer to the first character of the string; or `NULL` if the subtype
- *      is unrecognised. This pointer needn't be freed by the caller.
- */
-char* get_obj_subtype_string(obj_phys_t* obj) {
-    return o_subtype_to_string(obj->o_subtype);
+    // If no string set (due to no flags present), then report "Unknown type".
+    if (strlen(result_string) == 0) {
+        sprintf(result_string, default_string, masked_o_subtype);
+    }
+
+    // De-allocate excess memory
+    result_string = realloc(result_string, strlen(result_string) + 1);
+
+    return result_string;
 }
 
 /**
@@ -245,56 +316,22 @@ char* get_obj_subtype_string(obj_phys_t* obj) {
  * of an APFS object.
  */
 void print_obj_hdr_info(obj_phys_t* obj) {
-    char* type_flags_string = get_obj_type_flags_string(obj);
-    
-    bool malloced_type_string = false;
-    char* type_string = get_obj_type_string(obj);
-    if (!type_string) {
-        char* format_string = "Unknown type (0x%08x) --- perhaps this type was introduced in a later version of APFS than that published on 2019-02-27.";
-        size_t type_string_size = strlen(format_string) + 5; // Add 4 to account for `%08x` being replaced with an 8-digit hex number; add 1 more for terminating NULL byte.
-        
-        type_string = malloc(type_string_size);
-        if (!type_string) {
-            fprintf(stderr, "ABORT: print_obj_hdr_info: Could not allocate sufficient memory when generating `type_string` in the case where the object type is not recognised.\n");
-            exit(-1);
-        }
-        malloced_type_string = true;
-
-        sprintf(type_string, format_string, obj->o_type & OBJECT_TYPE_MASK);
-    }
-
-    bool malloced_subtype_string = false;
-    char* subtype_string = get_obj_subtype_string(obj);
-    if (!subtype_string) {
-        char* format_string = "Unknown subtype (0x%08x) --- perhaps this subtype was introduced in a later version of APFS than that published on 2019-02-27.";
-        size_t subtype_string_size = strlen(format_string) + 5; // Add 4 to account for `%08x` being replaced with an 8-digit hex number; add 1 more for terminating NULL byte.
-        
-        subtype_string = malloc(subtype_string_size);
-        if (!subtype_string) {
-            fprintf(stderr, "ABORT: print_obj_hdr_info: Could not allocate sufficient memory when generating `subtype_string` in the case where the object subtype is not recognised.\n");
-            exit(-1);
-        }
-        malloced_subtype_string = true;
-
-        sprintf(subtype_string, format_string, obj->o_subtype);
-    }
+    char* type_flags_string = get_o_type_flags_string(obj->o_type);
+    char* type_string       = get_o_type_string(obj->o_type);
+    char* subtype_string    = get_o_subtype_string(obj->o_subtype);
 
     // Print the info
     printf("Stored checksum:    0x%016llx\n",   *(uint64_t*)obj);
     printf("OID:                0x%llx\n",      obj->o_oid);
     printf("XID:                0x%llx\n",      obj->o_xid);
-    printf("Storage type:       %s\n",          get_obj_storage_type_string(obj));
+    printf("Storage type:       %s\n",          o_storage_type_to_string(obj->o_type));
     printf("Type flags:         %s\n",          type_flags_string);
     printf("Type:               %s\n",          type_string);
     printf("Subtype:            %s\n",          subtype_string);
 
     free(type_flags_string);
-    if (malloced_type_string) {
-        free(type_string);
-    }
-    if (malloced_subtype_string) {
-        free(subtype_string);
-    }
+    free(type_string);
+    free(subtype_string);
 }
 
 #endif // APFS_STRING_OBJECT_H
