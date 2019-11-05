@@ -43,19 +43,23 @@ int main(int argc, char** argv) {
     }
     printf("OK.\nSimulating a mount of the APFS container.\n");
     
-    char* block_buf = malloc(nx_block_size);
-    if (!block_buf) {
+    // Using `nx_superblock_t*`, but allocating a whole block of memory.
+    // This way, we can read the entire block and validate its checksum,
+    // but still have direct access to the fields in `nx_superblock_t`
+    // without needing to epxlicitly cast to that datatype.
+    nx_superblock_t* nxsb = malloc(nx_block_size);
+    if (!nxsb) {
         fprintf(stderr, "ABORT: Could not allocate sufficient memory to create `block_buf`.\n");
         return -1;
     }
 
-    if (read_blocks(block_buf, 0x0, 1) != 1) {
+    if (read_blocks(nxsb, 0x0, 1) != 1) {
         fprintf(stderr, "ABORT: Failed to successfully read block 0x0.\n");
         return -1;
     }
 
     printf("Validating checksum of block 0x0 ... ");
-    if (is_cksum_valid(block_buf)) {
+    if (is_cksum_valid(nxsb)) {
         printf("OK.\n");
     } else {
         printf("FAILED.\n!! APFS ERROR !! Checksum of block 0x0 should validate, but it doesn't. Proceeding as if it does.\n");
@@ -63,23 +67,16 @@ int main(int argc, char** argv) {
 
     printf("\nDetails of block 0x0:\n");
     printf("--------------------------------------------------------------------------------\n");
-    print_nx_superblock_info(block_buf);
+    print_nx_superblock_info(nxsb);
     printf("--------------------------------------------------------------------------------\n");
     printf("\n");
 
-    if (!is_nx_superblock(block_buf)) {
+    if (!is_nx_superblock(nxsb)) {
         printf("!! APFS ERROR !! Block 0x0 should be a container superblock, but it isn't. Proceeding as if it is.\n\n");
     }
-    if (((nx_superblock_t*)block_buf)->nx_magic != NX_MAGIC) {
+    if (nxsb->nx_magic != NX_MAGIC) {
         printf("!! APFS ERROR !! Container superblock at 0x0 doesn't have the correct magic number. Proceeding as if it does.\n");
     }
-
-    nx_superblock_t* nxsb = malloc(sizeof(nx_superblock_t));
-    if (!nxsb) {
-        fprintf(stderr, "ABORT: Could not allocate sufficient memory for `nxsb`.\n");
-        return -1;
-    }
-    memcpy(nxsb, block_buf, sizeof(*nxsb));
 
     printf("Locating the checkpoint descriptor area:\n");
     
@@ -250,7 +247,6 @@ int main(int argc, char** argv) {
     // Closing statements; de-allocate all memory, close all file descriptors.
     free(xp_obj);
     free(nxsb);
-    free(block_buf);
     fclose(nx);
     printf("END: All done.\n");
     return 0;
