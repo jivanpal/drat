@@ -371,10 +371,10 @@ void print_checkpoint_mapping_info(checkpoint_mapping_t* cpm) {
 }
 
 /**
- * Get a human-readable string that lists the incompatible feature flags that
- * are set on a given container superblock.
+ * Get a human-readable string that lists the flags that are set on a given
+ * checkpoint-mapping block.
  * 
- * nxsb:    A pointer to the container superblock in question.
+ * cpm:     A pointer to the checkpoint-mapping block in question.
  * 
  * RETURN VALUE:
  *      A pointer to the first character of the string. The caller must free
