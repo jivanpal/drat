@@ -12,6 +12,7 @@
 #include "apfs/struct/object.h"
 #include "apfs/struct/nx.h"
 #include "apfs/struct/omap.h"
+// #include "apfs/struct/fs.h"
 
 #include "apfs/string/object.h"
 #include "apfs/string/nx.h"
@@ -313,13 +314,49 @@ int main(int argc, char** argv) {
         }
         num_file_systems++;
     }
-    printf("The container superblock lists %u APFS volumes, with the following Virtual OIDs:\n", num_file_systems);
+    printf("The container superblock lists %u APFS volumes, whose superblocks have the following Virtual OIDs:\n", num_file_systems);
     for (uint32_t i = 0; i < num_file_systems; i++) {
         printf("- 0x%llx\n", nxsb->nx_fs_oid[i]);
     }
     printf("\n");
 
-    get_btree_phys_omap_val(nx_omap_btree, 0, 0);
+    printf("Reading the APFS volume superblocks ... ");
+    char (*apsbs)[nx_block_size] = malloc(nx_block_size * num_file_systems);
+    if (!apsbs) {
+        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `apsbs`.\n");
+        return -1;
+    }
+    for (uint32_t i = 0; i < num_file_systems; i++) {
+        omap_val_t* fs_val = get_btree_phys_omap_val(nx_omap_btree, nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
+        if (!fs_val) {
+            fprintf(stderr, "\nABORT: No objects with OID 0x%llx exist in `nx_omap_btree`.\n", nxsb->nx_fs_oid[i]);
+            return -1;
+        }
+        if (read_blocks(apsbs + i, fs_val->ov_paddr, 1) != 1) {
+            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_val->ov_paddr);
+            return -1;
+        }
+    }
+    printf("OK.\n");
+
+    printf("Validating the APFS volume superblocks ... ");
+    for (uint32_t i = 0; i < num_file_systems; i++) {
+        if (!is_cksum_valid(apsbs + i)) {
+            printf("FAILED.\n- The APFS volume with OID 0x%llx is malformed.\n- Going back to look at the previous checkpoint instead.\n", nxsb->nx_fs_oid[i]);
+
+            // TODO: Handle case where data for a given checkpoint is malformed
+            printf("END: Handling of this case has not yet been implemented.\n");
+            return 0;
+        }
+    }
+    printf("OK.\n");
+
+    printf("\nDetails of these volume superblocks:\n");
+    printf("--------------------------------------------------------------------------------\n");
+    for (uint32_t i = 0; i < num_file_systems; i++) {
+        print_obj_phys(apsbs + i);
+        printf("--------------------------------------------------------------------------------\n");
+    }
 
     // Closing statements; de-allocate all memory, close all file descriptors.
     free(nx_omap_btree);

@@ -17,139 +17,112 @@
  * Get the latest version of an object, up to a given XID, from an object map
  * B-tree that uses Physical OIDs to refer to its child nodes.
  * 
- * btn:     A pointer to the root node of an object map B-tree that uses
+ * root_node:   A pointer to the root node of an object map B-tree that uses
  *      Physical OIDs to refer to its child nodes.
- *      It is the caller's responsibility to ensure that `btn` satisfies
+ *      It is the caller's responsibility to ensure that `root_node` satisfies
  *      these criteria; if it does not, behaviour is undefined.
  * 
- * oid:     The OID of the object search for in the object map B-tree `btn`.
- *      That is, the result returned will pertain to an object found in the
- *      object map that has the given OID.
+ * oid:         The OID of the object search for in the object map B-tree
+ *      `root_node`. That is, the result returned will pertain to an object
+ *      found in the object map that has the given OID.
  * 
- * max_xid: The highest XID to consider for the given OID. That is, the result
- *      returned will pertain to the single object found in the object map that
- *      has the given OID, and also whose XID is the highest among all objects
- *      in the object map that have the same OID but whose XIDs do not exceed
- *      `max_xid`.
+ * max_xid:     The highest XID to consider for the given OID. That is, the
+ *      result returned will pertain to the single object found in the object
+ *      map that has the given OID, and also whose XID is the highest among all
+ *      objects in the object map that have the same OID but whose XIDs do not
+ *      exceed `max_xid`.
  * 
  * RETURN VALUE:
  *      A pointer to an object map value corresponding to the unique object
  *      whose OID and XID satisfy the criteria described above for the
- *      parameters `oid` and `max_xid`.
+ *      parameters `oid` and `max_xid`. If no object exists with the given OID,
+ *      a NULL pointer is returned.
  *      This pointer must be freed when it is no longer needed.
  */
-omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* btn, oid_t oid, xid_t max_xid) {
-    btree_node_phys_t* current_node = malloc(nx_block_size);
-    if (!current_node) {
-        fprintf(stderr, "\nABORT: btree_physical_get_val: Could not allocate sufficient memory for `current_node`.\n");
+omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid_t max_xid) {
+    // Pointers to areas of the node
+    char* toc_start = (char*)(root_node->btn_data) + root_node->btn_table_space.off;
+    char* key_start = toc_start + root_node->btn_table_space.len;
+    char* val_end   = (char*)root_node + nx_block_size - sizeof(btree_info_t);
+
+    // Create a copy of the root node to use as the current node we're working with
+    btree_node_phys_t* node = malloc(nx_block_size);
+    if (!node) {
+        fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `current_node`.\n");
         exit(-1);
     }
+    memcpy(node, root_node, nx_block_size);
+
+    // We'll need access to the B-tree info after discarding our copy of the root node
+    btree_info_t* bt_info = malloc(sizeof(btree_info_t));
+    if (!bt_info) {
+        fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `bt_info`.\n");
+        exit(-1);
+    }
+    memcpy(bt_info, val_end, sizeof(btree_info_t));
+
+    // This variable will store the highest XID encountered which doesn't exceed `max_xid`.
+    xid_t target_xid;
     
-    memcpy(current_node, btn, nx_block_size);
+    // Descend the B-tree to find the target key–value pair
+    while (true) {
+        target_xid = 0;
 
-    printf("Location offsets relative to the start of this block:\n");
-    printf("- Table of contents:    0x%lx\n",   sizeof(btree_node_phys_t) + btn->btn_table_space.off);
-    printf("- Keys area:            0x%lx\n",   sizeof(btree_node_phys_t) + btn->btn_table_space.off + btn->btn_table_space.len);
-    printf("- End of values area:   0x%lx\n",   nx_block_size - sizeof(btree_info_t));
+        if (!(node->btn_flags & BTNODE_FIXED_KV_SIZE)) {
+            fprintf(stderr, "\nNOTE: Object map B-trees don't have variable size keys and values ... do they?\n");
+            return NULL;
+        }
 
-    char* toc_start = (char*)(btn->btn_data) + btn->btn_table_space.off;
-    char* key_start = toc_start + btn->btn_table_space.len;
-    char* val_end   = (char*)btn + nx_block_size - sizeof(btree_info_t);
-
-    bool fixed_kv_size = btn->btn_flags & BTNODE_FIXED_KV_SIZE;
-    
-    if (fixed_kv_size) {
         // TOC entries are instances of `kvoff_t`
         kvoff_t* toc_entry = toc_start;
 
-        btree_info_t* bt_info = val_end;
 
-        printf("Key size:   %u bytes\n",  bt_info->bt_fixed.bt_key_size);
-        printf("Value size: %u bytes\n",  bt_info->bt_fixed.bt_val_size);
+        // For the given OID, determine the highest XID that doesn't exceed `max_xid`
+        for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
+            omap_key_t* key = key_start + toc_entry->k;
+            if (key->ok_oid == oid  &&  key->ok_xid <= max_xid) {
+                assert(key->ok_xid > target_xid);
+                target_xid = key->ok_xid;
+            }
+        }
 
-        omap_key_t* key = malloc(bt_info->bt_fixed.bt_key_size);
-        if (!key) {
-            fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `key` in fixed-size case.\n");
+
+        // If `xid` remained unchanged, then we didn't encounter an object
+        // with the given OID; return NULL
+        if (target_xid == 0) {
+            return NULL;
+        }
+
+        // We now have the target XID, and can find the corresponding child node or object map value
+        toc_entry = toc_start;
+        for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
+            omap_key_t* key = key_start + toc_entry->k;
+
+            if (key->ok_oid == oid  &&  key->ok_xid == target_xid) {
+                // We have found the desired key–value pair; break from this
+                // for-loop, and `toc_entry` will point to the correct TOC entry
+                break;
+            }
+        }
+
+        // If this is a leaf node, return the object map value
+        if (node->btn_flags & BTNODE_LEAF) {
+            omap_val_t* val = val_end - toc_entry->v;
+
+            omap_val_t* return_val = malloc(sizeof(omap_val_t));
+            memcpy(return_val, val, sizeof(omap_val_t));
+            
+            return return_val;
+        }
+
+        // Else, read the correspoinding child node into memory and loop
+        paddr_t* child_node_addr = val_end - toc_entry->v;
+        
+        if (read_blocks(node, *child_node_addr, 1) != 1) {
+            fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Failed to read block 0x%llx.\n", *child_node_addr);
             exit(-1);
         }
-
-        omap_val_t* val = malloc(bt_info->bt_fixed.bt_val_size);
-        if (!val) {
-            fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `val` in fixed-size case.\n");
-            exit(-1);
-        }
-
-        for (uint32_t i = 0; i < btn->btn_nkeys; i++, toc_entry++) {
-            memcpy(key,  key_start + toc_entry->k,  bt_info->bt_fixed.bt_key_size);
-            memcpy(val,  val_end   - toc_entry->v,  bt_info->bt_fixed.bt_val_size);
-
-            printf("Key-value pair #%u:\n", i);
-            
-            printf("- Key data:\n");
-            print_omap_key(key);
-
-            printf("- Value data:\n");
-            print_omap_val(val);
-        }
-
-        free(key);
-        free(val);
-    } else {
-        fprintf(stderr, "\nbtree_phys_omap_get_val: Ability to handle trees with non-fixed size for keys and values is not yet implemented.\n");
-
-        // // TOC entries are instances of `kvloc_t`
-        // kvloc_t* toc_entry = toc_start;
-
-        // for (uint32_t i = 0; i < btn->btn_nkeys; i++, toc_entry++) {
-        //     unsigned char* key = malloc(toc_entry->k.len);
-        //     if (!key) {
-        //         fprintf(stderr, "\nABORT: btree_physical_get_val: Could not allocate sufficient memory for `key` in variable-size case.\n");
-        //         exit(-1);
-        //     }
-
-        //     unsigned char* val = malloc(toc_entry->v.len);
-        //     if (!val) {
-        //         fprintf(stderr, "\nABORT: btree_physical_get_val: Could not allocate sufficient memory for `val` in variable-size case.\n");
-        //         exit(-1);
-        //     }
-            
-        //     memcpy(key,  key_start + toc_entry->k.off,  toc_entry->k.len);
-        //     memcpy(val,  val_end   - toc_entry->v.off,  toc_entry->v.len);
-            
-        //     printf("Key–value pair #%u:\n", i);
-        //     printf("- Key's offset in key area:                         0x%x\n", toc_entry->k.off);
-        //     printf("- Value's reverse offset from end of value area:    0x%x\n", toc_entry->v.off);
-        //     printf("- Key length:       %u bytes\n",    toc_entry->k.len);
-        //     printf("- Value length:     %u bytes\n",    toc_entry->v.len);
-
-        //     printf("- Key data (hex):   ");
-        //     for (uint32_t j = toc_entry->k.len; j > 0; /* nothing */) {
-        //         if (j % 2 == 0) {
-        //             printf(" ");
-        //         }
-        //         printf("%02x", key[--j]);
-        //     }
-        //     printf("\n");
-
-        //     printf("- Value data (hex): ");
-        //     for (uint32_t j = toc_entry->v.len; j > 0; /* nothing */) {
-        //         printf("%02x", val[--j]);
-        //         if (j % 2 == 0) {
-        //             printf(" ");
-        //         }
-        //     }
-        //     printf("\n");
-
-        //     free(key);
-        //     free(val);
-        // }
     }
-
-    // while(btn->btn_level != 0) {
-        // Go through node to find child node corresponding to chosen key.
-    // }
-
-    return NULL;
 }
 
 #endif // APFS_FUNC_BTREE_H
