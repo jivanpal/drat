@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
     // without needing to epxlicitly cast to that datatype.
     nx_superblock_t* nxsb = malloc(nx_block_size);
     if (!nxsb) {
-        fprintf(stderr, "ABORT: Could not allocate sufficient memory to create `block_buf`.\n");
+        fprintf(stderr, "ABORT: Could not allocate sufficient memory to create `nxsb`.\n");
         return -1;
     }
 
