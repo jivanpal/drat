@@ -109,7 +109,7 @@ void print_omap_phys_info(omap_phys_t* omap) {
     printf("- Storage type:         %s\n",          o_storage_type_to_string(omap->om_tree_type));
     printf("- Type flags:           %s\n",          type_flags_string);
     printf("- Type:                 %s\n",          type_string);
-    printf("- Virtual OID:          0x%llx\n",      omap->om_tree_oid);
+    printf("- Object ID:            0x%llx\n",      omap->om_tree_oid);
     free(type_flags_string);
     free(type_string);
 
@@ -119,7 +119,7 @@ void print_omap_phys_info(omap_phys_t* omap) {
     printf("- Storage type:         %s\n",          o_storage_type_to_string(omap->om_snapshot_tree_type));
     printf("- Type flags:           %s\n",          type_flags_string);
     printf("- Type:                 %s\n",          type_string);
-    printf("- Virtual OID:          0x%llx\n",      omap->om_snapshot_tree_oid);
+    printf("- Object ID:            0x%llx\n",      omap->om_snapshot_tree_oid);
     free(type_flags_string);
     free(type_string);
 
