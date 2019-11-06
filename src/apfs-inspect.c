@@ -292,6 +292,13 @@ int main(int argc, char** argv) {
     }
     printf("OK.\n");
 
+    printf("Validating the root node of the container object map B-tree ... ");
+    if (!is_cksum_valid(nx_omap_btree)) {
+        printf("FAILED.\n");
+    } else {
+        printf("OK.\n");
+    }
+
     printf("\nDetails of the container object map B-tree:\n");
     printf("--------------------------------------------------------------------------------\n");
     print_btree_node_phys(nx_omap_btree);
