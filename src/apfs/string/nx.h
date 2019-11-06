@@ -298,8 +298,8 @@ char* get_nx_flags_string(nx_superblock_t* nxsb) {
  * Print a nicely formatted string describing the data contained in a container
  * superblock, including the data in its header.
  */
-void print_nx_superblock_info(nx_superblock_t* nxsb) {
-    print_obj_hdr_info(nxsb); // `nxsb` is equivalent to `&(nxsb->nx_o)`.
+void print_nx_superblock(nx_superblock_t* nxsb) {
+    print_obj_phys(nxsb); // `nxsb` is equivalent to `&(nxsb->nx_o)`.
 
     char magic_string[] = {
         (char)nxsb->nx_magic,
@@ -354,7 +354,7 @@ void print_nx_superblock_info(nx_superblock_t* nxsb) {
  * 
  * cpm:     A pointer to the checkpoint-mapping in question.
  */
-void print_checkpoint_mapping_info(checkpoint_mapping_t* cpm) {
+void print_checkpoint_mapping(checkpoint_mapping_t* cpm) {
     printf("Ephemeral OID:                      0x%llx\n",      cpm->cpm_oid);
     printf("Logical block address on disk:      0x%llx\n",      cpm->cpm_paddr);
 
@@ -448,8 +448,8 @@ char* get_cpm_flags_string(checkpoint_map_phys_t* cpm) {
  * 
  * cpm:     A pointer to the checkpoint-mapping block in question.
  */
-void print_checkpoint_map_phys_info(checkpoint_map_phys_t* cpm) {
-    print_obj_hdr_info(cpm);    // `cpm` as the same as `&(cpm->cpm_o)`
+void print_checkpoint_map_phys(checkpoint_map_phys_t* cpm) {
+    print_obj_phys(cpm);    // `cpm` as the same as `&(cpm->cpm_o)`
     
     char* flags_string = get_cpm_flags_string(cpm);
     printf("Flags:\n%s",    flags_string);
@@ -460,7 +460,7 @@ void print_checkpoint_map_phys_info(checkpoint_map_phys_t* cpm) {
 }
 
 /**
- * Call `print_checkpoint_mapping_info()` once for each checkpoint-mapping
+ * Call `print_checkpoint_mapping()` once for each checkpoint-mapping
  * that exists in a given checkpoint-mapping block.
  */
 void print_checkpoint_map_phys_mappings(checkpoint_map_phys_t* cpm) {
@@ -468,7 +468,7 @@ void print_checkpoint_map_phys_mappings(checkpoint_map_phys_t* cpm) {
     checkpoint_mapping_t* end = cursor + cpm->cpm_count;
 
     while (cursor < end) {
-        print_checkpoint_mapping_info(cursor);
+        print_checkpoint_mapping(cursor);
         printf("--------------------------------------------------------------------------------\n");
         cursor++;
     }

@@ -315,7 +315,7 @@ char* get_o_subtype_string(uint32_t o_subtype) {
  * Print a nicely formatted string describing the data contained in the header
  * of an APFS object.
  */
-void print_obj_hdr_info(obj_phys_t* obj) {
+void print_obj_phys(obj_phys_t* obj) {
     char* type_flags_string = get_o_type_flags_string(obj->o_type);
     char* type_string       = get_o_type_string(obj->o_type);
     char* subtype_string    = get_o_subtype_string(obj->o_subtype);

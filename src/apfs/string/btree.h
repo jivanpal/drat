@@ -194,7 +194,7 @@ void print_btree_info(btree_info_t* bt_info) {
  * relating to the entire tree that it is the root node of will also be printed.
  */
 void print_btree_node_phys(btree_node_phys_t* btn) {
-    print_obj_hdr_info(btn);    // `btn` equals `&(btn->btn_o)`.
+    print_obj_phys(btn);    // `btn` equals `&(btn->btn_o)`.
 
     char* flags_string = get_btn_flags_string(btn);
     printf("Flags:                          %s\n",  flags_string);

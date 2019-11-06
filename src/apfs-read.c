@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
         goto cleanup;
     }
     printf("- Details of block 0x%llx:\n", nx_block_addr);
-    print_obj_hdr_info(block_buf);
+    print_obj_phys(block_buf);
     printf("\nEND: All done.\n");
 
 cleanup:

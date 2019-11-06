@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
 
     printf("\nDetails of block 0x0:\n");
     printf("--------------------------------------------------------------------------------\n");
-    print_nx_superblock_info(nxsb);
+    print_nx_superblock(nxsb);
     printf("--------------------------------------------------------------------------------\n");
     printf("\n");
 
@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 
     printf("\nDetails of this container superblock:\n");
     printf("--------------------------------------------------------------------------------\n");
-    print_nx_superblock_info(nxsb);
+    print_nx_superblock(nxsb);
     printf("--------------------------------------------------------------------------------\n");
     printf("- The corresponding checkpoint starts at index %u within the checkpoint descriptor area, and spans %u blocks.\n\n", nxsb->nx_xp_desc_index, nxsb->nx_xp_desc_len);
 
@@ -183,10 +183,10 @@ int main(int argc, char** argv) {
     printf("--------------------------------------------------------------------------------\n");
     for (uint32_t i = 0; i < nxsb->nx_xp_desc_len; i++) {
         if (is_nx_superblock(xp[i])) {
-            print_nx_superblock_info(xp[i]);
+            print_nx_superblock(xp[i]);
         } else {
             assert(is_checkpoint_map_phys(xp[i]));
-            print_checkpoint_map_phys_info(xp[i]);
+            print_checkpoint_map_phys(xp[i]);
         }
         printf("--------------------------------------------------------------------------------\n");
     }
@@ -244,7 +244,7 @@ int main(int argc, char** argv) {
     printf("\nDetails of the Ephemeral objects:\n");
     printf("--------------------------------------------------------------------------------\n");
     for (uint32_t i = 0; i < xp_obj_len; i++) {
-        print_obj_hdr_info(xp_obj[i]);
+        print_obj_phys(xp_obj[i]);
         printf("--------------------------------------------------------------------------------\n");
     }
     printf("\n");
@@ -272,7 +272,7 @@ int main(int argc, char** argv) {
 
     printf("\nDetails of the container object map:\n");
     printf("--------------------------------------------------------------------------------\n");
-    print_omap_phys_info(nx_omap);
+    print_omap_phys(nx_omap);
     printf("--------------------------------------------------------------------------------\n");
     printf("\n");
 
@@ -319,7 +319,7 @@ int main(int argc, char** argv) {
     }
     printf("\n");
 
-    btree_physical_get_val(nx_omap_btree, 0);
+    btree_phys_omap_get_val(nx_omap_btree, 0, 0);
 
     // Closing statements; de-allocate all memory, close all file descriptors.
     free(nx_omap_btree);

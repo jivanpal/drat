@@ -96,8 +96,8 @@ char* get_om_flags_string(omap_phys_t* omap) {
  * Print a nicely formatted string describing the data contained in an object
  * map, including the data in its header.
  */
-void print_omap_phys_info(omap_phys_t* omap) {
-    print_obj_hdr_info(omap);
+void print_omap_phys(omap_phys_t* omap) {
+    print_obj_phys(omap);
 
     char* flags_string = get_om_flags_string(omap);
     printf("Flags:\n%s", flags_string);
