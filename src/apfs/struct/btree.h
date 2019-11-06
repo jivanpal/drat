@@ -65,7 +65,7 @@ typedef struct kvoff {
 
 /** B-Tree Flags **/
 
-#define BTREE_UNIT64_KEYS           0x00000001
+#define BTREE_UINT64_KEYS           0x00000001
 #define BTREE_SEQUENTIAL_INSERT     0x00000002
 #define BTREE_ALLOW_GHOSTS          0x00000004
 #define BTREE_EPHEMERAL             0x00000008
