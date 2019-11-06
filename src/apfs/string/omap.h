@@ -130,4 +130,23 @@ void print_omap_phys(omap_phys_t* omap) {
     printf("- Maximum XID:          0x%llx\n",      omap->om_pending_revert_max);
 }
 
+/**
+ * Print a nicely formatted string describing the data contained in an object
+ * map key.
+ */
+void print_omap_key(omap_key_t* omap_key) {
+    printf("  - OID:                            0x%llx\n",      omap_key->ok_oid);
+    printf("  - XID:                            0x%llx\n",      omap_key->ok_xid);
+}
+
+/**
+ * Print a nicely formatted string describing the data contained in an object
+ * map value.
+ */
+void print_omap_val(omap_val_t* omap_val) {
+    // TODO: Print flags
+    printf("  - Object size:                    %u bytes\n",    omap_val->ov_size);
+    printf("  - Object address in container:    0x%llx\n",      omap_val->ov_paddr);
+}
+
 #endif // APFS_STRING_OMAP_H

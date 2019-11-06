@@ -319,7 +319,7 @@ int main(int argc, char** argv) {
     }
     printf("\n");
 
-    btree_phys_omap_get_val(nx_omap_btree, 0, 0);
+    get_btree_phys_omap_val(nx_omap_btree, 0, 0);
 
     // Closing statements; de-allocate all memory, close all file descriptors.
     free(nx_omap_btree);
