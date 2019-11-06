@@ -15,6 +15,7 @@
 #include "apfs/string/object.h"
 #include "apfs/string/nx.h"
 #include "apfs/string/omap.h"
+#include "apfs/string/btree.h"
 
 /**
  * Print usage info for this program.
@@ -274,6 +275,29 @@ int main(int argc, char** argv) {
     printf("--------------------------------------------------------------------------------\n");
     printf("\n");
 
+    if ((nx_omap->om_tree_type & OBJ_STORAGETYPE_MASK) != OBJ_PHYSICAL) {
+        printf("END: The container object map B-tree is not of the Physical storage type, and therefore it cannot be located.\n");
+        return 0;
+    }
+
+    printf("Reading the root node of the container object map B-tree ... ");
+    char* nx_omap_btree = malloc(nx_block_size);
+    if (!nx_omap_btree) {
+        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `nx_omap_btree`.\n");
+        return -1;
+    }
+    if (read_blocks(nx_omap_btree, nx_omap->om_tree_oid, 1) != 1) {
+        fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", nx_omap->om_tree_oid);
+        return -1;
+    }
+    printf("OK.\n");
+
+    printf("\nDetails of the container object map B-tree:\n");
+    printf("--------------------------------------------------------------------------------\n");
+    print_btree_node_phys(nx_omap_btree);
+    printf("--------------------------------------------------------------------------------\n");
+    printf("\n");
+
     uint32_t num_file_systems = 0;
     for (uint32_t i = 0; i < NX_MAX_FILE_SYSTEMS; i++) {
         if (nxsb->nx_fs_oid[i] == 0) {
@@ -288,6 +312,7 @@ int main(int argc, char** argv) {
     printf("\n");
 
     // Closing statements; de-allocate all memory, close all file descriptors.
+    free(nx_omap_btree);
     free(nx_omap);
     free(xp_obj);
     free(nxsb);
