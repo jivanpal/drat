@@ -92,6 +92,9 @@ process.
 
 #### Example output
 
+<details>
+<summary>Click to show/hide example output</summary>
+
 ```
 $ sudo ./bin/apfs-inspect /dev/disk2s2
 
@@ -412,3 +415,4 @@ Subtype:            (none/invalid)
 --------------------------------------------------------------------------------
 END: All done.
 ```
+</details>
