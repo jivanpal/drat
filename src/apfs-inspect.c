@@ -7,6 +7,7 @@
 #include "apfs/io.h"
 #include "apfs/func/boolean.h"
 #include "apfs/func/cksum.h"
+#include "apfs/func/btree.h"
 
 #include "apfs/struct/object.h"
 #include "apfs/struct/nx.h"
@@ -317,6 +318,8 @@ int main(int argc, char** argv) {
         printf("- 0x%llx\n", nxsb->nx_fs_oid[i]);
     }
     printf("\n");
+
+    btree_physical_get_val(nx_omap_btree, 0);
 
     // Closing statements; de-allocate all memory, close all file descriptors.
     free(nx_omap_btree);
