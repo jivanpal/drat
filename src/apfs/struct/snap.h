@@ -3,10 +3,10 @@
  * §13 "Snapshot Metadata"
  */
 
-#ifndef APFS_STRUCT_J_SNAP_H
-#define APFS_STRUCT_J_SNAP_H
+#ifndef APFS_STRUCT_SNAP_H
+#define APFS_STRUCT_SNAP_H
 
-#include "j_object.h"   // for `j_key_t`
+#include "j.h"          // for `j_key_t`
 #include "object.h"     // for `oid_t`, `xid_t`
 
 /** `j_snap_metadata_key_t` **/
@@ -49,4 +49,4 @@ typedef enum {
     SNAP_META_PENDING_DATALESS  = 0x00000001,
 } snap_meta_flags;
 
-#endif // APFS_STRUCT_J_SNAP_H
+#endif // APFS_STRUCT_SNAP_H

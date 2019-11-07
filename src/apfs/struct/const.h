@@ -3,8 +3,8 @@
  * §9 "File-System Constants"
  */
 
-#ifndef APFS_STRUCT_J_CONST_H
-#define APFS_STRUCT_J_CONST_H
+#ifndef APFS_STRUCT_CONST_H
+#define APFS_STRUCT_CONST_H
 
 #include <stdint.h>
 
@@ -167,4 +167,4 @@ typedef uint16_t    mode_t;
 #define DT_SOCK     12
 #define DT_WHT      14
 
-#endif // APFS_STRUCT_J_CONST_H
+#endif // APFS_STRUCT_CONST_H

@@ -6,7 +6,7 @@
 #ifndef APFS_STRUCT_DSTREAM_H
 #define APFS_STRUCT_DSTREAM_H
 
-#include "j_object.h"   // for `j_key_t`
+#include "j.h"      // for `j_key_t`
 
 /** `j_phys_ext_key_t` **/
 
