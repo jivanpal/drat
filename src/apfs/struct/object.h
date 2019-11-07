@@ -17,7 +17,7 @@ typedef uint64_t    xid_t;
 
 #define MAX_CKSUM_SIZE  8
 
-typedef struct obj_phys {
+typedef struct {
     uint8_t     o_cksum[MAX_CKSUM_SIZE];
     oid_t       o_oid;
     xid_t       o_xid;

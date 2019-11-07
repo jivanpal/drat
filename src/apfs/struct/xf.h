@@ -8,13 +8,13 @@
 
 #include <stdint.h>
 
-typedef struct xf_blob {
+typedef struct {
     uint16_t    xf_num_exts;
     uint16_t    xf_used_data;
     uint8_t     xf_data[];
 } xf_blob_t;
 
-typedef struct x_field {
+typedef struct {
     uint8_t     x_type;
     uint8_t     x_flags;
     uint16_t    x_size;

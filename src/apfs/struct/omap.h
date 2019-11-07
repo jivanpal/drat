@@ -11,7 +11,7 @@
 
 /** `omap_phys_t` **/
 
-typedef struct omap_phys {
+typedef struct {
     obj_phys_t  om_o;
     uint32_t    om_flags;
     uint32_t    om_snap_count;
@@ -26,14 +26,14 @@ typedef struct omap_phys {
 
 /** `omap_key_t` **/
 
-typedef struct omap_key {
+typedef struct {
     oid_t   ok_oid;
     xid_t   ok_xid;
 } omap_key_t;
 
 /** `omap_val_t` **/
 
-typedef struct omap_val {
+typedef struct {
     uint32_t    ov_flags;
     uint32_t    ov_size;
     paddr_t     ov_paddr;
@@ -41,7 +41,7 @@ typedef struct omap_val {
 
 /** `omap_snapshot_t` **/
 
-typedef struct omap_snapshot {
+typedef struct {
     uint32_t    oms_flags;
     uint32_t    oms_pad;
     oid_t       oms_oid;

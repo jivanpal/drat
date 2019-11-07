@@ -14,7 +14,7 @@
 
 #define APFS_MODIFIED_NAMELEN   32
 
-typedef struct apfs_modified_by {
+typedef struct {
     uint8_t     id[APFS_MODIFIED_NAMELEN];
     uint64_t    timestamp;
     xid_t       last_xid;
@@ -26,7 +26,7 @@ typedef struct apfs_modified_by {
 #define APFS_MAX_HIST       8
 #define APFS_VOLNAME_LEN    256
 
-typedef struct apfs_superblock {
+typedef struct {
     obj_phys_t      apfs_o;
 
     uint32_t        apfs_magic;

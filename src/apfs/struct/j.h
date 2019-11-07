@@ -11,7 +11,7 @@
 
 /** `j_key_t` **/
 
-typedef struct j_key {
+typedef struct {
     uint64_t    obj_id_and_type;
 } __attribute__((packed))   j_key_t;
 
@@ -21,7 +21,7 @@ typedef struct j_key {
 
 /** `j_inode_key_t` **/
 
-typedef struct j_inode_key {
+typedef struct {
     j_key_t     hdr;
 } __attribute__((packed))   j_inode_key_t;
 
@@ -30,7 +30,7 @@ typedef struct j_inode_key {
 typedef uint32_t    uid_t;
 typedef uint32_t    gid_t;
 
-typedef struct j_inode_val {
+typedef struct {
     uint64_t        parent_id;
     uint64_t        private_id;
     
@@ -60,7 +60,7 @@ typedef struct j_inode_val {
 
 /** `j_drec_key_t` **/
 
-typedef struct j_drec_key {
+typedef struct {
     j_key_t     hdr;
     uint16_t    name_len;
         /*
@@ -73,7 +73,7 @@ typedef struct j_drec_key {
 
 /** `j_drec_hashed_key_t` **/
 
-typedef struct j_drec_hashed_key {
+typedef struct {
     j_key_t     hdr;
     uint32_t    name_len_and_hash;
     uint8_t     name[0];
@@ -85,7 +85,7 @@ typedef struct j_drec_hashed_key {
 
 /** `j_drec_val_t` **/
 
-typedef struct j_drec_val {
+typedef struct {
     uint64_t    file_id;
     uint64_t    date_added;
     uint64_t    flags;
@@ -94,13 +94,13 @@ typedef struct j_drec_val {
 
 /** `j_dir_stats_key_t` **/
 
-typedef struct j_dir_stats_key {
+typedef struct {
     j_key_t     hdr;
 } __attribute__((packed))   j_dir_stats_key_t;
 
 /** `j_dir_stats_val` **/
 
-typedef struct j_dir_stats_val {
+typedef struct {
     uint64_t    num_children;
     uint64_t    total_size;
     uint64_t    chained_key;
@@ -109,7 +109,7 @@ typedef struct j_dir_stats_val {
 
 /** `j_xattr_key_t` **/
 
-typedef struct j_xattr_key {
+typedef struct {
     j_key_t     hdr;
     uint16_t    name_len;
     uint8_t     name[0];
@@ -117,7 +117,7 @@ typedef struct j_xattr_key {
 
 /** `j_xattr_val_t` **/
 
-typedef struct j_xattr_val {
+typedef struct {
     uint16_t    flags;
     uint16_t    xdata_len;
     uint8_t     xdata[0];

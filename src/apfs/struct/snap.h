@@ -11,13 +11,13 @@
 
 /** `j_snap_metadata_key_t` **/
 
-typedef struct j_snap_metadata_key {
+typedef struct {
     j_key_t     hdr;
 } __attribute__((packed))   j_snap_metadata_key_t;
 
 /** `j_snap_metadata_val_t` **/
 
-typedef struct j_snap_metadata_val {
+typedef struct {
     oid_t       extentref_tree_oid;
     oid_t       sblock_oid;
     uint64_t    create_time;
@@ -31,7 +31,7 @@ typedef struct j_snap_metadata_val {
 
 /** `j_snap_name_key_t` **/
 
-typedef struct j_snap_name_key {
+typedef struct {
     j_key_t     hdr;
     uint16_t    name_len;
     uint8_t     name[0];
@@ -39,7 +39,7 @@ typedef struct j_snap_name_key {
 
 /** `j_snap_name_val_t` **/
 
-typedef struct j_snap_name_val {
+typedef struct {
     xid_t   snap_xid;
 } __attribute__((packed))   j_snap_name_val_t;
 

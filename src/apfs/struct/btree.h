@@ -11,14 +11,14 @@
 
 /** `nloc_t` --- forward declared for `btree_node_phys_t` **/
 
-typedef struct nloc {
+typedef struct {
     uint16_t    off;
     uint16_t    len;
 } nloc_t;
 
 /** `btree_node_phys_t` **/
 
-typedef struct btree_node_phys {
+typedef struct {
     obj_phys_t  btn_o;
     uint16_t    btn_flags;
     uint16_t    btn_level;
@@ -32,7 +32,7 @@ typedef struct btree_node_phys {
 
 /** `btree_info_fixed_t` **/
 
-typedef struct btree_info_fixed {
+typedef struct {
     uint32_t    bt_flags;
     uint32_t    bt_node_size;
     uint32_t    bt_key_size;
@@ -41,7 +41,7 @@ typedef struct btree_info_fixed {
 
 /** `btree_info_t` **/
 
-typedef struct btree_info {
+typedef struct {
     btree_info_fixed_t  bt_fixed;
     uint32_t            bt_longest_key;
     uint32_t            bt_longest_val;
@@ -51,14 +51,14 @@ typedef struct btree_info {
 
 /** `kvloc_t` **/
 
-typedef struct kvloc {
+typedef struct {
     nloc_t  k;
     nloc_t  v;
 } kvloc_t;
 
 /** `kvoff_t` **/
 
-typedef struct kvoff {
+typedef struct {
     uint16_t    k;
     uint16_t    v;
 } kvoff_t;

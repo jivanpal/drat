@@ -13,13 +13,13 @@
 
 /** `j_crypto_key_t` **/
 
-typedef struct j_crypto_key {
+typedef struct {
     j_key_t     hdr;
 } __attribute__((packed))   j_crypto_key_t;
 
 /** `wrapped_crypto_state_t` --- forward declared for `j_crypto_val_t` **/
 
-typedef struct wrapped_crypto_state {
+typedef struct {
     uint16_t            major_version;
     uint16_t            minor_version;
     crypto_flags_t      cpflags;
@@ -34,14 +34,14 @@ typedef struct wrapped_crypto_state {
 
 /** `j_crypto_val_t` **/
 
-typedef struct j_crypto_val {
+typedef struct {
     uint32_t                refcnt;
     wrapped_crypto_state_t  state;
 } __attribute__((aligned(4), packed))   j_crypto_val_t;
 
 /** `wrapped_meta_crypto_state_t` **/
 
-typedef struct wrapped_meta_crypto_state {
+typedef struct {
     uint16_t            major_version;
     uint16_t            minor_version;
     crypto_flags_t      cpflags;
@@ -68,7 +68,7 @@ typedef struct wrapped_meta_crypto_state {
 
 /** `keybag_entry_t` --- forward declared for `kb_locker_t` **/
 
-typedef struct keybag_entry {
+typedef struct {
     uuid_t      ke_uuid;
     uint16_t    ke_tag;
     uint16_t    ke_keylen;
@@ -81,7 +81,7 @@ typedef struct keybag_entry {
 
 /** `kb_locker_t` **/
 
-typedef struct kb_locker {
+typedef struct {
     uint16_t        kl_version;
     uint16_t        kl_nkeys;
     uint32_t        kl_nbytes;
@@ -93,7 +93,7 @@ typedef struct kb_locker {
 
 /** `media_keybag_t` **/
 
-typedef struct media_keybag {
+typedef struct {
     obj_phys_t  mk_obj;
     kb_locker_t mk_locker;
 } media_keybag_t;

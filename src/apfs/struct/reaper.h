@@ -10,7 +10,7 @@
 
 /** `nx_repear_phys_t` **/
 
-typedef struct nx_repear_phys {
+typedef struct {
     obj_phys_t  nr_o;
     uint64_t    nr_next_reap_id;
     uint64_t    nr_completed_id;
@@ -30,7 +30,7 @@ typedef struct nx_repear_phys {
 
 /** `nx_reap_list_entry_t` --- forward declared for `nx_reap_list_phys_t` **/
 
-typedef struct nx_reap_list_entry {
+typedef struct {
     uint32_t    nrle_next;
     uint32_t    nrle_flags;
     uint32_t    nrle_type;
@@ -42,7 +42,7 @@ typedef struct nx_reap_list_entry {
 
 /** `nx_reap_list_phys_t` **/
 
-typedef struct nx_reap_list_phys {
+typedef struct {
     obj_phys_t              nrl_o;
     oid_t                   nrl_next;
     uint32_t                nrl_flags;
@@ -83,14 +83,14 @@ enum {
 
 /** `omap_reap_state_t` **/
 
-typedef struct omap_reap_state {
+typedef struct {
     uint32_t    omr_phase;
     omap_key_t  omr_ok;
 } omap_reap_state_t;
 
 /** `omap_cleanup_state_t` **/
 
-typedef struct omap_cleanup_state {
+typedef struct {
     uint32_t    omc_cleaning;
     uint32_t    omc_omsflags;
     xid_t       omc_sxidprev;
@@ -102,7 +102,7 @@ typedef struct omap_cleanup_state {
 
 /** `apfs_reap_state_t` **/
 
-typedef struct apfs_reap_state {
+typedef struct {
     uint64_t    last_pbn;
     xid_t       cur_snap_xid;
     uint32_t    phase;

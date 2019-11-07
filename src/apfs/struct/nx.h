@@ -29,7 +29,7 @@ typedef enum {
 #define NX_TX_MIN_CHECKPOINT_COUNT      4
 #define NX_EPH_INFO_VERSION             1
 
-typedef struct nx_superblock {
+typedef struct {
     obj_phys_t  nx_o;
     uint32_t    nx_magic;
     uint32_t    nx_block_size;
@@ -111,7 +111,7 @@ typedef struct nx_superblock {
 
 /** `checkpoint_mapping_t` **/
 
-typedef struct checkpoint_mapping {
+typedef struct {
     uint32_t    cpm_type;
     uint32_t    cpm_subtype;
     uint32_t    cpm_size;
@@ -123,7 +123,7 @@ typedef struct checkpoint_mapping {
 
 /** `checkpoint_map_phys_t` **/
 
-typedef struct checkpoint_map_phys {
+typedef struct {
     obj_phys_t              cpm_o;
     uint32_t                cpm_flags;
     uint32_t                cpm_count;
@@ -136,7 +136,7 @@ typedef struct checkpoint_map_phys {
 
 /** `evict_mapping_val_t` **/
 
-typedef struct evict_mapping_val {
+typedef struct {
     paddr_t     dst_paddr;
     uint64_t    len;
 } __attribute__((packed))   evict_mapping_val_t;

@@ -10,7 +10,7 @@
 
 typedef int64_t         paddr_t;
 
-typedef struct prange {
+typedef struct {
     paddr_t     pr_start_paddr;
     uint64_t    pr_block_count;
 } prange_t;

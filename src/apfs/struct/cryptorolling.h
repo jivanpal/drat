@@ -11,13 +11,13 @@
 /** `er_state_phys_t` **/
 
 // Forward declared for `er_state_phys[_v1]_t`
-typedef struct er_state_phys_header {
+typedef struct {
     obj_phys_t  ersb_o;
     uint32_t    ersb_magic;
     uint32_t    ersb_version;
 } er_state_phys_header_t;
 
-typedef struct er_state_phys {
+typedef struct {
     er_state_phys_header_t  ersb_header;
     uint64_t    ersb_flags;
     uint64_t    ersb_snap_xid;
@@ -32,7 +32,7 @@ typedef struct er_state_phys {
     uint64_t    ersb_recovery_length;
 } er_state_phys_t;
 
-typedef struct er_state_phys_v1 {
+typedef struct {
     er_state_phys_header_t  ersb_header;
     uint64_t    ersb_flags;
     uint64_t    ersb_snap_xid;
@@ -51,7 +51,7 @@ typedef struct er_state_phys_v1 {
 
 /** `er_phase_t` **/
 
-typedef enum er_phase_enum {
+typedef enum {
     ER_PHASE_OMAP_ROLL  = 1,
     ER_PHASE_DATA_ROLL  = 2,
     ER_PHASE_SNAP_ROLL  = 3,
@@ -59,7 +59,7 @@ typedef enum er_phase_enum {
 
 /** `er_recovery_block_phys_t` **/
 
-typedef struct er_recovery_block_phys {
+typedef struct {
     obj_phys_t  erb_o;
     uint64_t    erb_offset;
     oid_t       erb_next_oid;
@@ -68,14 +68,14 @@ typedef struct er_recovery_block_phys {
 
 /** `gbitmap_block_phys_t` **/
 
-typedef struct gbitmap_block_phys {
+typedef struct {
     obj_phys_t  bmb_o;
     uint64_t    bmb_field[0];
 } gbitmap_block_phys_t;
 
 /** `gbitmap_phys_t` **/
 
-typedef struct gbitmap_phys {
+typedef struct {
     obj_phys_t  bm_o;
     oid_t       bm_tree_oid;
     uint64_t    bm_bit_count;

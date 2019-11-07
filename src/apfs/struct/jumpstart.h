@@ -11,7 +11,7 @@
 
 /** `nx_efi_jumpstart_t` **/
 
-typedef struct nx_efi_jumpstart {
+typedef struct {
     obj_phys_t  nej_o;
     uint32_t    nej_magic;
     uint32_t    nej_version;

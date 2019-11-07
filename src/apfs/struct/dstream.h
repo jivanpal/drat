@@ -10,13 +10,13 @@
 
 /** `j_phys_ext_key_t` **/
 
-typedef struct j_phys_ext_key {
+typedef struct {
     j_key_t     hdr;
 } __attribute__((packed))   j_phys_ext_key_t;
 
 /** `j_phys_ext_val_t` **/
 
-typedef struct j_phys_ext_val {
+typedef struct {
     uint64_t    len_and_kind;
     uint64_t    owning_obj_id;
     int32_t     refcnt;
@@ -28,14 +28,14 @@ typedef struct j_phys_ext_val {
 
 /** `j_file_extent_key_t` **/
 
-typedef struct j_file_extent_key {
+typedef struct {
     j_key_t     hdr;
     uint64_t    logical_addr;
 } __attribute__((packed))   j_file_extent_key_t;
 
 /** `j_file_extent_val_t` **/
 
-typedef struct j_file_extent_val {
+typedef struct {
     uint64_t    len_and_flags;
     uint64_t    phys_block_num;
     uint64_t    crypto_id;
@@ -47,19 +47,19 @@ typedef struct j_file_extent_val {
 
 /** `j_dstream_id_key_t` **/
 
-typedef struct j_dstream_id_key {
+typedef struct {
     j_key_t     hdr;
 } __attribute__((packed))   j_dstream_id_key_t;
 
 /** `j_dstream_id_val_t` **/
 
-typedef struct j_dstream_id_val {
+typedef struct {
     uint32_t    refcnt;
 } __attribute__((packed))   j_dstream_id_val_t;
 
 /** `j_dstream_t` --- forward declared for `j_xattr_dstream` **/
 
-typedef struct j_dstream {
+typedef struct {
     uint64_t    size;
     uint64_t    alloced_size;
     uint64_t    default_crypto_id;
@@ -69,7 +69,7 @@ typedef struct j_dstream {
 
 /** `j_xattr_dstream` **/
 
-typedef struct j_xattr_dstream {
+typedef struct {
     uint64_t        xattr_obj_id;
     j_dstream_t     dstream;
 } j_xattr_dstream_t;

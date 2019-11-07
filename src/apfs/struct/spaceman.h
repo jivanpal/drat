@@ -11,7 +11,7 @@
 
 /** `chunk_info_t` **/
 
-typedef struct chunk_info {
+typedef struct {
     xid_t       ci_xid;     // Spec says `uint64_t`, but I assume it is meant to be `xid_t`; they're equivalent, anyway
     uint64_t    ci_addr;
     uint32_t    ci_block_count;
@@ -21,7 +21,7 @@ typedef struct chunk_info {
 
 /** `chunk_info_block_t` **/
 
-typedef struct chunk_info_block {
+typedef struct {
     obj_phys_t      cib_o;
     uint32_t        cib_index;
     uint32_t        cib_chunk_info_count;
@@ -30,7 +30,7 @@ typedef struct chunk_info_block {
 
 /** `cib_addr_block` **/
 
-typedef struct cib_addr_block {
+typedef struct {
     obj_phys_t  cab_o;
     uint32_t    cab_index;
     uint32_t    cab_cib_count;
@@ -39,14 +39,14 @@ typedef struct cib_addr_block {
 
 /** `spaceman_free_queue_key_t` **/
 
-typedef struct spaceman_free_queue_key {
+typedef struct {
     xid_t       sfqk_xid;
     paddr_t     sfqk_paddr;
 } spaceman_free_queue_key_t;
 
 /** `spaceman_free_queue_t` **/
 
-typedef struct spaceman_free_queue {
+typedef struct {
     uint64_t    sfq_count;
     oid_t       sfq_tree_oid;
     xid_t       sfq_oldest_xid;
@@ -58,7 +58,7 @@ typedef struct spaceman_free_queue {
 
 /** `spaceman_device_t` **/
 
-typedef struct spaceman_device {
+typedef struct {
     uint64_t    sm_block_count;
     uint64_t    sm_chunk_count;
     uint32_t    sm_cib_count;
@@ -71,7 +71,7 @@ typedef struct spaceman_device {
 
 /** `spaceman_allocation_zone_boundaries_t` **/
 
-typedef struct spaceman_allocation_zone_boundaries {
+typedef struct {
     uint64_t    saz_zone_start;
     uint64_t    saz_zone_end;
 } spaceman_allocation_zone_boundaries_t;
@@ -81,7 +81,7 @@ typedef struct spaceman_allocation_zone_boundaries {
 #define SM_ALLOCZONE_INVALID_END_BOUNDARY       0
 #define SM_ALLOCZONE_NUM_PREVIOUS_BOUNDARIES    7
 
-typedef struct spaceman_allocation_zone_info_phys {
+typedef struct {
     spaceman_allocation_zone_boundaries_t
         saz_current_boundaries;
     spaceman_allocation_zone_boundaries_t
@@ -103,7 +103,7 @@ enum smdev {
 
 #define SM_DATAZONE_ALLOCZONE_COUNT     8
 
-typedef struct spaceman_datazone_info_phys {
+typedef struct {
     spaceman_allocation_zone_info_phys_t
         sdz_allocation_zones[SD_COUNT][SM_DATAZONE_ALLOCZONE_COUNT];
 } spaceman_datazone_info_phys_t;
@@ -119,7 +119,7 @@ enum sfq {
 
 /** `spaceman_phys_t` **/
 
-typedef struct spaceman_phys {
+typedef struct {
     obj_phys_t  sm_o;
     uint32_t    sm_block_size;
     uint32_t    sm_blocks_per_chunk;
