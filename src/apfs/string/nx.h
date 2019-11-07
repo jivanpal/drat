@@ -149,8 +149,8 @@ char* get_nx_readonly_compatible_features_string(nx_superblock_t* nxsb) {
 }
 
 /**
- * Get a human-readable string that lists the incompatible feature flags that
- * are set on a given container superblock.
+ * Get a human-readable string that lists the backward-incompatible feature
+ * flags that are set on a given container superblock.
  * 
  * nxsb:    A pointer to the container superblock in question.
  * 
