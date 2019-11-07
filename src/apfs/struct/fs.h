@@ -8,6 +8,7 @@
 
 #include "general.h"    // for `uuid_t`
 #include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
+#include "crypto.h"
 
 /** `apfs_modified_by_t` --- forward declared for `apfs_superblock_t` **/
 
