@@ -6,6 +6,7 @@
 #ifndef APFS_STRUCT_J_H
 #define APFS_STRUCT_J_H
 
+#include "cryptotypes.h"
 #include "const.h"      // for `mode_t`
 
 /** `j_key_t` **/

@@ -1,6 +1,6 @@
 /**
  * Structures and related items as defined in
- * §13 "B-Trees"
+ * §14 "B-Trees"
  */
 
 #ifndef APFS_STRUCT_BTREE_H

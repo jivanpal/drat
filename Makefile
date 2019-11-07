@@ -28,6 +28,7 @@ all:	$(TARGETS)
 .PHONY: clean
 clean:
 	rm -rf $(BINDIR) $(OBJDIR)
+	find . -name '*.gch' -delete
 
 # Makes the target `binary-name` an alias of `bin/binary-name`
 .PHONY: $(TARGETS)
@@ -42,3 +43,8 @@ $(OBJECTS):		$(OBJDIR)/%.o:	$(SRCDIR)/%.c $(HEADERS)
 	@[ -d $(OBJDIR) ] || (mkdir -p $(OBJDIR) && echo "Created directory \`$(OBJDIR)\`.")
 	@$(CC) $(CFLAGS) -c $< -o $@
 	@echo "$<\t==> $@ "
+
+# This target exists to allow test compilation of
+# headers, e.g. `make src/apfs/struct/object.gch`
+$(HEADERS:%.h=%.gch):	%.gch:		%.h
+	@$(CC) $(CFLAGS) -c $< -o $@
