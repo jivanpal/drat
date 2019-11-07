@@ -139,7 +139,7 @@ typedef struct apfs_superblock {
     | APFS_FEATURE_HARDLINK_MAP_RECORDS \
 )
 
-/** Read-Only Comaptible Volume Feature Fl**s
+/** Read-Only Comaptible Volume Feature Flags **/
 
 #define APFS_SUPPORTED_ROCOMPAT_MASK    0x0ULL
 
