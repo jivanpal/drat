@@ -457,7 +457,7 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("\n");
     
     printf("Root tree info:\n");
-    printf("- Physical OID:     0x%llx\n",  apsb->apfs_root_tree_oid);
+    printf("- OID:              0x%llx\n",  apsb->apfs_root_tree_oid);
     printf("- Storage type:     %s\n",      o_storage_type_to_string(apsb->apfs_root_tree_type));
     
     tmp_string = get_o_type_flags_string(apsb->apfs_root_tree_type);
@@ -471,7 +471,7 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("\n");
 
     printf("Extent-reference tree info:\n");
-    printf("- Physical OID:     0x%llx\n",  apsb->apfs_extentref_tree_oid);
+    printf("- OID:              0x%llx\n",  apsb->apfs_extentref_tree_oid);
     printf("- Storage type:     %s\n",      o_storage_type_to_string(apsb->apfs_extentref_tree_type));
     
     tmp_string = get_o_type_flags_string(apsb->apfs_extentref_tree_type);
@@ -485,7 +485,7 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("\n");
 
     printf("Snapshot metadata tree info:\n");
-    printf("- Physical OID:     0x%llx\n",  apsb->apfs_snap_meta_tree_oid);
+    printf("- OID:              0x%llx\n",  apsb->apfs_snap_meta_tree_oid);
     printf("- Storage type:     %s\n",      o_storage_type_to_string(apsb->apfs_snap_meta_tree_type));
     
     tmp_string = get_o_type_flags_string(apsb->apfs_snap_meta_tree_type);
