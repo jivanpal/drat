@@ -12,12 +12,13 @@
 #include "apfs/struct/object.h"
 #include "apfs/struct/nx.h"
 #include "apfs/struct/omap.h"
-// #include "apfs/struct/fs.h"
+#include "apfs/struct/fs.h"
 
 #include "apfs/string/object.h"
 #include "apfs/string/nx.h"
 #include "apfs/string/omap.h"
 #include "apfs/string/btree.h"
+#include "apfs/string/fs.h"
 
 /**
  * Print usage info for this program.
@@ -342,7 +343,15 @@ int main(int argc, char** argv) {
     printf("Validating the APFS volume superblocks ... ");
     for (uint32_t i = 0; i < num_file_systems; i++) {
         if (!is_cksum_valid(apsbs + i)) {
-            printf("FAILED.\n- The APFS volume with OID 0x%llx is malformed.\n- Going back to look at the previous checkpoint instead.\n", nxsb->nx_fs_oid[i]);
+            printf("FAILED.\n- The checksum of the APFS volume with OID 0x%llx did not validate.\n- Going back to look at the previous checkpoint instead.\n", nxsb->nx_fs_oid[i]);
+
+            // TODO: Handle case where data for a given checkpoint is malformed
+            printf("END: Handling of this case has not yet been implemented.\n");
+            return 0;
+        }
+
+        if ( ((apfs_superblock_t*)(apsbs + i))->apfs_magic  !=  APFS_MAGIC ) {
+            printf("FAILED.\n- The magic string of the APFS volume with OID 0x%llx did not validate.\n- Going back to look at the previous checkpoint instead.\n", nxsb->nx_fs_oid[i]);
 
             // TODO: Handle case where data for a given checkpoint is malformed
             printf("END: Handling of this case has not yet been implemented.\n");
@@ -354,11 +363,12 @@ int main(int argc, char** argv) {
     printf("\nDetails of these volume superblocks:\n");
     printf("--------------------------------------------------------------------------------\n");
     for (uint32_t i = 0; i < num_file_systems; i++) {
-        print_obj_phys(apsbs + i);
+        print_apfs_superblock(apsbs + i);
         printf("--------------------------------------------------------------------------------\n");
     }
 
     // Closing statements; de-allocate all memory, close all file descriptors.
+    free(apsbs);
     free(nx_omap_btree);
     free(nx_omap);
     free(xp_obj);
