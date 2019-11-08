@@ -284,7 +284,7 @@ int main(int argc, char** argv) {
     }
 
     printf("Reading the root node of the container object map B-tree ... ");
-    char* nx_omap_btree = malloc(nx_block_size);
+    btree_node_phys_t* nx_omap_btree = malloc(nx_block_size);
     if (!nx_omap_btree) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `nx_omap_btree`.\n");
         return -1;
