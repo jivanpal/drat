@@ -75,7 +75,7 @@ Subtype:          Space manager free-space queue
 
 ### `apfs-inspect`
 
-This tool inspect an APFS container by simulating the process of mounting it,
+This tool inspects an APFS container by simulating the process of mounting it,
 printing information on what it determines about the container during the
 process.
 
