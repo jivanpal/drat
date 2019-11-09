@@ -43,7 +43,7 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
     // Create a copy of the root node to use as the current node we're working with
     btree_node_phys_t* node = malloc(nx_block_size);
     if (!node) {
-        fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `current_node`.\n");
+        fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `node`.\n");
         exit(-1);
     }
     memcpy(node, root_node, nx_block_size);
