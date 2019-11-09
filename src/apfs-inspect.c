@@ -366,6 +366,121 @@ int main(int argc, char** argv) {
         print_apfs_superblock(apsbs + i);
         printf("--------------------------------------------------------------------------------\n");
     }
+    printf("\n");
+
+    printf("\n");
+    printf("--------------------------------------------------------------------------------\n");
+    printf("--------------------------------------------------------------------------------\n");
+    printf("\n");
+    for (uint32_t i = 0; i < 1 /* TODO: num_file_systems */; i++) {
+        apfs_superblock_t* apsb = apsbs + i;
+        printf("Simulating a mount of volume %u (%s).\n", i, apsb->apfs_volname);
+        printf("\n");
+
+        printf("The volume object map has Physical OID 0x%llx.\n", apsb->apfs_omap_oid);
+
+        printf("Reading the volume object map ... ");
+        omap_phys_t* fs_omap = malloc(nx_block_size);
+        if (!fs_omap) {
+            fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_omap`.\n");
+            return -1;
+        }
+        if (read_blocks(fs_omap, apsb->apfs_omap_oid, 1) != 1) {
+            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", apsb->apfs_omap_oid);
+            return -1;
+        }
+        printf("OK.\n");
+
+        printf("Validating the volume object map ... ");
+        if (!is_cksum_valid(fs_omap)) {
+            printf("FAILED.\n- The checksum did not validate.\n- Going back to look at the previous checkpoint instead.\n");
+
+            // TODO: Handle case where data for a given checkpoint is malformed
+            printf("END: Handling of this case has not yet been implemented.\n");
+            return 0;
+        }
+        printf("OK.\n");
+
+        printf("\nDetails of the volume object map:\n");
+        printf("--------------------------------------------------------------------------------\n");
+        print_omap_phys(fs_omap);
+        printf("--------------------------------------------------------------------------------\n");
+        printf("\n");
+
+        if ((fs_omap->om_tree_type & OBJ_STORAGETYPE_MASK) != OBJ_PHYSICAL) {
+            printf("END: The volume object map B-tree is not of the Physical storage type, and therefore it cannot be located.\n");
+            return 0;
+        }
+
+        printf("Reading the root node of the volume object map B-tree ... ");
+        btree_node_phys_t* fs_omap_btree = malloc(nx_block_size);
+        if (!fs_omap_btree) {
+            fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_omap_btree`.\n");
+            return -1;
+        }
+        if (read_blocks(fs_omap_btree, fs_omap->om_tree_oid, 1) != 1) {
+            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_omap->om_tree_oid);
+            return -1;
+        }
+        printf("OK.\n");
+
+        printf("Validating the root node of the volume object map B-tree ... ");
+        if (!is_cksum_valid(fs_omap_btree)) {
+            printf("FAILED.\n");
+        } else {
+            printf("OK.\n");
+        }
+
+        printf("\nDetails of the volume object map B-tree:\n");
+        printf("--------------------------------------------------------------------------------\n");
+        print_btree_node_phys(fs_omap_btree);
+        printf("--------------------------------------------------------------------------------\n");
+        printf("\n");
+
+        printf("The file-system tree root for this volume has Virtual OID 0x%llx.\n", apsb->apfs_root_tree_oid);
+        printf("Looking up this Virtual OID in the volume object map ... ");
+        omap_val_t* fs_root_val = get_btree_phys_omap_val(fs_omap_btree, apsb->apfs_root_tree_oid, apsb->apfs_o.o_xid);
+        if (!fs_root_val) {
+            fprintf(stderr, "\nABORT: No objects with OID 0x%llx exist in `fs_omap_btree`.\n", apsb->apfs_root_tree_oid);
+            return -1;
+        }
+        printf("corresponding block address is 0x%llx.\n", fs_root_val->ov_paddr);
+        
+        printf("Reading ... ");
+        btree_node_phys_t* fs_root_btree = malloc(nx_block_size);
+        if (!fs_root_btree) {
+            fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_root_btree`.\n");
+            return -1;
+        }
+        if (read_blocks(fs_root_btree, fs_root_val->ov_paddr, 1) != 1) {
+            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_root_val->ov_paddr);
+            return -1;
+        }
+        printf("validating ... ");
+        if (!is_cksum_valid(fs_root_btree)) {
+            printf("FAILED.\nGoing back to look at the previous checkpoint instead.\n");
+
+            // TODO: Handle case where data for a given checkpoint is malformed
+            printf("END: Handling of this case has not yet been implemented.\n");
+            return 0;
+        }
+        printf("OK.\n");
+
+        printf("\nDetails of the file-system B-tree root node:\n");
+        printf("--------------------------------------------------------------------------------\n");
+        print_btree_node_phys(fs_root_btree);
+        printf("--------------------------------------------------------------------------------\n");
+        
+        // TODO: RESUME HERE
+
+        printf("\n");
+        printf("--------------------------------------------------------------------------------\n");
+        printf("--------------------------------------------------------------------------------\n");
+        printf("\n");
+
+        free(fs_omap_btree);
+        free(fs_omap);
+    }
 
     // Closing statements; de-allocate all memory, close all file descriptors.
     free(apsbs);
