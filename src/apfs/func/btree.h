@@ -65,6 +65,9 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
     while (true) {
         if (!(node->btn_flags & BTNODE_FIXED_KV_SIZE)) {
             fprintf(stderr, "\nNOTE: Object map B-trees don't have variable size keys and values ... do they?\n");
+            
+            free(bt_info);
+            free(node);
             return NULL;
         }
 
@@ -95,6 +98,8 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
         // it points before `toc_start` if the desired (OID, XID) pair
         // does not exist in this B-tree.
         if ((char*)toc_entry < toc_start) {
+            free(bt_info);
+            free(node);
             return NULL;
         }
 
@@ -104,6 +109,8 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
             // object with that OID exists in the B-tree.
             omap_key_t* key = key_start + toc_entry->k;
             if (key->ok_oid != oid) {
+                free(bt_info);
+                free(node);
                 return NULL;
             }
 
@@ -112,6 +119,8 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
             omap_val_t* return_val = malloc(sizeof(omap_val_t));
             memcpy(return_val, val, sizeof(omap_val_t));
             
+            free(bt_info);
+            free(node);
             return return_val;
         }
 
