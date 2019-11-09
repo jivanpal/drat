@@ -40,11 +40,6 @@
  *      This pointer must be freed when it is no longer needed.
  */
 omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid_t max_xid) {
-    // Pointers to areas of the node
-    char* toc_start = (char*)(root_node->btn_data) + root_node->btn_table_space.off;
-    char* key_start = toc_start + root_node->btn_table_space.len;
-    char* val_end   = (char*)root_node + nx_block_size - sizeof(btree_info_t);
-
     // Create a copy of the root node to use as the current node we're working with
     btree_node_phys_t* node = malloc(nx_block_size);
     if (!node) {
@@ -52,6 +47,11 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
         exit(-1);
     }
     memcpy(node, root_node, nx_block_size);
+
+    // Pointers to areas of the node
+    char* toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
+    char* key_start = toc_start + node->btn_table_space.len;
+    char* val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
 
     // We'll need access to the B-tree info after discarding our copy of the root node
     btree_info_t* bt_info = malloc(sizeof(btree_info_t));
@@ -61,13 +61,8 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
     }
     memcpy(bt_info, val_end, sizeof(btree_info_t));
 
-    // This variable will store the highest XID encountered which doesn't exceed `max_xid`.
-    xid_t target_xid;
-    
     // Descend the B-tree to find the target key–value pair
     while (true) {
-        target_xid = 0;
-
         if (!(node->btn_flags & BTNODE_FIXED_KV_SIZE)) {
             fprintf(stderr, "\nNOTE: Object map B-trees don't have variable size keys and values ... do they?\n");
             return NULL;
@@ -76,37 +71,42 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
         // TOC entries are instances of `kvoff_t`
         kvoff_t* toc_entry = toc_start;
 
-
-        // For the given OID, determine the highest XID that doesn't exceed `max_xid`
+        // Find the correct TOC entry, i.e. the last TOC entry whose:
+        // - OID doesn't exceed the given OID; or
+        // - OID matches the given OID, and XID doesn't exceed the given XID
         for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
             omap_key_t* key = key_start + toc_entry->k;
-            if (key->ok_oid == oid  &&  key->ok_xid <= max_xid) {
-                assert(key->ok_xid > target_xid);
-                target_xid = key->ok_xid;
-            }
-        }
-
-
-        // If `xid` remained unchanged, then we didn't encounter an object
-        // with the given OID; return NULL
-        if (target_xid == 0) {
-            return NULL;
-        }
-
-        // We now have the target XID, and can find the corresponding child node or object map value
-        toc_entry = toc_start;
-        for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
-            omap_key_t* key = key_start + toc_entry->k;
-
-            if (key->ok_oid == oid  &&  key->ok_xid == target_xid) {
-                // We have found the desired key–value pair; break from this
-                // for-loop, and `toc_entry` will point to the correct TOC entry
+            if (key->ok_oid > oid) {
+                toc_entry--;
                 break;
             }
+            if (key->ok_oid == oid) {
+                if (key->ok_xid > max_xid) {
+                    toc_entry--;
+                    break;
+                }
+                if (key->ok_xid == max_xid) {
+                    break;
+                }
+            }
+        }
+
+        // `toc_entry` now points to the correct TOC entry to use; or
+        // it points before `toc_start` if the desired (OID, XID) pair
+        // does not exist in this B-tree.
+        if ((char*)toc_entry < toc_start) {
+            return NULL;
         }
 
         // If this is a leaf node, return the object map value
         if (node->btn_flags & BTNODE_LEAF) {
+            // If the object doesn't have the specified OID, then no sufficient
+            // object with that OID exists in the B-tree.
+            omap_key_t* key = key_start + toc_entry->k;
+            if (key->ok_oid != oid) {
+                return NULL;
+            }
+
             omap_val_t* val = val_end - toc_entry->v;
 
             omap_val_t* return_val = malloc(sizeof(omap_val_t));
@@ -122,6 +122,15 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
             fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Failed to read block 0x%llx.\n", *child_node_addr);
             exit(-1);
         }
+
+        if (!is_cksum_valid(node)) {
+            fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Checksum of node at block 0x%llx did not validate.\n", *child_node_addr);
+            exit(-1);
+        }
+
+        toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
+        key_start = toc_start + node->btn_table_space.len;
+        val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
     }
 }
 
