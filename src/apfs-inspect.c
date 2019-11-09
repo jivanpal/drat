@@ -472,6 +472,14 @@ int main(int argc, char** argv) {
         print_btree_node_phys(fs_root_btree);
         printf("--------------------------------------------------------------------------------\n");
         
+        oid_t desired_oid = 0x1;
+        j_key_val_t* fs_rec = get_btree_virt_fs_val(fs_omap_btree, fs_root_btree, desired_oid, nxsb->nx_o.o_xid);
+        if (!fs_rec) {
+            printf("No records found with OID 0x%llx.\n", desired_oid);
+        } else {
+            print_j_key(fs_rec->data);
+        }
+        
         // TODO: RESUME HERE
 
         printf("\n");
@@ -479,6 +487,7 @@ int main(int argc, char** argv) {
         printf("--------------------------------------------------------------------------------\n");
         printf("\n");
 
+        free(fs_rec);
         free(fs_omap_btree);
         free(fs_omap);
     }
