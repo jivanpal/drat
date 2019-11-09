@@ -456,6 +456,7 @@ int main(int argc, char** argv) {
             fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_root_val->ov_paddr);
             return -1;
         }
+        free(fs_root_val);  // No longer need the block address of the file-system root.
         printf("validating ... ");
         if (!is_cksum_valid(fs_root_btree)) {
             printf("FAILED.\nGoing back to look at the previous checkpoint instead.\n");
