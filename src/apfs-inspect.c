@@ -493,6 +493,9 @@ int main(int argc, char** argv) {
         printf("\n");
 
         oid_t fs_oid = 0x1;
+        printf("Search results for file-system records with Virtual OID 0x%llx:\n", fs_oid);
+        printf("--------------------------------------------------------------------------------\n");
+
         j_rec_t** fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, nxsb->nx_o.o_xid);
         if (!fs_records) {
             printf("No records found with OID 0x%llx.\n", fs_oid);
@@ -501,7 +504,6 @@ int main(int argc, char** argv) {
 
         size_t num_records = 0;
 
-        printf("--------------------------------------------------------------------------------\n");
         for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
             num_records++;
             j_rec_t* fs_rec = *fs_rec_cursor;
