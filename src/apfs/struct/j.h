@@ -71,6 +71,23 @@ typedef struct {
     uint8_t     name[0];
 } __attribute__((packed))   j_drec_key_t;
 
+/*
+ * NOTE: The spec says that if a file-system record is of type
+ * `APFS_TYPE_DIR_REC`, then the record's key is an instance of `j_drec_key_t`.
+ * However, the type `j_drec_hashed_key_t` (seen below) is defined in the spec
+ * but not used anywhere in the spec; and upon closer inspection, the keys I
+ * have encountered in practice exclusively appear to be instances of this type.
+ * 
+ * As such, either:
+ * (a) `j_drec_key_t` has been silently deprecated as of 2019-10-31 and replaced
+ *      by `j_drec_hashed_key_t`; or
+ * (b) the specific type (`j_drec_key_t` vs. `j_drec_hashed_key_t`) must be
+ *      determined by some convoluted means (i.e. case analysis of the data
+ *      contained in the key).
+ * 
+ * We assume that (a) is true, i.e. we exclusively use `j_drec_hashed_key_t`.
+ */
+
 /** `j_drec_hashed_key_t` **/
 
 typedef struct {
@@ -80,7 +97,7 @@ typedef struct {
 } __attribute__((packed))   j_drec_hashed_key_t;
 
 #define J_DREC_LEN_MASK     0x000003ff
-#define J_DREC_HASH_MASK    0xfffff400
+#define J_DREC_HASH_MASK    0xfffffc00  // Spec incorrectly says `0xfffff400`
 #define J_DREC_HASH_SHIFT   10
 
 /** `j_drec_val_t` **/

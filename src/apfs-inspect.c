@@ -14,11 +14,17 @@
 #include "apfs/struct/omap.h"
 #include "apfs/struct/fs.h"
 
+#include "apfs/struct/j.h"
+#include "apfs/struct/dstream.h"
+#include "apfs/struct/sibling.h"
+#include "apfs/struct/snap.h"
+
 #include "apfs/string/object.h"
 #include "apfs/string/nx.h"
 #include "apfs/string/omap.h"
 #include "apfs/string/btree.h"
 #include "apfs/string/fs.h"
+#include "apfs/string/j.h"
 
 /**
  * Print usage info for this program.
@@ -445,7 +451,7 @@ int main(int argc, char** argv) {
             return -1;
         }
         printf("corresponding block address is 0x%llx.\n", fs_root_val->ov_paddr);
-        
+
         printf("Reading ... ");
         btree_node_phys_t* fs_root_btree = malloc(nx_block_size);
         if (!fs_root_btree) {
@@ -471,13 +477,83 @@ int main(int argc, char** argv) {
         printf("--------------------------------------------------------------------------------\n");
         print_btree_node_phys(fs_root_btree);
         printf("--------------------------------------------------------------------------------\n");
-        
+        printf("\n");
+
         oid_t desired_oid = 0x1;
         j_key_val_t* fs_rec = get_btree_virt_fs_val(fs_omap_btree, fs_root_btree, desired_oid, nxsb->nx_o.o_xid);
         if (!fs_rec) {
             printf("No records found with OID 0x%llx.\n", desired_oid);
         } else {
-            print_j_key(fs_rec->data);
+            j_key_t* hdr = fs_rec->data;
+            printf("Key size:           %u bytes\n",    fs_rec->key_len);
+            printf("Value size:         %u bytes\n",    fs_rec->val_len);
+            printf("ID and type field:  0x%016llx\n",   hdr->obj_id_and_type);
+            printf("\n");
+            
+            switch ( (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT ) {
+                // NOTE: Need to enclose each case in a block `{}` since the
+                // names `key` and `val` are potentially declared multiple times
+                // in this switch-statement (though in practice it is not a
+                // concern since every `case` here ends in a `break`.)
+                case APFS_TYPE_SNAP_METADATA: {
+                    j_snap_metadata_key_t* key = fs_rec->data;
+                    j_snap_metadata_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_EXTENT: {
+                    j_phys_ext_key_t* key = fs_rec->data;
+                    j_phys_ext_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_INODE: {
+                    j_inode_key_t* key = fs_rec->data;
+                    j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_XATTR: {
+                    j_xattr_key_t* key = fs_rec->data;
+                    j_xattr_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_SIBLING_LINK: {
+                    j_sibling_key_t* key = fs_rec->data;
+                    j_sibling_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_DSTREAM_ID: {
+                    j_dstream_id_key_t* key = fs_rec->data;
+                    j_dstream_id_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_CRYPTO_STATE: {
+                    j_crypto_key_t* key = fs_rec->data;
+                    j_crypto_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_FILE_EXTENT: {
+                    j_file_extent_key_t* key = fs_rec->data;
+                    j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_DIR_REC: {
+                    // Spec inorrectly says to use `j_drec_key_t`; see NOTE in `apfs/struct/j.h`
+                    j_drec_hashed_key_t*    key = fs_rec->data;
+                    j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
+                    print_j_drec_hashed_key(key);
+                    print_j_drec_val(val, fs_rec->val_len == sizeof(j_drec_val_t));
+                } break;
+                case APFS_TYPE_DIR_STATS: {
+                    j_dir_stats_key_t* key = fs_rec->data;
+                    // Spec incorrectly says to use `j_drec_val_t`; we use `j_dir_stats_val_t`
+                    j_dir_stats_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_SNAP_NAME: {
+                    j_snap_name_key_t* key = fs_rec->data;
+                    j_snap_name_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_SIBLING_MAP: {
+                    j_sibling_map_key_t* key = fs_rec->data;
+                    j_sibling_map_val_t* val = fs_rec->data + fs_rec->key_len;
+                } break;
+                case APFS_TYPE_INVALID:
+                    fprintf(stderr, "- A record with OID 0x%llx has an invalid type.\n", desired_oid);
+                    break;
+                default:
+                    fprintf(stderr, "- A record with OID 0x%llx has an unknown type.\n", desired_oid);
+                    break;
+            }
         }
         
         // TODO: RESUME HERE
