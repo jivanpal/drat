@@ -331,7 +331,7 @@ char* drec_val_to_type_string(j_drec_val_t* val) {
 }
 
 void print_j_drec_val(j_drec_val_t* val, bool has_xfields) {
-    printf("Diretcory Virtual OID:  0x%llx\n", val->file_id);
+    printf("Directory Virtual OID:  0x%llx\n", val->file_id);
 
     // timestamp converted from nanoseconds since
     // Unix epoch to seconds since Unix epoch.
