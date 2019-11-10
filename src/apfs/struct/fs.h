@@ -42,7 +42,6 @@ typedef struct {
     uint64_t    apfs_fs_quota_block_count;
     uint64_t    apfs_fs_alloc_count;
     
-    // TODO: define `wrapped_meta_crypto_state_t` :: crypto.h ?
     wrapped_meta_crypto_state_t     apfs_meta_crypto;
 
     uint32_t    apfs_root_tree_type;
