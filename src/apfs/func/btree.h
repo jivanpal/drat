@@ -66,7 +66,7 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
     // Descend the B-tree to find the target key–value pair
     while (true) {
         if (!(node->btn_flags & BTNODE_FIXED_KV_SIZE)) {
-            fprintf(stderr, "\nNOTE: Object map B-trees don't have variable size keys and values ... do they?\n");
+            fprintf(stderr, "\nget_btree_phys_omap_val: Object map B-trees don't have variable size keys and values ... do they?\n");
             
             free(bt_info);
             free(node);
