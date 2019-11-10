@@ -479,17 +479,26 @@ int main(int argc, char** argv) {
         printf("--------------------------------------------------------------------------------\n");
         printf("\n");
 
-        oid_t desired_oid = 0x1;
-        j_key_val_t* fs_rec = get_btree_virt_fs_val(fs_omap_btree, fs_root_btree, desired_oid, nxsb->nx_o.o_xid);
-        if (!fs_rec) {
-            printf("No records found with OID 0x%llx.\n", desired_oid);
-        } else {
+        oid_t fs_oid = 0x1;
+        j_rec_t** fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, nxsb->nx_o.o_xid);
+        if (!fs_records) {
+            printf("No records found with OID 0x%llx.\n", fs_oid);
+            return -1;
+        }
+
+        size_t num_records = 0;
+
+        printf("--------------------------------------------------------------------------------\n");
+        for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
+            num_records++;
+            j_rec_t* fs_rec = *fs_rec_cursor;
+
             j_key_t* hdr = fs_rec->data;
             printf("Key size:           %u bytes\n",    fs_rec->key_len);
             printf("Value size:         %u bytes\n",    fs_rec->val_len);
             printf("ID and type field:  0x%016llx\n",   hdr->obj_id_and_type);
             printf("\n");
-            
+
             switch ( (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT ) {
                 // NOTE: Need to enclose each case in a block `{}` since the
                 // names `key` and `val` are potentially declared multiple times
@@ -548,13 +557,17 @@ int main(int argc, char** argv) {
                     j_sibling_map_val_t* val = fs_rec->data + fs_rec->key_len;
                 } break;
                 case APFS_TYPE_INVALID:
-                    fprintf(stderr, "- A record with OID 0x%llx has an invalid type.\n", desired_oid);
+                    fprintf(stderr, "- A record with OID 0x%llx has an invalid type.\n", fs_oid);
                     break;
                 default:
-                    fprintf(stderr, "- A record with OID 0x%llx has an unknown type.\n", desired_oid);
+                    fprintf(stderr, "- A record with OID 0x%llx has an unknown type.\n", fs_oid);
                     break;
             }
+
+            printf("--------------------------------------------------------------------------------\n");
         }
+
+        printf("- Found %lu records with Virtual OID 0x%llx.\n", num_records, fs_oid);
         
         // TODO: RESUME HERE
 
@@ -563,7 +576,7 @@ int main(int argc, char** argv) {
         printf("--------------------------------------------------------------------------------\n");
         printf("\n");
 
-        free(fs_rec);
+        free_j_rec_array(fs_records);
         free(fs_omap_btree);
         free(fs_omap);
     }
