@@ -119,7 +119,11 @@ int main(int argc, char** argv) {
     }
 
     printf("Locating the most recent well-formed container superblock in the checkpoint descriptor area:\n");
+    
     uint32_t i_latest_nx = 0;
+    xid_t xid_latest_nx = 0;
+
+    xid_t max_xid = ~0;     // `~0` is the highest possible XID
 
     for (uint32_t i = 0; i < xp_desc_blocks; i++) {
         if (!is_cksum_valid(xp_desc[i])) {
@@ -133,13 +137,22 @@ int main(int argc, char** argv) {
                 continue;
             }
 
-            if ( ((nx_superblock_t*)xp_desc[i])->nx_o.o_xid  >  ((nx_superblock_t*)xp_desc[i_latest_nx])->nx_o.o_xid ) {
+            if (
+                    ( ((nx_superblock_t*)xp_desc[i])->nx_o.o_xid  >  xid_latest_nx )
+                    && ( ((nx_superblock_t*)xp_desc[i])->nx_o.o_xid  <= max_xid  )
+            ) {
                 i_latest_nx = i;
+                xid_latest_nx = ((nx_superblock_t*)xp_desc[i])->nx_o.o_xid;
             }
         } else if (!is_checkpoint_map_phys(xp_desc[i])) {
             printf("- !! APFS ERROR !! Block at index %u within this area is not a container superblock or checkpoint map. Skipping it.\n", i);
             continue;
         }
+    }
+
+    if (xid_latest_nx == 0) {
+        printf("No container superblock with an XID that doesn't exceed 0x%llx exists in the checkpoint descriptor area.\n", max_xid);
+        return 0;
     }
 
     // Don't need a copy of the block 0x0 NXSB which is stored in `nxsb`
