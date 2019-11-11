@@ -49,14 +49,14 @@ bool is_checkpoint_map_phys(obj_phys_t* obj) {
  * Determine whether a given APFS object is the root node of a B-tree.
  */
 bool is_btree_node_phys_root(obj_phys_t* obj) {
-    return (obj->o_type & OBJECT_TYPE_BTREE);
+    return (obj->o_type & OBJECT_TYPE_MASK) == OBJECT_TYPE_BTREE;
 }
 
 /**
  * Determine whether a given APFS object is a non-root node of a B-tree.
  */
 bool is_btree_node_phys_non_root(obj_phys_t* obj) {
-    return (obj->o_type & OBJECT_TYPE_BTREE_NODE);
+    return (obj->o_type & OBJECT_TYPE_MASK) == OBJECT_TYPE_BTREE_NODE;
 }
 
 /**
