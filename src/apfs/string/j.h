@@ -300,9 +300,9 @@ void print_j_drec_hashed_key(j_drec_hashed_key_t* key) {
     uint32_t name_hash = (key->name_len_and_hash & J_DREC_HASH_MASK) >> J_DREC_HASH_SHIFT;
     // TODO: validate the hash?
     
-    printf("Directory name length:  %u UTF-8 bytes (including terminating NULL (U+0000) byte)\n",  name_len);
-    printf("Directory name hash:    0x%06x\n",          name_hash);
-    printf("Directory name:         ### %s ####\n",     key->name);
+    printf("Dentry name length:     %u UTF-8 bytes (including terminating NULL (U+0000) byte)\n",  name_len);
+    printf("Dentry name hash:       0x%06x\n",          name_hash);
+    printf("Dentry name:            ### %s ####\n",     key->name);
 }
 
 char* drec_val_to_type_string(j_drec_val_t* val) {
@@ -331,7 +331,7 @@ char* drec_val_to_type_string(j_drec_val_t* val) {
 }
 
 void print_j_drec_val(j_drec_val_t* val, bool has_xfields) {
-    printf("Directory Virtual OID:  0x%llx\n", val->file_id);
+    printf("Dentry Virtual OID:     0x%llx\n", val->file_id);
 
     // timestamp converted from nanoseconds since
     // Unix epoch to seconds since Unix epoch.
