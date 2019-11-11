@@ -12,7 +12,7 @@ OBJDIR=obj
 BINDIR=bin
 
 ### Target paths ###
-TARGETS		:= apfs-read apfs-inspect
+TARGETS		:= apfs-read apfs-inspect apfs-explore-omap-tree apfs-explore-fs-tree
 SOURCES		:= $(wildcard $(SRCDIR)/*.c)
 HEADERS		:= $(wildcard $(SRCDIR)/*.h) $(wildcard $(SRCDIR)/*/*.h) $(wildcard $(SRCDIR)/*/*/*.h)
 OBJECTS		:= $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
