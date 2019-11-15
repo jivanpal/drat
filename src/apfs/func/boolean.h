@@ -67,4 +67,12 @@ bool is_btree_node_phys(obj_phys_t* obj) {
     return is_btree_node_phys_root(obj) || is_btree_node_phys_non_root(obj);
 }
 
+/**
+ * Determine whether a given APFS object has the subtype corresponding to a
+ * file-system records tree.
+ */
+bool is_fs_tree(obj_phys_t* obj) {
+    return obj->o_subtype == OBJECT_TYPE_FSTREE;
+}
+
 #endif // APFS_FUNC_BOOLEAN_H

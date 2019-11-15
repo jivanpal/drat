@@ -330,6 +330,31 @@ char* drec_val_to_type_string(j_drec_val_t* val) {
     }
 }
 
+char* drec_val_to_short_type_string(j_drec_val_t* val) {
+    switch (val->flags & DREC_TYPE_MASK) {
+        case DT_UNKNOWN:
+            return "Unknown";
+        case DT_FIFO:
+            return "FIFO---";
+        case DT_CHR:
+            return "ChrSpcl";
+        case DT_DIR:
+            return "Dirctry";
+        case DT_BLK:
+            return "BlkSpcl";
+        case DT_REG:
+            return "RegFile";
+        case DT_LNK:
+            return "Symlink";
+        case DT_SOCK:
+            return "Socket-";
+        case DT_WHT:
+            return "Whteout";
+        default:
+            return "Unrecog";
+    }
+}
+
 void print_j_drec_val(j_drec_val_t* val, bool has_xfields) {
     printf("Dentry Virtual OID:     0x%llx\n", val->file_id);
 
