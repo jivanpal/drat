@@ -34,6 +34,7 @@ void print_usage(char* program_name) {
 }
 
 int main(int argc, char** argv) {
+    setbuf(stdout, NULL);
     printf("\n");
 
     // Extrapolate CLI arguments, exit if invalid
