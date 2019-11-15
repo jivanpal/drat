@@ -157,12 +157,27 @@ int main(int argc, char** argv) {
 
         kvloc_t* toc_entry = toc_start;
         for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
-            j_key_t* key = key_start + toc_entry->k.off;
-            uint8_t type = (key->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT;
+            j_key_t* hdr = key_start + toc_entry->k.off;
+            uint8_t type = (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT;
+
             printf(
-                "- %3u:  %#15llx = Virtual OID   ||   %2u = %#1x = Type\n",
-                i, key->obj_id_and_type & OBJ_ID_MASK, type, type
+                "- %3u:  %#15llx = Virtual OID   ||   %2u = %#1x = Type",
+                i, hdr->obj_id_and_type & OBJ_ID_MASK, type, type
             );
+
+            if (node->btn_flags & BTNODE_LEAF) {
+                if ( (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT  ==  APFS_TYPE_DIR_REC ) {
+                    j_drec_hashed_key_t* key = hdr;
+                    j_drec_val_t* val = val_end - toc_entry->v.off;
+
+                    printf(" = `dentry`   ||   Dentry Virtual OID = %#16llx   ||   Dentry name = %s", val->file_id, key->name);
+                }
+            } else {
+                oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
+                printf("   ||   Target child node Virtual OID = %#16llx", *child_node_virt_oid);
+            }
+
+            printf("\n");
         }
         
         uint32_t entry_index;
