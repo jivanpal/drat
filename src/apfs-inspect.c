@@ -392,7 +392,7 @@ int main(int argc, char** argv) {
     printf("--------------------------------------------------------------------------------\n");
     printf("--------------------------------------------------------------------------------\n");
     printf("\n");
-    for (uint32_t i = 0; i < 1 /* TODO: num_file_systems */; i++) {
+    for (uint32_t i = 0; i < num_file_systems; i++) {
         apfs_superblock_t* apsb = apsbs + i;
         printf("Simulating a mount of volume %u (%s).\n", i, apsb->apfs_volname);
         printf("\n");
