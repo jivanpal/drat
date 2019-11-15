@@ -129,15 +129,18 @@ int main(int argc, char** argv) {
     // Pointers to areas of the node
     char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
     char* key_start = toc_start + node->btn_table_space.len;
-    char* val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
-
-    // Copy the B-tree info somewhere else for easy referencing
-    btree_info_t* bt_info = malloc(sizeof(btree_info_t));
-    if (!bt_info) {
-        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `bt_info`.\n");
-        return -1;
+    char* val_end   = (char*)node + nx_block_size;
+    if (node->btn_flags & BTNODE_ROOT) {
+        val_end -= sizeof(btree_info_t);
     }
-    memcpy(bt_info, val_end, sizeof(btree_info_t));
+
+    // // Copy the B-tree info somewhere else for easy referencing
+    // btree_info_t* bt_info = malloc(sizeof(btree_info_t));
+    // if (!bt_info) {
+    //     fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `bt_info`.\n");
+    //     return -1;
+    // }
+    // memcpy(bt_info, val_end, sizeof(btree_info_t));
 
     // Descend the tree
     while (true) {
