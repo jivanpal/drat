@@ -276,7 +276,7 @@ int main(int argc, char** argv) {
     printf("Loading the container object map ... ");
     omap_phys_t* nx_omap = malloc(nx_block_size);
     if (read_blocks(nx_omap, nxsb->nx_omap_oid, 1) != 1) {
-        printf("\nABORT: Could not allocate sufficient memory for `nx_omap`.\n");
+        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `nx_omap`.\n");
         return -1;
     }
     printf("OK.\n");
