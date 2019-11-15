@@ -274,13 +274,15 @@ int main(int argc, char** argv) {
 
         // Else, read the corresponding child node into `node` and loop
         oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
-        omap_val_t* child_node_omap_val = get_btree_phys_omap_val(omap_root_node, *child_node_virt_oid, fs_root_node->btn_o.o_xid);
+        printf("Child node has Virtual OID 0x%llx.\n", *child_node_virt_oid);
+        
+        omap_val_t* child_node_omap_val = get_btree_phys_omap_val(omap_root_node, *child_node_virt_oid, (xid_t)(~0) /*fs_root_node->btn_o.o_xid*/);
         if (!child_node_omap_val) {
             printf("Need to descend to node with Virtual OID 0x%llx, but the object map lists no objects with this Virtual OID.\n", *child_node_virt_oid);
             return 0;
         }
 
-        printf("Child node resides at adress 0x%llx. Reading ... ", child_node_omap_val->ov_paddr);
+        printf("The object map resolved this Virtual OID to block address 0x%llx. Reading ... ", child_node_omap_val->ov_paddr);
         if (read_blocks(node, child_node_omap_val->ov_paddr, 1) != 1) {
             fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", child_node_omap_val->ov_paddr);
             return -1;
