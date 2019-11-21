@@ -21,6 +21,7 @@
 #include "apfs/string/btree.h"
 #include "apfs/string/omap.h"
 #include "apfs/string/fs.h"
+#include "apfs/string/j.h"
 
 /**
  * Print usage info for this program.
@@ -178,6 +179,26 @@ int main(int argc, char** argv) {
             } else {
                 oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
                 printf("   ||   Target child node Virtual OID = %#16llx", *child_node_virt_oid);
+                omap_val_t* child_node_omap_val = get_btree_phys_omap_val( omap_root_node, *child_node_virt_oid, (xid_t)(~0) );
+                if (!child_node_omap_val) {
+                    printf("  ||  UNRESOLVABLE");
+                } else {
+                    btree_node_phys_t* child_node = malloc(nx_block_size);
+                    if (!child_node) {
+                        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `child_node`.\n");
+                        return -1;
+                    }
+                    if (read_blocks(child_node, child_node_omap_val->ov_paddr, 1) != 1) {
+                        fprintf(stderr, "\nABORT: Failed to read block %#llx.\n", child_node_omap_val->ov_paddr);
+                        return -1;
+                    }
+
+                    if (*((uint64_t*)child_node) == 0) {
+                        printf("  ||  ZEROED OUT");
+                    }
+
+                    free (child_node);
+                }
             }
 
             printf("\n");
@@ -193,7 +214,7 @@ int main(int argc, char** argv) {
 
         toc_entry = (kvloc_t*)toc_start + entry_index;
 
-        // If this is a leaf node, output the object map value
+        // If this is a leaf node, output the file-system record details
         if (node->btn_flags & BTNODE_LEAF) {
             j_rec_t* fs_rec = malloc(sizeof(j_rec_t) + toc_entry->k.len + toc_entry->v.len);
             if (!fs_rec) {
@@ -258,6 +279,8 @@ int main(int argc, char** argv) {
                 case APFS_TYPE_FILE_EXTENT: {
                     j_file_extent_key_t* key = fs_rec->data;
                     j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
+                    print_j_file_extent_key(key);
+                    print_j_file_extent_val(val);
                 } break;
                 case APFS_TYPE_DIR_REC: {
                     // Spec inorrectly says to use `j_drec_key_t`; see NOTE in `apfs/struct/j.h`
@@ -316,6 +339,8 @@ int main(int argc, char** argv) {
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
         val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
+
+        free(child_node_omap_val);
     }
     
     return 0;

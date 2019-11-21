@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 
 #include "../struct/j.h"
+#include "../struct/dstream.h"
 #include "../struct/xf.h"
 
 char* j_key_type_to_string(uint8_t j_key_type) {
@@ -288,6 +289,20 @@ void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {
     printf("%u\n", ((xf_blob_t*)(val->xfields))->xf_num_exts);
     
     // TODO: Print actual details of extended fields/attributes
+}
+
+void print_j_file_extent_key(j_file_extent_key_t* key) {
+    print_j_key(key);   // `key` equals `&(key->hdr)`
+    printf("\n");
+    printf("Extent offset within file:  %#llx\n", key->logical_addr);
+}
+
+void print_j_file_extent_val(j_file_extent_val_t* val) {
+    // TODO: Print flags
+    // TODO: Print crypto ID
+
+    printf("Length (bytes): %llu\n",    val->len_and_flags & J_FILE_EXTENT_LEN_MASK);
+    printf("Start block:    %#llx\n",   val->phys_block_num);
 }
 
 void print_j_drec_hashed_key(j_drec_hashed_key_t* key) {
