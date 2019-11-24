@@ -245,7 +245,7 @@ char* get_o_subtype_string(uint32_t o_subtype) {
 
     // Set `result_string` to an empty string,
     // so that `strlen(result_string) == 0`.
-    result_string = '\0';
+    *result_string = '\0';
 
     // This string is a legal `sprintf()` format string.
     char* default_string = "Unknown subtype (0x%08x) --- perhaps this subtype was introduced in a later version of APFS than that published on 2019-02-27.";
