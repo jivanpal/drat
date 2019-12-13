@@ -19,6 +19,7 @@ TARGETS		:= \
 	apfs-explore-fs-tree \
 	apfs-search \
 	apfs-search-last-btree-node \
+	apfs-resolver \
 	apfs-list \
 	apfs-recover \
 	apfs-list-raw \
