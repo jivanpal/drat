@@ -66,7 +66,7 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
     // Descend the B-tree to find the target key–value pair
     while (true) {
         if (!(node->btn_flags & BTNODE_FIXED_KV_SIZE)) {
-            fprintf(stderr, "\nget_btree_phys_omap_val: Object map B-trees don't have variable size keys and values ... do they?\n");
+            // fprintf(stderr, "\nget_btree_phys_omap_val: Object map B-trees don't have variable size keys and values ... do they?\n");
             
             free(bt_info);
             free(node);
@@ -86,24 +86,33 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
                 break;
             }
             if (key->ok_oid == oid) {
-                if (key->ok_xid > max_xid) {
-                    toc_entry--;
-                    break;
-                }
-                if (key->ok_xid == max_xid) {
-                    break;
-                }
+                // if (key->ok_xid > max_xid) {
+                //     toc_entry--;
+                //     break;
+                // }
+                // if (key->ok_xid == max_xid) {
+                //     break;
+                // }
+                break;
             }
         }
 
-        // `toc_entry` now points to the correct TOC entry to use; or
-        // it points before `toc_start` if the desired (OID, XID) pair
-        // does not exist in this B-tree.
+        // One of the following is now true about `toc_entry`:
+        // (a) it points to the correct entry to descend.
+        // (b) it points before `toc_start` if no records with the desired OID
+        //      exist in this B-tree.
+        // (c) it points directly after the last TOC entry if we should descend
+        //      the last node.
         if ((char*)toc_entry < toc_start) {
             free(bt_info);
             free(node);
             return NULL;
         }
+        if (toc_entry - (kvoff_t*)toc_start == node->btn_nkeys) {
+            toc_entry--;
+        }
+
+        // fprintf(stderr, "\n- get_btree_phys_omap_val: Picked entry %lu\n", toc_entry - (kvoff_t*)toc_start);
 
         // If this is a leaf node, return the object map value
         if (node->btn_flags & BTNODE_LEAF) {
@@ -138,10 +147,10 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
             exit(-1);
         }
 
-        if (!is_cksum_valid(node)) {
-            fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Checksum of node at block 0x%llx did not validate.\n", *child_node_addr);
-            exit(-1);
-        }
+        // if (!is_cksum_valid(node)) {
+        //     fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Checksum of node at block 0x%llx did not validate.\n", *child_node_addr);
+        //     exit(-1);
+        // }
 
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
@@ -229,6 +238,7 @@ void free_j_rec_array(j_rec_t** records_array) {
  *      calls to `malloc()` and `realloc()`.
  */
 j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_t* vol_fs_root_node, oid_t oid, xid_t max_xid) {
+
     /**
      * `desc_path` describes the path we have taken to descend down the file-
      * system root tree. The value of `desc_path[i]` is the index of the key
@@ -330,22 +340,37 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
             }
         }
 
-        // `toc_entry` now points to the correct entry to descend; or
-        // it points before `toc_start` if no records with the
-        // desired OID exist in this B-tree.
+        /**
+         * One of the following is now true about `toc_entry`:
+         * (a) it points to the correct entry to descend.
+         * (b) it points before `toc_start` if no records with the desired OID
+         *      exist in this B-tree.
+         * (c) it points directly after the last TOC entry; in which case:
+         *      (i)  if this is a leaf node, we looked into it because the first
+         *              entry of the next node has the desired OID. As such,
+         *              don't adjust `desc_path`; it's logical value already
+         *              targets the next node, and this iwll be handled by the
+         *              next while loop.
+         *      (ii) if this is a non-leaf node, we should descend the last 
+         *              entry.
+         */
         if ((char*)toc_entry < toc_start) {
             free(bt_info);
             free(node);
             free_j_rec_array(records);
             return NULL;
         }
-
         // If this is a leaf node, then it contains the first record with the
         // given OID, and `desc_path` desribes the path taken to reach this
-        // node. Break from the while-loop so that we can walk along the tree
-        // to get the rest of the records with the given OID.
+        // node (unless it describes an out of bounds path, as described in
+        // case (c)(i) above). Break from the while-loop so that we can walk
+        // along the tree to get the rest of the records with the given OID.
         if (node->btn_flags & BTNODE_LEAF) {
             break;
+        }
+        if (toc_entry - (kvloc_t*)toc_start == node->btn_nkeys) {
+            desc_path[i]--;
+            toc_entry--;
         }
 
         // Else, read the corresponding child node into memory and loop
@@ -392,6 +417,49 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
      * shorter
      */
     while (true) {
+        // TODO: DEBUG --- REMOVE
+        // fprintf(stderr, "(");
+        // for (i = 0; i < vol_fs_root_node->btn_level; i++) {
+        //     fprintf(stderr, "%u, ", desc_path[i]);
+        // }
+        // fprintf(stderr, "%u)\n", desc_path[i]);
+        //
+        // if (vol_fs_root_node->btn_level == 3) {
+
+        //     if ( desc_path[0] == 5
+        //         && desc_path[1] == 12
+        //         && desc_path[2] == 63
+        //         // && desc_path[3] == 0
+        //     ) {
+        //         fprintf(stderr, "Skip!");
+        //         desc_path[2]++;
+        //         desc_path[3] = 0;
+        //         continue;
+        //     }
+
+        //     if ( desc_path[0] == 5
+        //         && desc_path[1] == 12
+        //         && desc_path[2] == 77
+        //         // && desc_path[3] == 0
+        //     ) {
+        //         fprintf(stderr, "Skip!");
+        //         desc_path[2]++;
+        //         desc_path[3] = 0;
+        //         continue;
+        //     }
+
+        //     if ( desc_path[0] == 5
+        //         && desc_path[1] == 12
+        //         && desc_path[2] == 78
+        //         // && desc_path[3] == 0
+        //     ) {
+        //         fprintf(stderr, "Skip!");
+        //         desc_path[2]++;
+        //         desc_path[3] = 0;
+        //         continue;
+        //     }
+        // }
+
         // Reset current node and pointers to the root node
         memcpy(node, vol_fs_root_node, nx_block_size);
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;

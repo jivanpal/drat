@@ -1,6 +1,6 @@
 ### Compiler/linker definitions ###
 FLAGS=-std=c99 -Werror -Wall -Wextra -Wno-incompatible-pointer-types -Wno-multichar \
--Wno-unused-variable
+-Wno-unused-variable -Wno-unused-parameter
 CC=gcc
 CFLAGS=$(FLAGS)
 LD=gcc
