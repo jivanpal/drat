@@ -19,7 +19,9 @@ TARGETS		:= \
 	apfs-explore-fs-tree \
 	apfs-search-last-btree-node \
 	apfs-list \
-	apfs-recover
+	apfs-recover \
+	apfs-list-raw \
+	apfs-recover-raw
 SOURCES		:= $(wildcard $(SRCDIR)/*.c)
 HEADERS		:= $(wildcard $(SRCDIR)/*.h) $(wildcard $(SRCDIR)/*/*.h) $(wildcard $(SRCDIR)/*/*/*.h)
 OBJECTS		:= $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
