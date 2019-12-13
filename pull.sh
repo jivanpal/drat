@@ -21,6 +21,7 @@ while IFS= read -r filepath; do
 
     # Don't overwrite existing files
     if [ -f "$backup_path" ] ; then
+        echo "ALREADY EXISTS: $filepath"
         continue
     fi
     
