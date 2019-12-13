@@ -112,10 +112,53 @@ int main(int argc, char** argv) {
 
         printf("\nNode has %u entries, as follows:\n", node->btn_nkeys);
         kvoff_t* toc_entry = toc_start;
-        for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
-            omap_key_t* key = key_start + toc_entry->k;
-            printf("- %3u:  %#16llx = OID   ||   %#16llx = XID\n", i, key->ok_oid, key->ok_xid);
-        }
+        // Print mapped block's details if explroing a leaf node
+        if (node->btn_flags & BTNODE_LEAF) {
+            obj_phys_t* block = malloc(nx_block_size);
+            if (!block) {
+                fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `block`.\n");
+                return -1;
+            }
+            for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
+                omap_key_t* key = key_start + toc_entry->k;
+                omap_val_t* val = val_end   - toc_entry->v;
+                if (read_blocks(block, val->ov_paddr, 1) != 1) {
+                    fprintf(stderr, "\nABORT: read_blocks: Error reading block %#llx.\n", val->ov_paddr);
+                    return -1;
+                }
+
+                printf(
+                    "- %3u:"
+                    "  OID = %#9llx"
+                    "  ||  XID = %#9llx"
+                    "  ||  Target block = %#9llx"
+                    "  ||  Target's actual OID = %#9llx (%s)"
+                    "  ||  Target's actual XID = %#9llx (%s)\n", 
+                    
+                    i,
+                    key->ok_oid,
+                    key->ok_xid,
+                    val->ov_paddr,
+                    block->o_oid,   (block->o_oid == key->ok_oid ? "YES  " : "   NO"),
+                    block->o_xid,   (block->o_xid == key->ok_xid ? "YES  " : "   NO")
+                );
+            }
+            free(block);
+        } else {
+            for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
+                omap_key_t* key = key_start + toc_entry->k;
+
+                printf(
+                    "- %3u:"
+                    "  OID = %#9llx"
+                    "  ||  XID = %#9llx\n",
+                    
+                    i,
+                    key->ok_oid,
+                    key->ok_xid
+                );
+            }
+        } 
         
         uint32_t entry_index;
         printf("Choose an entry [0-%u]: ", node->btn_nkeys - 1);
