@@ -20,6 +20,7 @@ TARGETS		:= \
 	apfs-search \
 	apfs-search-last-btree-node \
 	apfs-resolver \
+	apfs-modify \
 	apfs-list \
 	apfs-recover \
 	apfs-list-raw \

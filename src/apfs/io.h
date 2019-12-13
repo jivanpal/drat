@@ -116,4 +116,51 @@ size_t read_blocks(void* buffer, long start_block, size_t num_blocks) {
     return num_blocks_read;
 }
 
+/**
+ * Write given data to a given address of the open file.
+ * 
+ * - buffer:        The location where the data that will be written is stored.
+ * 
+ * - start_block:   APFS physical block address to start writing to.
+ * 
+ * - num_blocks:    The number of APFS physical blocks to write from `buffer`
+ *                  to disk.
+ * 
+ * RETURN VALUE:    On success, the return value is equal to `num_blocks`.
+ *                  On failure, the return value is less than `num_blocks`,
+ *                  and equals the number of blocks that were successfully
+ *                  written before an error occurred.
+ */
+size_t write_blocks(void* buffer, long start_block, size_t num_blocks) {
+    if (fseek(nx, start_block * nx_block_size, SEEK_SET) == -1) {
+        // An error occurred.
+        printf("FAILED: read_blocks: ");
+        switch (errno) {
+            case EBADF:
+                printf("The file `%s` cannot be seeked through.\n", nx_path);
+                break;
+            case EINVAL:
+                printf("The specified starting block address, 0x%lx, is invalid, as it lies outside of the file `%s`.\n", start_block, nx_path);
+                break;
+            case EOVERFLOW:
+                printf("The specified starting block address, 0x%lx, exceeds %lu bits in length, which would result in an overflow.\n", start_block, 8 * sizeof(long));
+                break;
+            case ESPIPE:
+                printf("The data stream associated with the file `%s` is a pipe or FIFO, and thus cannot be seeked through.\n", nx_path);
+                break;
+            default:
+                printf("Unknown error.\n");
+                break;
+        }
+        return -1;
+    }
+
+    size_t num_blocks_written = fwrite(buffer, nx_block_size, num_blocks, nx);
+    if (num_blocks_written != num_blocks) {
+        // A write error occured
+        printf("write_blocks: An error occurred after writing %lu blocks.\n", num_blocks_written);
+    }
+    return num_blocks_written;
+}
+
 #endif // APFS_IO_H
