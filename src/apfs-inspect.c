@@ -493,99 +493,157 @@ int main(int argc, char** argv) {
         printf("--------------------------------------------------------------------------------\n");
         printf("\n");
 
-        oid_t fs_oid = 0x1;
-        printf("Search results for file-system records with Virtual OID 0x%llx:\n", fs_oid);
-        printf("--------------------------------------------------------------------------------\n");
+        size_t NUM_QUERIES = 6;
+        oid_t fs_oid_queries[] = {
+            0xa64b2,
+            0xa64b3,
+            0xd491a,
+            0xd491d,
+            0xd491e,
+            0xd491f,
+        };
 
-        j_rec_t** fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, nxsb->nx_o.o_xid);
-        if (!fs_records) {
-            printf("No records found with OID 0x%llx.\n", fs_oid);
-            return -1;
-        }
+        for (size_t j = 0; j < NUM_QUERIES; j++) {
+            oid_t fs_oid = fs_oid_queries[j];
 
-        size_t num_records = 0;
+            // printf("Search results for file-system records with Virtual OID 0x%llx:\n", fs_oid);
+            // printf("--------------------------------------------------------------------------------\n");
 
-        for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
-            num_records++;
-            j_rec_t* fs_rec = *fs_rec_cursor;
+            printf("\n%#llx:\n", fs_oid);
 
-            j_key_t* hdr = fs_rec->data;
-            printf("Key size:           %u bytes\n",    fs_rec->key_len);
-            printf("Value size:         %u bytes\n",    fs_rec->val_len);
-            printf("ID and type field:  0x%016llx\n",   hdr->obj_id_and_type);
-            printf("\n");
-
-            switch ( (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT ) {
-                // NOTE: Need to enclose each case in a block `{}` since the
-                // names `key` and `val` are potentially declared multiple times
-                // in this switch-statement (though in practice it is not a
-                // concern since every `case` here ends in a `break`.)
-                case APFS_TYPE_SNAP_METADATA: {
-                    j_snap_metadata_key_t* key = fs_rec->data;
-                    j_snap_metadata_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_EXTENT: {
-                    j_phys_ext_key_t* key = fs_rec->data;
-                    j_phys_ext_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_INODE: {
-                    j_inode_key_t* key = fs_rec->data;
-                    j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
-                    print_j_inode_key(key);
-                    print_j_inode_val(val, fs_rec->val_len == sizeof(j_inode_val_t));
-                } break;
-                case APFS_TYPE_XATTR: {
-                    j_xattr_key_t* key = fs_rec->data;
-                    j_xattr_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_SIBLING_LINK: {
-                    j_sibling_key_t* key = fs_rec->data;
-                    j_sibling_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_DSTREAM_ID: {
-                    j_dstream_id_key_t* key = fs_rec->data;
-                    j_dstream_id_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_CRYPTO_STATE: {
-                    j_crypto_key_t* key = fs_rec->data;
-                    j_crypto_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_FILE_EXTENT: {
-                    j_file_extent_key_t* key = fs_rec->data;
-                    j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_DIR_REC: {
-                    // Spec inorrectly says to use `j_drec_key_t`; see NOTE in `apfs/struct/j.h`
-                    j_drec_hashed_key_t*    key = fs_rec->data;
-                    j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
-                    print_j_drec_hashed_key(key);
-                    print_j_drec_val(val, fs_rec->val_len == sizeof(j_drec_val_t));
-                } break;
-                case APFS_TYPE_DIR_STATS: {
-                    j_dir_stats_key_t* key = fs_rec->data;
-                    // Spec incorrectly says to use `j_drec_val_t`; we use `j_dir_stats_val_t`
-                    j_dir_stats_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_SNAP_NAME: {
-                    j_snap_name_key_t* key = fs_rec->data;
-                    j_snap_name_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_SIBLING_MAP: {
-                    j_sibling_map_key_t* key = fs_rec->data;
-                    j_sibling_map_val_t* val = fs_rec->data + fs_rec->key_len;
-                } break;
-                case APFS_TYPE_INVALID:
-                    fprintf(stderr, "- A record with OID 0x%llx has an invalid type.\n", fs_oid);
-                    break;
-                default:
-                    fprintf(stderr, "- A record with OID 0x%llx has an unknown type.\n", fs_oid);
-                    break;
+            j_rec_t** fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, nxsb->nx_o.o_xid);
+            if (!fs_records) {
+                printf("No records found with OID 0x%llx.\n", fs_oid);
+                return -1;
             }
 
-            printf("--------------------------------------------------------------------------------\n");
-        }
+            size_t num_records = 0;
 
-        printf("- Found %lu records with Virtual OID 0x%llx.\n", num_records, fs_oid);
+            for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
+                num_records++;
+                j_rec_t* fs_rec = *fs_rec_cursor;
+
+                j_key_t* hdr = fs_rec->data;
+                // printf("Key size:           %u bytes\n",    fs_rec->key_len);
+                // printf("Value size:         %u bytes\n",    fs_rec->val_len);
+                // printf("ID and type field:  0x%016llx\n",   hdr->obj_id_and_type);
+                // printf("\n");
+                printf("- ");
+
+                switch ( (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT ) {
+                    // NOTE: Need to enclose each case in a block `{}` since the
+                    // names `key` and `val` are potentially declared multiple times
+                    // in this switch-statement (though in practice it is not a
+                    // concern since every `case` here ends in a `break`.)
+                    case APFS_TYPE_SNAP_METADATA: {
+                        j_snap_metadata_key_t* key = fs_rec->data;
+                        j_snap_metadata_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("SNAP METADATA");
+                    } break;
+                    case APFS_TYPE_EXTENT: {
+                        j_phys_ext_key_t* key = fs_rec->data;
+                        j_phys_ext_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("EXTENT");
+                    } break;
+                    case APFS_TYPE_INODE: {
+                        j_inode_key_t* key = fs_rec->data;
+                        j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("INODE");
+                        // print_j_inode_key(key);
+                        // print_j_inode_val(val, fs_rec->val_len == sizeof(j_inode_val_t));
+                    } break;
+                    case APFS_TYPE_XATTR: {
+                        j_xattr_key_t* key = fs_rec->data;
+                        j_xattr_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("XATTR");
+                    } break;
+                    case APFS_TYPE_SIBLING_LINK: {
+                        j_sibling_key_t* key = fs_rec->data;
+                        j_sibling_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("SIBLING LINK");
+                    } break;
+                    case APFS_TYPE_DSTREAM_ID: {
+                        j_dstream_id_key_t* key = fs_rec->data;
+                        j_dstream_id_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("DSTREAM ID "
+                            " || file ID = %#8llx"
+                            " || ref. count = %u",
+
+                            key->hdr.obj_id_and_type & OBJ_ID_MASK,
+                            val->refcnt
+                        );
+                    } break;
+                    case APFS_TYPE_CRYPTO_STATE: {
+                        j_crypto_key_t* key = fs_rec->data;
+                        j_crypto_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("CRYPTO STATE");
+                    } break;
+                    case APFS_TYPE_FILE_EXTENT: {
+                        j_file_extent_key_t* key = fs_rec->data;
+                        j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
+
+                        uint64_t extent_length_bytes = val->len_and_flags & J_FILE_EXTENT_LEN_MASK;
+                        uint64_t extent_length_blocks = extent_length_bytes / nx_block_size;
+
+                        printf( "FILE EXTENT"
+                            " || file ID = %#8llx"
+                            " || log. addr. = %#10llx"
+                            " || length = %8llu B = %#10llx B = %5llu blocks = %#7llx blocks"
+                            " || phys. block = %#10llx",
+
+                            key->hdr.obj_id_and_type & OBJ_ID_MASK,
+                            key->logical_addr,
+                            extent_length_bytes, extent_length_bytes, extent_length_blocks, extent_length_blocks,
+                            val->phys_block_num
+                        );
+                    } break;
+                    case APFS_TYPE_DIR_REC: {
+                        // Spec inorrectly says to use `j_drec_key_t`; see NOTE in `apfs/struct/j.h`
+                        j_drec_hashed_key_t*    key = fs_rec->data;
+                        j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
+                        printf("DIR REC"
+                            " || target ID = %#8llx"
+                            " || name = %s",
+
+                            val->file_id,
+                            key->name
+                        );
+                        // print_j_drec_hashed_key(key);
+                        // print_j_drec_val(val, fs_rec->val_len == sizeof(j_drec_val_t));
+                    } break;
+                    case APFS_TYPE_DIR_STATS: {
+                        j_dir_stats_key_t* key = fs_rec->data;
+                        // Spec incorrectly says to use `j_drec_val_t`; we use `j_dir_stats_val_t`
+                        j_dir_stats_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("DIR STATS");
+                    } break;
+                    case APFS_TYPE_SNAP_NAME: {
+                        j_snap_name_key_t* key = fs_rec->data;
+                        j_snap_name_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("SNAP NAME");
+                    } break;
+                    case APFS_TYPE_SIBLING_MAP: {
+                        j_sibling_map_key_t* key = fs_rec->data;
+                        j_sibling_map_val_t* val = fs_rec->data + fs_rec->key_len;
+                        printf("SIBLING MAP");
+                    } break;
+                    case APFS_TYPE_INVALID:
+                        printf("INVALID");
+                        // fprintf(stderr, "- A record with OID 0x%llx has an invalid type.\n", fs_oid);
+                        break;
+                    default:
+                        printf("(unknown)");
+                        fprintf(stderr, "- A record with OID 0x%llx has an unknown type.\n", fs_oid);
+                        break;
+                }
+
+                // printf("--------------------------------------------------------------------------------\n");
+                printf("\n");
+            }
+
+            // printf("- Found %lu records with Virtual OID 0x%llx.\n", num_records, fs_oid);
+            free_j_rec_array(fs_records);
+        }
         
         // TODO: RESUME HERE
 
@@ -594,7 +652,7 @@ int main(int argc, char** argv) {
         printf("--------------------------------------------------------------------------------\n");
         printf("\n");
 
-        free_j_rec_array(fs_records);
+        
         free(fs_omap_btree);
         free(fs_omap);
     }
