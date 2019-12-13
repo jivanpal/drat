@@ -68,6 +68,14 @@ bool is_btree_node_phys(obj_phys_t* obj) {
 }
 
 /**
+ * Determine whether a given APFS object has the subtype corresponding to an
+ * object map tree.
+ */
+bool is_omap_tree(obj_phys_t* obj) {
+    return obj->o_subtype == OBJECT_TYPE_OMAP;
+}
+
+/**
  * Determine whether a given APFS object has the subtype corresponding to a
  * file-system records tree.
  */

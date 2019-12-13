@@ -17,6 +17,7 @@ TARGETS		:= \
 	apfs-inspect \
 	apfs-explore-omap-tree \
 	apfs-explore-fs-tree \
+	apfs-search \
 	apfs-search-last-btree-node \
 	apfs-list \
 	apfs-recover \
