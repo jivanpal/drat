@@ -301,6 +301,8 @@ char* get_nx_flags_string(nx_superblock_t* nxsb) {
 void print_nx_superblock(nx_superblock_t* nxsb) {
     print_obj_phys(nxsb); // `nxsb` is equivalent to `&(nxsb->nx_o)`.
 
+    printf("Keybag location: starts at %#llx, spans %#llx blocks\n", nxsb->nx_keylocker.pr_start_paddr, nxsb->nx_keylocker.pr_block_count);
+
     char magic_string[] = {
         (char)nxsb->nx_magic,
         (char)(nxsb->nx_magic >> 8),
