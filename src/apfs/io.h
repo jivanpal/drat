@@ -17,17 +17,23 @@ size_t  nx_block_size = 4096;
 
 void report_fopen_error() {
     switch (errno) {
-        case ENOMEM:
-            fprintf(stderr, "Unable to allocate sufficient memory to buffer file.\n");
-            break;
         case EACCES:
             fprintf(stderr, "You do not have sufficient privileges to read this file.\n");
             break;
+        case EAGAIN:
+            fprintf(stderr, "open(2): the specified path is the slave side of a locked pseudo-terminal device.");
+            break;
         case EFAULT:
-            fprintf(stderr, "Segmentation fault.\n");
+            fprintf(stderr, "Segmentation fault; the specified path points outside our allocated address space.\n");
             break;
         case EINTR:
             fprintf(stderr, "The process was interrupted.\n");
+            break;
+        case EILSEQ:
+            fprintf(stderr, "The specified filepath does not match the encoding rules.\n");
+            break;
+        case EINVAL:
+            fprintf(stderr, "The `mode` argument to `fopen()` is invalid. This error should never occur in practice, please file a bug at: https://github.com/jivanpal/apfs-tools/issues\n");
             break;
         case ELOOP:
             fprintf(stderr, "Too many symlinks were encountered; perhaps you specified a looping symlink.\n");
@@ -38,8 +44,14 @@ void report_fopen_error() {
         case ENAMETOOLONG:
             fprintf(stderr, "The specified filepath or one of its componenets is too long.\n");
             break;
+        case ENFILE:
+            fprintf(stderr, "The system file table is full.\n");
+            break;
         case ENOENT:
             fprintf(stderr, "The specified file does not exist.\n");
+            break;
+        case ENOMEM:
+            fprintf(stderr, "Unable to allocate sufficient memory to buffer file.\n");
             break;
         case ENOTDIR:
             fprintf(stderr, "A component of the specified filepath is not a directory.\n");
@@ -47,11 +59,11 @@ void report_fopen_error() {
         case ENXIO:
             fprintf(stderr, "The device associated with the specified file does not exist.\n");
             break;
-        case EOVERFLOW:
-            fprintf(stderr, "The specified file is a regular file, but its size exceeds %lu bytes, so is too large to be handled.\n", sizeof(off_t));
+        case EOPNOTSUPP:
+            fprintf(stderr, "You tried to open a socket, but your system doesn't support that.\n");
             break;
-        case EILSEQ:
-            fprintf(stderr, "The specified filepath does not match the encoding rules.\n");
+        case EOVERFLOW:
+            fprintf(stderr, "The specified file is a regular file whose size exceeds %lu bytes, so it is too large to be handled.\n", sizeof(off_t));
             break;
         default:
             fprintf(stderr, "Unknown error.\n");
