@@ -1,3 +1,6 @@
+#ifndef DRAT_INSPECT_H
+#define DRAT_INSPECT_H
+
 #include <stdio.h>
 #include <sys/errno.h>
 #include <assert.h>
@@ -26,14 +29,11 @@
 #include "apfs/string/fs.h"
 #include "apfs/string/j.h"
 
-/**
- * Print usage info for this program.
- */
-void print_usage(char* program_name) {
+void print_usage_inspect(char* program_name) {
     printf("Usage:   %s <container>\nExample: %s /dev/disk0s2\n\n", program_name, program_name);
 }
 
-int main(int argc, char** argv) {
+int main_inspect(int argc, char** argv) {
     setbuf(stdout, NULL);
     printf("\n");
 
@@ -667,3 +667,5 @@ int main(int argc, char** argv) {
     printf("END: All done.\n");
     return 0;
 }
+
+#endif // DRAT_INSPECT_H
