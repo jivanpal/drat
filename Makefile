@@ -9,46 +9,28 @@ LDFLAGS=$(FLAGS)
 ### Directory definitions ###
 SRCDIR=src
 OBJDIR=obj
-BINDIR=bin
 
 ### Target paths ###
-TARGETS		:= \
-	apfs-read \
-	apfs-inspect \
-	apfs-explore-omap-tree \
-	apfs-explore-fs-tree \
-	apfs-search \
-	apfs-search-last-btree-node \
-	apfs-resolver \
-	apfs-modify \
-	apfs-list \
-	apfs-recover \
-	apfs-list-raw \
-	apfs-recover-raw
-SOURCES		:= $(wildcard $(SRCDIR)/*.c)
-HEADERS		:= $(wildcard $(SRCDIR)/*.h) $(wildcard $(SRCDIR)/*/*.h) $(wildcard $(SRCDIR)/*/*/*.h)
+HEADERS		:= $(wildcard $(SRCDIR)/apfs/*.h) $(wildcard $(SRCDIR)/apfs/*/*.h)
+COMMANDS	:= $(SRCDIR)/commands.h $(wildcard $(SRCDIR)/commands/*.h)
+SOURCES		:= $(SRCDIR)/drat.c
 OBJECTS		:= $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
-BINARIES	:= $(TARGETS:%=$(BINDIR)/%)
+BINARIES	:= drat
 
 ### Targets ###
 
 # Makes all targets (binaries)
 .PHONY: all
-all:	$(TARGETS)
-	@echo "All done. The binaries are in the \`$(BINDIR)\` directory."
+all:	$(BINARIES)
+	@echo "All done. The binary is \`drat\`, in the top-level directory (the same directory as the Makefile)."
 
 # Removes all binaries and object files
 .PHONY: clean
 clean:
-	rm -rf $(BINDIR) $(OBJDIR)
+	rm -rf drat $(OBJDIR)
 	find . -name '*.gch' -delete
 
-# Makes the target `binary-name` an alias of `bin/binary-name`
-.PHONY: $(TARGETS)
-$(TARGETS):		%:				$(BINDIR)/%
-
-$(BINARIES):	$(BINDIR)/%:	$(OBJDIR)/%.o
-	@[ -d $(BINDIR) ] || (mkdir -p $(BINDIR) && echo "Created directory \`$(BINDIR)/\`.")
+$(BINARIES):	%:				$(OBJDIR)/%.o
 	@$(LD) $^ $(LDFLAGS) -o $@
 	@echo "$^\t==> $@"
 
@@ -60,4 +42,7 @@ $(OBJECTS):		$(OBJDIR)/%.o:	$(SRCDIR)/%.c $(HEADERS)
 # This target exists to allow test compilation of
 # headers, e.g. `make src/apfs/struct/object.gch`
 $(HEADERS:%.h=%.gch):	%.gch:		%.h
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(COMMANDS:%.h=%.gch):	%.gch:		%.h
 	@$(CC) $(CFLAGS) -c $< -o $@

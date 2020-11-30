@@ -4,43 +4,43 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "apfs/io.h"
-#include "apfs/func/boolean.h"
-#include "apfs/func/cksum.h"
-#include "apfs/func/btree.h"
+#include "../apfs/io.h"
+#include "../apfs/func/boolean.h"
+#include "../apfs/func/cksum.h"
+#include "../apfs/func/btree.h"
 
-#include "apfs/struct/object.h"
-#include "apfs/struct/nx.h"
-#include "apfs/struct/omap.h"
-#include "apfs/struct/fs.h"
+#include "../apfs/struct/object.h"
+#include "../apfs/struct/nx.h"
+#include "../apfs/struct/omap.h"
+#include "../apfs/struct/fs.h"
 
-#include "apfs/struct/j.h"
-#include "apfs/struct/dstream.h"
-#include "apfs/struct/sibling.h"
-#include "apfs/struct/snap.h"
+#include "../apfs/struct/j.h"
+#include "../apfs/struct/dstream.h"
+#include "../apfs/struct/sibling.h"
+#include "../apfs/struct/snap.h"
 
-#include "apfs/string/object.h"
-#include "apfs/string/nx.h"
-#include "apfs/string/omap.h"
-#include "apfs/string/btree.h"
-#include "apfs/string/fs.h"
-#include "apfs/string/j.h"
+#include "../apfs/string/object.h"
+#include "../apfs/string/nx.h"
+#include "../apfs/string/omap.h"
+#include "../apfs/string/btree.h"
+#include "../apfs/string/fs.h"
+#include "../apfs/string/j.h"
 
 /**
  * Print usage info for this program.
  */
-void print_usage(char* program_name) {
+void print_usage__search(char* program_name) {
     printf("Usage:   %s <container>\nExample: %s /dev/disk0s2\n\n", program_name, program_name);
 }
 
-int main(int argc, char** argv) {
+int main__search(int argc, char** argv) {
     setbuf(stdout, NULL);
     printf("\n");
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 2) {
         printf("Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        print_usage__search(argv[0]);
         return 1;
     }
     nx_path = argv[1];

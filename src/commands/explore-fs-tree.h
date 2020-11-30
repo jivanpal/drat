@@ -4,39 +4,36 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "apfs/io.h"
-#include "apfs/struct/general.h"
-#include "apfs/struct/j.h"
-#include "apfs/struct/const.h"
-#include "apfs/struct/dstream.h"
-#include "apfs/struct/sibling.h"
-#include "apfs/struct/snap.h"
+#include "../apfs/io.h"
+#include "../apfs/struct/general.h"
+#include "../apfs/struct/j.h"
+#include "../apfs/struct/const.h"
+#include "../apfs/struct/dstream.h"
+#include "../apfs/struct/sibling.h"
+#include "../apfs/struct/snap.h"
 
-#include "apfs/func/boolean.h"
-#include "apfs/func/cksum.h"
-#include "apfs/func/btree.h"
+#include "../apfs/func/boolean.h"
+#include "../apfs/func/cksum.h"
+#include "../apfs/func/btree.h"
 
-#include "apfs/string/object.h"
-#include "apfs/string/nx.h"
-#include "apfs/string/btree.h"
-#include "apfs/string/omap.h"
-#include "apfs/string/fs.h"
-#include "apfs/string/j.h"
+#include "../apfs/string/object.h"
+#include "../apfs/string/nx.h"
+#include "../apfs/string/btree.h"
+#include "../apfs/string/omap.h"
+#include "../apfs/string/fs.h"
+#include "../apfs/string/j.h"
 
-/**
- * Print usage info for this program.
- */
-void print_usage(char* program_name) {
+void print_usage__explore_fs_tree(char* program_name) {
     printf("Usage:   %s <container> <fs tree root node address> <omap tree root node address>\nExample: %s /dev/disk0s2 0xd02a4 0x3af2\n\n", program_name, program_name);
 }
 
-int main(int argc, char** argv) {
+int main__explore_fs_tree(int argc, char** argv) {
     printf("\n");
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
         printf("Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        print_usage__explore_fs_tree(argv[0]);
         return 1;
     }
 
@@ -50,7 +47,7 @@ int main(int argc, char** argv) {
     }
     if (!parse_success) {
         printf("%s is not a valid block address.\n", argv[2]);
-        print_usage(argv[0]);
+        print_usage__explore_fs_tree(argv[0]);
         printf("\n");
     }
 
@@ -62,7 +59,7 @@ int main(int argc, char** argv) {
     }
     if (!parse_success) {
         printf("%s is not a valid block address.\n", argv[3]);
-        print_usage(argv[0]);
+        print_usage__explore_fs_tree(argv[0]);
         printf("\n");
     }
     

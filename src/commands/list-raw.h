@@ -4,32 +4,32 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "apfs/io.h"
-#include "apfs/func/boolean.h"
-#include "apfs/func/cksum.h"
-#include "apfs/func/btree.h"
+#include "../apfs/io.h"
+#include "../apfs/func/boolean.h"
+#include "../apfs/func/cksum.h"
+#include "../apfs/func/btree.h"
 
-#include "apfs/struct/object.h"
-#include "apfs/struct/nx.h"
-#include "apfs/struct/omap.h"
-#include "apfs/struct/fs.h"
+#include "../apfs/struct/object.h"
+#include "../apfs/struct/nx.h"
+#include "../apfs/struct/omap.h"
+#include "../apfs/struct/fs.h"
 
-#include "apfs/struct/j.h"
-#include "apfs/struct/dstream.h"
-#include "apfs/struct/sibling.h"
-#include "apfs/struct/snap.h"
+#include "../apfs/struct/j.h"
+#include "../apfs/struct/dstream.h"
+#include "../apfs/struct/sibling.h"
+#include "../apfs/struct/snap.h"
 
-#include "apfs/string/object.h"
-#include "apfs/string/nx.h"
-#include "apfs/string/omap.h"
-#include "apfs/string/btree.h"
-#include "apfs/string/fs.h"
-#include "apfs/string/j.h"
+#include "../apfs/string/object.h"
+#include "../apfs/string/nx.h"
+#include "../apfs/string/omap.h"
+#include "../apfs/string/btree.h"
+#include "../apfs/string/fs.h"
+#include "../apfs/string/j.h"
 
 /**
  * Print usage info for this program.
  */
-void print_usage(char* program_name) {
+void print_usage__list_raw(char* program_name) {
     fprintf(stderr, "Usage:   %s <container> <volume ID> <file-system object ID in volume>\nExample: %s /dev/disk0s2  0  0xd4a7f\n\n", program_name, program_name);
 }
 
@@ -150,13 +150,13 @@ void print_fs_records(j_rec_t** fs_records) {
     fprintf(stderr, "\n");
 }
 
-int main(int argc, char** argv) {
+int main__list_raw(int argc, char** argv) {
     setbuf(stdout, NULL);
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
         fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        print_usage__list_raw(argv[0]);
         return 1;
     }
     
@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
     bool parse_success = sscanf(argv[2], "%u", &volume_id);
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid volume ID.\n", argv[2]);
-        print_usage(argv[0]);
+        print_usage__list_raw(argv[0]);
         fprintf(stderr, "\n");
     }
 
@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
     }
     if (!parse_success) {
         printf("%s is not a valid block address.\n", argv[3]);
-        print_usage(argv[0]);
+        print_usage__list_raw(argv[0]);
         printf("\n");
     }
     
