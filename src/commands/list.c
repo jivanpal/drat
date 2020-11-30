@@ -31,17 +31,17 @@
 /**
  * Print usage info for this program.
  */
-void print_usage__recover_raw(char* program_name) {
-    fprintf(stderr, "Usage:   %s <container> <volume ID> <file-system object ID in volume>\nExample: %s /dev/disk0s2  0  0xd4a7f\n\n", program_name, program_name);
+static void print_usage(char* program_name) {
+    fprintf(stderr, "Usage:   %s <container> <volume ID> <path in volume>\nExample: %s /dev/disk0s2  0  /Users/john/Documents\n\n", program_name, program_name);
 }
 
-int main__recover_raw(int argc, char** argv) {
+int cmd_list(int argc, char** argv) {
     setbuf(stdout, NULL);
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
         fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage__recover_raw(argv[0]);
+        print_usage(argv[0]);
         return 1;
     }
     
@@ -51,20 +51,11 @@ int main__recover_raw(int argc, char** argv) {
     bool parse_success = sscanf(argv[2], "%u", &volume_id);
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid volume ID.\n", argv[2]);
-        print_usage__recover_raw(argv[0]);
+        print_usage(argv[0]);
         fprintf(stderr, "\n");
     }
 
-    oid_t fs_oid;
-    parse_success = sscanf(argv[3], "0x%llx", &fs_oid);
-    if (!parse_success) {
-        parse_success = sscanf(argv[3], "%llu", &fs_oid);
-    }
-    if (!parse_success) {
-        printf("%s is not a valid block address.\n", argv[3]);
-        print_usage__recover_raw(argv[0]);
-        printf("\n");
-    }
+    char* path_stack = argv[3];
     
     // Open (device special) file corresponding to an APFS container, read-only
     fprintf(stderr, "Opening file at `%s` in read-only mode ... ", nx_path);
@@ -119,7 +110,7 @@ int main__recover_raw(int argc, char** argv) {
         fprintf(stderr, "- It is not contiguous.\n");
         fprintf(stderr, "- The Physical OID of the B-tree representing it is 0x%llx.\n", nxsb->nx_xp_desc_base);
         fprintf(stderr, "END: The ability to handle this case has not yet been implemented.\n\n");   // TODO: implement case when xp_desc area is not contiguous
-        return -1;
+        return 0;
     } else {
         fprintf(stderr, "- It is contiguous.\n");
         fprintf(stderr, "- The address of its first block is 0x%llx.\n", nxsb->nx_xp_desc_base);
@@ -166,7 +157,7 @@ int main__recover_raw(int argc, char** argv) {
 
     if (xid_latest_nx == 0) {
         fprintf(stderr, "No container superblock with an XID that doesn't exceed 0x%llx exists in the checkpoint descriptor area.\n", max_xid);
-        return -1;
+        return 0;
     }
 
     // Don't need a copy of the block 0x0 NXSB which is stored in `nxsb`
@@ -248,7 +239,7 @@ int main__recover_raw(int argc, char** argv) {
             
             // TODO: Handle case where data for a given checkpoint is malformed
             fprintf(stderr, "END: Handling of this case has not yet been implemented.\n");
-            return -1;
+            return 0;
         }
     }
     fprintf(stderr, "OK.\n");
@@ -269,13 +260,13 @@ int main__recover_raw(int argc, char** argv) {
     fprintf(stderr, "Validating the container object map ... ");
     if (!is_cksum_valid(nx_omap)) {
         fprintf(stderr, "FAILED.\n");
-        return -1;
+        return 0;
     }
     fprintf(stderr, "OK.\n");
 
     if ((nx_omap->om_tree_type & OBJ_STORAGETYPE_MASK) != OBJ_PHYSICAL) {
         fprintf(stderr, "END: The container object map B-tree is not of the Physical storage type, and therefore it cannot be located.\n");
-        return -1;
+        return 0;
     }
 
     fprintf(stderr, "Reading the root node of the container object map B-tree ... ");
@@ -336,7 +327,7 @@ int main__recover_raw(int argc, char** argv) {
 
             // TODO: Handle case where data for a given checkpoint is malformed
             fprintf(stderr, "END: Handling of this case has not yet been implemented.\n");
-            return -1;
+            return 0;
         }
 
         if ( ((apfs_superblock_t*)(apsbs + i))->apfs_magic  !=  APFS_MAGIC ) {
@@ -344,7 +335,7 @@ int main__recover_raw(int argc, char** argv) {
 
             // TODO: Handle case where data for a given checkpoint is malformed
             fprintf(stderr, "END: Handling of this case has not yet been implemented.\n");
-            return -1;
+            return 0;
         }
     }
     fprintf(stderr, "OK.\n");
@@ -356,7 +347,7 @@ int main__recover_raw(int argc, char** argv) {
 
     if (volume_id >= num_file_systems) {
         fprintf(stderr, "The specified volume ID (%u) does not exist in the list above. Exiting.\n", volume_id);
-        return -1;
+        return 0;
     }
     apfs_superblock_t* apsb = apsbs + volume_id;
 
@@ -377,13 +368,13 @@ int main__recover_raw(int argc, char** argv) {
     fprintf(stderr, "Validating the volume object map ... ");
     if (!is_cksum_valid(fs_omap)) {
         fprintf(stderr, "\nFAILED. The checksum did not validate.");
-        return -1;
+        return 0;
     }
     fprintf(stderr, "OK.\n");
 
     if ((fs_omap->om_tree_type & OBJ_STORAGETYPE_MASK) != OBJ_PHYSICAL) {
         fprintf(stderr, "END: The volume object map B-tree is not of the Physical storage type, and therefore it cannot be located.\n");
-        return -1;
+        return 0;
     }
 
     fprintf(stderr, "Reading the root node of the volume object map B-tree ... ");
@@ -428,10 +419,12 @@ int main__recover_raw(int argc, char** argv) {
 
     fprintf(stderr, "validating ... ");
     if (!is_cksum_valid(fs_root_btree)) {
-        fprintf(stderr, "FAILED.\n");
-        return -1;
+        fprintf(stderr, "FAILED.\nGoing back to look at the previous checkpoint instead.\n");
+        return 0;
     }
     fprintf(stderr, "OK.\n");
+
+    oid_t fs_oid = 0x2;
 
     j_rec_t** fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, (xid_t)(~0) );
     if (!fs_records) {
@@ -439,45 +432,52 @@ int main__recover_raw(int argc, char** argv) {
         return -1;
     }
 
-    fprintf(stderr, "\nRecords for file-system object %#llx\n", fs_oid);
-    // `fs_records` now contains the records for the item at the specified path
-    print_fs_records(fs_records);
-
-    // Output content from all matching file extents
-    char* buffer = malloc(nx_block_size);
-    if (!buffer) {
-        fprintf(stderr, "Could not allocate sufficient memory for `buffer`.\n");
+    char* path = malloc(strlen(path_stack) + 1);
+    if (!path) {
+        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `path`.\n");
         return -1;
     }
+    memcpy(path, path_stack, strlen(path_stack) + 1);
 
-    bool found_file_extent = false;
-    for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
-        j_rec_t* fs_rec = *fs_rec_cursor;
-        j_key_t* hdr = fs_rec->data;
-        if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_FILE_EXTENT ) {
-            found_file_extent = true;
-            j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
-
-            // Output the content from this particular file extent
-            uint64_t block_addr = val->phys_block_num;
-
-            uint64_t extent_len_blocks = (val->len_and_flags & J_FILE_EXTENT_LEN_MASK) / nx_block_size;
-            for (uint64_t i = 0;   i < extent_len_blocks;   i++, block_addr++) {
-                if (read_blocks(buffer, block_addr, 1) != 1) {
-                    fprintf(stderr, "\n\nEncountered an error reading block %#llx (block %llu of %llu). Exiting.\n\n", block_addr, i+1, extent_len_blocks);
-                    return -1;
-                }
-                
-                if (fwrite(buffer, nx_block_size, 1, stdout) != 1) {
-                    fprintf(stderr, "\n\nEncountered an error writing block %llu of %llu to `stdout`. Exiting.\n\n", i+1, extent_len_blocks);
-                    return -1;
+    char* path_element;
+    while ( (path_element = strsep(&path, "/")) != NULL ) {
+        // If path element is empty string, skip it
+        if (*path_element == '\0') {
+            continue;
+        }
+        
+        signed int matching_record_index = -1;
+        for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
+            j_rec_t* fs_rec = *fs_rec_cursor;
+            j_key_t* hdr = fs_rec->data;
+            if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_DIR_REC ) {
+                j_drec_hashed_key_t* key = fs_rec->data;   
+                if (strcmp((char*)key->name, path_element) == 0) {
+                    matching_record_index = fs_rec_cursor - fs_records;
+                    break;
                 }
             }
         }
+
+        if (matching_record_index == -1) {
+            // No match
+            fprintf(stderr, "Could not find a dentry for that path. Exiting.\n");
+            return 0;
+        }
+
+        // Get the file ID of the matching record's target
+        j_rec_t* fs_rec = fs_records[matching_record_index];
+        j_drec_val_t* val = fs_rec->data + fs_rec->key_len;
+
+        // Get the records for the target
+        fs_oid = val->file_id;
+        free_j_rec_array(fs_records);
+        fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, (xid_t)(~0) );
     }
-    if (!found_file_extent) {
-        fprintf(stderr, "Could not find any file extents for the specified path.\n");
-    }
+
+    fprintf(stderr, "\nRecords for file-system object %#llx -- `%s` --\n", fs_oid, path_stack);
+    // `fs_records` now contains the records for the item at the specified path
+    print_fs_records(fs_records);
 
     free_j_rec_array(fs_records);
     

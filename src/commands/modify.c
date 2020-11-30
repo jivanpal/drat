@@ -29,11 +29,11 @@
 /**
  * Print usage info for this program.
  */
-void print_usage__modify(char* program_name) {
+static void print_usage(char* program_name) {
     printf("Usage:   %s <container>\nExample: %s /dev/disk0s2\n\n", program_name, program_name);
 }
 
-int main__modify(int argc, char** argv) {
+int cmd_modify(int argc, char** argv) {
     /** Setup **/
 
     setbuf(stdout, NULL);
@@ -42,7 +42,7 @@ int main__modify(int argc, char** argv) {
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 2) {
         printf("Incorrect number of arguments.\n");
-        print_usage__modify(argv[0]);
+        print_usage(argv[0]);
         return 1;
     }
     nx_path = argv[1];

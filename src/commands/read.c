@@ -16,17 +16,17 @@
 #include "../apfs/string/omap.h"
 #include "../apfs/string/fs.h"
 
-void print_usage__read(char* program_name) {
+static void print_usage(char* program_name) {
     printf("Usage:   %s <container> <address>\nExample: %s /dev/disk0s2 0x3af2\n\n", program_name, program_name);
 }
 
-int main__read(int argc, char** argv) {
+int cmd_read(int argc, char** argv) {
     printf("\n");
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 3) {
         printf("Incorrect number of arguments.\n");
-        print_usage__read(argv[0]);
+        print_usage(argv[0]);
         return 1;
     }
     char* nx_path = argv[1];
@@ -37,7 +37,7 @@ int main__read(int argc, char** argv) {
     }
     if (!parse_success) {
         printf("%s is not a valid block address.\n", argv[2]);
-        print_usage__read(argv[0]);
+        print_usage(argv[0]);
         printf("\n");
     }
     

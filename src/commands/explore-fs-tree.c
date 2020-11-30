@@ -23,17 +23,17 @@
 #include "../apfs/string/fs.h"
 #include "../apfs/string/j.h"
 
-void print_usage__explore_fs_tree(char* program_name) {
+static void print_usage(char* program_name) {
     printf("Usage:   %s <container> <fs tree root node address> <omap tree root node address>\nExample: %s /dev/disk0s2 0xd02a4 0x3af2\n\n", program_name, program_name);
 }
 
-int main__explore_fs_tree(int argc, char** argv) {
+int cmd_explore_fs_tree(int argc, char** argv) {
     printf("\n");
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
         printf("Incorrect number of arguments.\n");
-        print_usage__explore_fs_tree(argv[0]);
+        print_usage(argv[0]);
         return 1;
     }
 
@@ -47,7 +47,7 @@ int main__explore_fs_tree(int argc, char** argv) {
     }
     if (!parse_success) {
         printf("%s is not a valid block address.\n", argv[2]);
-        print_usage__explore_fs_tree(argv[0]);
+        print_usage(argv[0]);
         printf("\n");
     }
 
@@ -59,7 +59,7 @@ int main__explore_fs_tree(int argc, char** argv) {
     }
     if (!parse_success) {
         printf("%s is not a valid block address.\n", argv[3]);
-        print_usage__explore_fs_tree(argv[0]);
+        print_usage(argv[0]);
         printf("\n");
     }
     

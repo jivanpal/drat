@@ -1,19 +1,6 @@
 #ifndef DRAT_COMMANDS_H
 #define DRAT_COMMANDS_H
 
-#include "commands/explore-fs-tree.h"
-#include "commands/explore-omap-tree.h"
-#include "commands/inspect.h"
-#include "commands/list-raw.h"
-#include "commands/list.h"
-#include "commands/modify.h"
-#include "commands/read.h"
-#include "commands/recover-raw.h"
-#include "commands/recover.h"
-#include "commands/resolver.h"
-#include "commands/search-last-btree-node.h"
-#include "commands/search.h"
-
 #define ARRAY_SIZE(a)   (sizeof(a) / sizeof(*(a)))
 
 typedef int main_function(int argc, const char** argv);
@@ -22,6 +9,23 @@ typedef struct {
     const char*     command_name;
     main_function*  command_main;
 } drat_command_t;
+
+/**
+ * Function prototypes; functions implementations will be
+ * linked into main program via compiled object files.
+ */
+main_function main__explore_fs_tree;
+main_function main__explore_omap_tree;
+main_function main__inspect;
+main_function main__list_raw;
+main_function main__list;
+main_function main__modify;
+main_function main__read;
+main_function main__recover_raw;
+main_function main__recover;
+main_function main__resolver;
+main_function main__search_last_btree_node;
+main_function main__search;
 
 static drat_command_t commands[] = {
     { "explore-fs-tree"         , main__explore_fs_tree         },

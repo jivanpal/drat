@@ -19,17 +19,17 @@
 /**
  * Print usage info for this program.
  */
-void print_usage__explore_omap_tree(char* program_name) {
+static void print_usage(char* program_name) {
     printf("Usage:   %s <container> <root node address>\nExample: %s /dev/disk0s2 0x3af2\n\n", program_name, program_name);
 }
 
-int main__explore_omap_tree(int argc, char** argv) {
+int cmd_explore_omap_tree(int argc, char** argv) {
     printf("\n");
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 3) {
         printf("Incorrect number of arguments.\n");
-        print_usage__explore_omap_tree(argv[0]);
+        print_usage(argv[0]);
         return 1;
     }
     
@@ -42,7 +42,7 @@ int main__explore_omap_tree(int argc, char** argv) {
     }
     if (!parse_success) {
         printf("%s is not a valid block address.\n", argv[2]);
-        print_usage__explore_omap_tree(argv[0]);
+        print_usage(argv[0]);
         printf("\n");
     }
     

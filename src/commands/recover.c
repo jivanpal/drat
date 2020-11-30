@@ -31,17 +31,17 @@
 /**
  * Print usage info for this program.
  */
-void print_usage__recover(char* program_name) {
+static void print_usage(char* program_name) {
     fprintf(stderr, "Usage:   %s <container> <volume ID> <path in volume>\nExample: %s /dev/disk0s2  0  /Users/john/Documents\n\n", program_name, program_name);
 }
 
-int main__recover(int argc, char** argv) {
+int cmd_recover(int argc, char** argv) {
     setbuf(stdout, NULL);
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
         fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage__recover(argv[0]);
+        print_usage(argv[0]);
         return 1;
     }
     
@@ -51,7 +51,7 @@ int main__recover(int argc, char** argv) {
     bool parse_success = sscanf(argv[2], "%u", &volume_id);
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid volume ID.\n", argv[2]);
-        print_usage__recover(argv[0]);
+        print_usage(argv[0]);
         fprintf(stderr, "\n");
     }
 

@@ -31,17 +31,17 @@
 /**
  * Print usage info for this program.
  */
-void print_usage__list_raw(char* program_name) {
+static void print_usage(char* program_name) {
     fprintf(stderr, "Usage:   %s <container> <volume ID> <file-system object ID in volume>\nExample: %s /dev/disk0s2  0  0xd4a7f\n\n", program_name, program_name);
 }
 
-int main__list_raw(int argc, char** argv) {
+int cmd_recover_raw(int argc, char** argv) {
     setbuf(stdout, NULL);
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
         fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage__list_raw(argv[0]);
+        print_usage(argv[0]);
         return 1;
     }
     
@@ -51,7 +51,7 @@ int main__list_raw(int argc, char** argv) {
     bool parse_success = sscanf(argv[2], "%u", &volume_id);
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid volume ID.\n", argv[2]);
-        print_usage__list_raw(argv[0]);
+        print_usage(argv[0]);
         fprintf(stderr, "\n");
     }
 
@@ -62,7 +62,7 @@ int main__list_raw(int argc, char** argv) {
     }
     if (!parse_success) {
         printf("%s is not a valid block address.\n", argv[3]);
-        print_usage__list_raw(argv[0]);
+        print_usage(argv[0]);
         printf("\n");
     }
     
@@ -442,6 +442,42 @@ int main__list_raw(int argc, char** argv) {
     fprintf(stderr, "\nRecords for file-system object %#llx\n", fs_oid);
     // `fs_records` now contains the records for the item at the specified path
     print_fs_records(fs_records);
+
+    // Output content from all matching file extents
+    char* buffer = malloc(nx_block_size);
+    if (!buffer) {
+        fprintf(stderr, "Could not allocate sufficient memory for `buffer`.\n");
+        return -1;
+    }
+
+    bool found_file_extent = false;
+    for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
+        j_rec_t* fs_rec = *fs_rec_cursor;
+        j_key_t* hdr = fs_rec->data;
+        if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_FILE_EXTENT ) {
+            found_file_extent = true;
+            j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
+
+            // Output the content from this particular file extent
+            uint64_t block_addr = val->phys_block_num;
+
+            uint64_t extent_len_blocks = (val->len_and_flags & J_FILE_EXTENT_LEN_MASK) / nx_block_size;
+            for (uint64_t i = 0;   i < extent_len_blocks;   i++, block_addr++) {
+                if (read_blocks(buffer, block_addr, 1) != 1) {
+                    fprintf(stderr, "\n\nEncountered an error reading block %#llx (block %llu of %llu). Exiting.\n\n", block_addr, i+1, extent_len_blocks);
+                    return -1;
+                }
+                
+                if (fwrite(buffer, nx_block_size, 1, stdout) != 1) {
+                    fprintf(stderr, "\n\nEncountered an error writing block %llu of %llu to `stdout`. Exiting.\n\n", i+1, extent_len_blocks);
+                    return -1;
+                }
+            }
+        }
+    }
+    if (!found_file_extent) {
+        fprintf(stderr, "Could not find any file extents for the specified path.\n");
+    }
 
     free_j_rec_array(fs_records);
     
