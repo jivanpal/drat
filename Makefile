@@ -11,43 +11,41 @@ SRCDIR=src
 OUTDIR=out
 
 ### Target paths ###
-HEADER_SOURCES	:= $(wildcard $(SRCDIR)/*.h) $(wildcard $(SRCDIR)/*/*.h) $(wildcard $(SRCDIR)/*/*/*.h)
-COMMAND_SOURCES	:= $(wildcard $(SRCDIR)/commands/*.c)
-PROGRAM_SOURCES	:= $(wildcard $(SRCDIR)/*.c)
+PROGRAMS	:= $(wildcard $(SRCDIR)/*.c)
+BINARIES	:= $(PROGRAMS:$(SRCDIR)/%.c=%)
 
-HEADER_OBJECTS	:= $(HEADER_SOURCES:$(SRCDIR)/%.h=$(OUTDIR)/%.gch)
-COMMAND_OBJECTS	:= $(COMMAND_SOURCES:$(SRCDIR)/%.c=$(OUTDIR)/%.o)
-PROGRAM_OBJECTS	:= $(PROGRAM_SOURCES:$(SRCDIR)/%.c=$(OUTDIR)/%.o)
-
-BINARIES		:= $(PROGRAM_SOURCES:$(SRCDIR)/%.c=%)
+HEADERS		:= $(shell find src -name '*.h')
+GCHS		:= $(HEADERS:$(SRCDIR)/%.h=$(OUTDIR)/%.gch)
+SOURCES		:= $(shell find src -name '*.c')
+OBJECTS		:= $(SOURCES:$(SRCDIR)/%.c=$(OUTDIR)/%.o)
 
 ### Targets ###
 
 .PHONY: binaries
 binaries: $(BINARIES)
 
-.PHONY: commands
-commands: $(COMMAND_OBJECTS)
-
 .PHONY: headers
-headers: $(HEADER_OBJECTS)
+headers: $(GCHS)
 
-$(BINARIES): %: $(OUTDIR)/%.o $(COMMAND_OBJECTS)
-	@$(LD) $^ $(LDFLAGS) -o $@
-	@echo "$^\t==> $@"
+$(BINARIES): %: $(OUTDIR)/%.o $(OBJECTS)
+	@echo "BINARIES +++ $< +++ $@"
+	$(LD) $^ $(LDFLAGS) -o $@
+	@echo
 
-$(PROGRAM_OBJECTS) $(COMMAND_OBJECTS): $(OUTDIR)/%.o: $(SRCDIR)/%.c $(HEADER_SOURCES)
+$(OBJECTS): $(OUTDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
+	@echo "OBJECTS +++ $< +++ $@"
 	@[ -d $(@D) ] || (mkdir -p $(@D) && echo "Created directory \`$(@D)\`.")
-	@$(CC) $(CFLAGS) -c "$<" -o "$@"
-	@echo "$<\t==> $@"
+	$(CC) $(CFLAGS) -c "$<" -o "$@"
+	@echo
 
-$(HEADER_OBJECTS): $(OUTDIR)/%.gch: $(SRCDIR)/%.h
+$(GCHS): $(OUTDIR)/%.gch: $(SRCDIR)/%.h
+	@echo "GCHS +++ $< +++ $@"
 	@[ -d $(@D) ] || (mkdir -p $(@D) && echo "Created directory \`$(@D)\`.")
-	@$(CC) $(CFLAGS) -c "$<" -o "$@"
-	@echo "$<\t==> $@"
+	$(CC) $(CFLAGS) -c "$<" -o "$@"
+	@echo
 
 .PHONY: all
-all: binaries commands headers
+all: binaries headers
 	@echo "All done. The binaries are in the top-level directory (the same directory as the Makefile)."
 
 .PHONY: clean
