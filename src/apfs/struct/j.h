@@ -46,7 +46,6 @@ typedef struct {
         int32_t     nlink;
     };
 
-    // TODO: define `cp_key_class_t`
     cp_key_class_t  default_protection_class;
     uint32_t        write_generation_counter;
     uint32_t        bsd_flags;
@@ -62,12 +61,7 @@ typedef struct {
 
 typedef struct {
     j_key_t     hdr;
-    uint16_t    name_len;
-        /*
-         * TODO: Above may be `uint32_t len_name_and_hash`?
-         * Spec contradicts itself; investigate this --
-         * Likely a typo inherited from `j_drec_hashed_key_t` definition.
-         */
+    uint16_t    name_len;   // NOTE: Not `name_len_and_hash` as the spec erroneously says.
     uint8_t     name[0];
 } __attribute__((packed))   j_drec_key_t;
 
@@ -76,7 +70,8 @@ typedef struct {
  * `APFS_TYPE_DIR_REC`, then the record's key is an instance of `j_drec_key_t`.
  * However, the type `j_drec_hashed_key_t` (seen below) is defined in the spec
  * but not used anywhere in the spec; and upon closer inspection, the keys I
- * have encountered in practice exclusively appear to be instances of this type.
+ * have encountered in practice exclusively appear to be instances of
+ * `j_drec_hased_key_t`.
  * 
  * As such, either:
  * (a) `j_drec_key_t` has been silently deprecated as of 2019-10-31 and replaced

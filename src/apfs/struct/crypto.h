@@ -9,7 +9,7 @@
 #include "general.h"    // for `uuid_t`
 #include "object.h"     // for `obj_phys_t`
 #include "j.h"          // for `j_key_t`
-// #include "cryptotypes.h"     // `j.h` suffices to include `cryptotypes.h`
+#include "cryptotypes.h"
 
 /** `j_crypto_key_t` **/
 

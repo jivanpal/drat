@@ -8,7 +8,7 @@
 
 #include "general.h"    // for `uuid_t`
 #include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
-#include "crypto.h"
+#include "crypto.h"     // for `wrapped_meta_crypto_state_t`
 
 /** `apfs_modified_by_t` --- forward declared for `apfs_superblock_t` **/
 
@@ -27,10 +27,10 @@ typedef struct {
 #define APFS_VOLNAME_LEN    256
 
 typedef struct {
-    obj_phys_t      apfs_o;
+    obj_phys_t  apfs_o;
 
-    uint32_t        apfs_magic;
-    uint32_t        apfs_fs_index;
+    uint32_t    apfs_magic;
+    uint32_t    apfs_fs_index;
 
     uint64_t    apfs_features;
     uint64_t    apfs_readonly_compatible_features;

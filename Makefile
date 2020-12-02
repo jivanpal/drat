@@ -10,19 +10,25 @@ LDFLAGS=$(FLAGS)
 SRCDIR=src
 OUTDIR=out
 
-### Target paths ###
-PROGRAMS	:= $(wildcard $(SRCDIR)/*.c)
-BINARIES	:= $(PROGRAMS:$(SRCDIR)/%.c=%)
+### Source paths ###
+HEADERS		:= $(shell find $(SRCDIR) -name '*.h')
+SOURCES		:= $(shell find $(SRCDIR) -name '*.c')
+CMD_SRCS	:= $(wildcard $(SRCDIR)/commands/*.c)
+BIN_SRCS	:= $(wildcard $(SRCDIR)/*.c)
 
-HEADERS		:= $(shell find src -name '*.h')
+# Target paths
 GCHS		:= $(HEADERS:$(SRCDIR)/%.h=$(OUTDIR)/%.gch)
-SOURCES		:= $(shell find src -name '*.c')
 OBJECTS		:= $(SOURCES:$(SRCDIR)/%.c=$(OUTDIR)/%.o)
+COMMANDS	:= $(CMD_SRCS:$(SRCDIR)/commands/%.c=%)
+BINARIES	:= $(BIN_SRCS:$(SRCDIR)/%.c=%)
 
 ### Targets ###
 
 .PHONY: binaries
 binaries: $(BINARIES)
+
+.PHONY: commands
+commands: $(COMMANDS)
 
 .PHONY: headers
 headers: $(GCHS)
@@ -31,6 +37,9 @@ $(BINARIES): %: $(OUTDIR)/%.o $(OBJECTS)
 	@echo "BINARIES +++ $< +++ $@"
 	$(LD) $^ $(LDFLAGS) -o $@
 	@echo
+
+# Make `<command_name>` an alias of `out/commands/<command_name>.o`
+$(COMMANDS): %: $(OUTDIR)/commands/%.o
 
 $(OBJECTS): $(OUTDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
 	@echo "OBJECTS +++ $< +++ $@"
