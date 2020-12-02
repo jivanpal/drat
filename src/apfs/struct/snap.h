@@ -1,13 +1,14 @@
+#ifndef APFS_STRUCT_SNAP_H
+#define APFS_STRUCT_SNAP_H
+
 /**
  * Structures and related items as defined in
  * §13 "Snapshot Metadata"
  */
 
-#ifndef APFS_STRUCT_SNAP_H
-#define APFS_STRUCT_SNAP_H
-
-#include "j.h"          // for `j_key_t`
-#include "object.h"     // for `oid_t`, `xid_t`
+#include <stdint.h>
+#include "j.h"          // j_key_t
+#include "object.h"     // oid_t, xid_t
 
 /** `j_snap_metadata_key_t` **/
 

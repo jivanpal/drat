@@ -1,12 +1,13 @@
+#ifndef APFS_STRUCT_CRYPTOROLLING_H
+#define APFS_STRUCT_CRYPTOROLLING_H
+
 /**
  * Structures and related items as defined in
  * §18 "Encryption Rolling"
  */
 
-#ifndef APFS_STRUCT_CRYPTOROLLING_H
-#define APFS_STRUCT_CRYPTOROLLING_H
-
-#include "object.h"
+#include <stdint.h>
+#include "object.h"     // obj_phys_t, oid_t, xid_t
 
 /** `er_state_phys_t` **/
 

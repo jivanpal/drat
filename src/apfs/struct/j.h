@@ -1,13 +1,14 @@
+#ifndef APFS_STRUCT_J_H
+#define APFS_STRUCT_J_H
+
 /**
  * Structures and related items as defined in
  * §8 "File-System Objects"
  */
 
-#ifndef APFS_STRUCT_J_H
-#define APFS_STRUCT_J_H
-
-#include "cryptotypes.h"
-#include "const.h"      // for `mode_t`
+#include <stdint.h>
+#include "const.h"          // mode_t
+#include "cryptotypes.h"    // cp_key_class_t
 
 /** `j_key_t` **/
 

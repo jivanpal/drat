@@ -1,13 +1,14 @@
+#ifndef APFS_STRUCT_SPACEMAN_H
+#define APFS_STRUCT_SPACEMAN_H
+
 /**
  * Structures and related items as defined in
  * §16 "Space Manager"
  */
 
-#ifndef APFS_STRUCT_SPACEMAN_H
-#define APFS_STRUCT_SPACEMAN_H
-
-#include "general.h"    // for `paddr_t`
-#include "object.h"     // for `xid_t` and `obj_phys_t`
+#include <stdint.h>
+#include "general.h"    // paddr_t
+#include "object.h"     // obj_phys_t, xid_t
 
 /** `chunk_info_t` **/
 

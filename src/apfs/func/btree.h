@@ -1,17 +1,8 @@
 #ifndef APFS_FUNC_BTREE_H
 #define APFS_FUNC_BTREE_H
 
-#include <stdbool.h>
-
-#include "cksum.h"
-
-#include "../struct/general.h"
 #include "../struct/btree.h"
-#include "../struct/j.h"
-#include "../io.h"
-
-#include "../string/omap.h"
-#include "../string/j.h"
+#include "../struct/omap.h"
 
 omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid_t max_xid);
 

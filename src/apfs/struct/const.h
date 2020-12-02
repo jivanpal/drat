@@ -1,10 +1,10 @@
+#ifndef APFS_STRUCT_CONST_H
+#define APFS_STRUCT_CONST_H
+
 /**
  * Structures and related items as defined in
  * §9 "File-System Constants"
  */
-
-#ifndef APFS_STRUCT_CONST_H
-#define APFS_STRUCT_CONST_H
 
 #include <stdint.h>
 

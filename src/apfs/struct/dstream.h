@@ -1,12 +1,13 @@
+#ifndef APFS_STRUCT_DSTREAM_H
+#define APFS_STRUCT_DSTREAM_H
+
 /**
  * Structures and related items as defined in
  * §10 "Data Streams"
  */
 
-#ifndef APFS_STRUCT_DSTREAM_H
-#define APFS_STRUCT_DSTREAM_H
-
-#include "j.h"      // for `j_key_t`
+#include <stdint.h>
+#include "j.h"      // j_key_t
 
 /** `j_phys_ext_key_t` **/
 

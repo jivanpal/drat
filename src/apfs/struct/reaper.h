@@ -1,12 +1,14 @@
+#ifndef APFS_STRUCT_REAPER_H
+#define APFS_STRUCT_REAPER_H
+
 /**
  * Structures and related items as defined in
  * §17 "Reaper"
  */
 
-#ifndef APFS_STRUCT_REAPER_H
-#define APFS_STRUCT_REAPER_H
-
-#include "omap.h"
+#include <stdint.h>
+#include "object.h"     // obj_phys_t, oid_t, xid_t
+#include "omap.h"       // omap_key_t
 
 /** `nx_repear_phys_t` **/
 

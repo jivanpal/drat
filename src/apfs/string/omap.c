@@ -6,6 +6,13 @@
 
 #include "omap.h"
 
+#include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "object.h"
+
 /**
  * Get a human-readable string that lists the flags that are set on a given
  * object map.

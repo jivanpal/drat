@@ -1,10 +1,10 @@
+#ifndef APFS_STRUCT_OBJECT_H
+#define APFS_STRUCT_OBJECT_H
+
 /**
  * Structures and related items as defined in
  * §3 "Objects"
  */
-
-#ifndef APFS_STRUCT_OBJECT_H
-#define APFS_STRUCT_OBJECT_H
 
 #include <stdint.h>
 

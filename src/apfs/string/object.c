@@ -5,6 +5,11 @@
 
 #include "object.h"
 
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 /**
  * Get a human-readable string describing the object storage type for a given
  * type bitfield.

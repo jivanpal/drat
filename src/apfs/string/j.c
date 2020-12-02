@@ -5,6 +5,24 @@
 
 #include "j.h"
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include <sys/stat.h>
+/**
+ * Resolve a missing <sys/stat.h> definition in Xcode Command Line Tools
+ * for macOS Mojave. See: https://github.com/jivanpal/apfs-tools/issues/1
+ **/
+#ifndef SF_DATALESS
+#define SF_DATALESS 0x40000000
+#endif
+
+#include "../struct/xf.h"
+
 char* j_key_type_to_string(uint8_t j_key_type) {
     switch (j_key_type) {
         case APFS_TYPE_SNAP_METADATA:

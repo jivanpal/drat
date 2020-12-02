@@ -1,14 +1,15 @@
+#ifndef APFS_STRUCT_FS_H
+#define APFS_STRUCT_FS_H
+
 /**
  * Structures and related items as defined in
  * §7 "Volumes"
  */
 
-#ifndef APFS_STRUCT_FS_H
-#define APFS_STRUCT_FS_H
-
-#include "general.h"    // for `uuid_t`
-#include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
-#include "crypto.h"     // for `wrapped_meta_crypto_state_t`
+#include <stdint.h>
+#include "crypto.h"     // wrapped_meta_crypto_state_t
+#include "general.h"    // uuid_t
+#include "object.h"     // obj_phys_t, oid_t, xid_t
 
 /** `apfs_modified_by_t` --- forward declared for `apfs_superblock_t` **/
 

@@ -1,13 +1,14 @@
+#ifndef APFS_STRUCT_OMAP_H
+#define APFS_STRUCT_OMAP_H
+
 /**
  * Structures and related items as defined in
  * §6 "Object Maps"
  */
 
-#ifndef APFS_STRUCT_OMAP_H
-#define APFS_STRUCT_OMAP_H
-
-#include "general.h"    // for `paddr_t`
-#include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
+#include <stdint.h>
+#include "general.h"    // paddr_t
+#include "object.h"     // obj_phys_t, oid_t, xid_t
 
 /** `omap_phys_t` **/
 

@@ -2,7 +2,6 @@
 #define APFS_STRING_NX_H
 
 #include "../struct/nx.h"
-#include "object.h"
 
 char* get_nx_features_string(nx_superblock_t* nxsb);
 char* get_nx_readonly_compatible_features_string(nx_superblock_t* nxsb);

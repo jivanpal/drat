@@ -1,13 +1,13 @@
+#ifndef APFS_STRUCT_SIBLING_H
+#define APFS_STRUCT_SIBLING_H
+
 /**
  * Structures and related items as defined in
  * §12 "Siblings"
  */
 
-#ifndef APFS_STRUCT_SIBLING_H
-#define APFS_STRUCT_SIBLING_H
-
-// #include <stdint.h>
-#include "j.h"      // for `j_key_t`
+#include <stdint.h>
+#include "j.h"          // j_key_t
 
 /** `j_sibling_key_t` **/
 

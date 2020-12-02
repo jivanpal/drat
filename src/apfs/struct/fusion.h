@@ -1,13 +1,14 @@
+#ifndef APFS_STRUCT_FUSION_H
+#define APFS_STRUCT_FUSION_H
+
 /**
  * Structures and related items as defined in
  * §19 "Fusion"
  */
 
-#ifndef APFS_STRUCT_FUSION_H
-#define APFS_STRUCT_FUSION_H
-
-#include "general.h"
-#include "object.h"
+#include <stdint.h>
+#include "general.h"    // paddr_t, prange_t
+#include "object.h"     // obj_phys_t, oid_t, xid_t
 
 // NOTE: The APFS spec uses camel case for variable names, but in order to
 // maintain consistency with the rest of the APFS structures defined in this

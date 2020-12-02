@@ -1,12 +1,7 @@
 #ifndef APFS_STRING_OBJECT_H
 #define APFS_STRING_OBJECT_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-
-#include "../struct/object.h"   // for `obj_phys_t`
+#include "../struct/object.h"
 
 char* o_storage_type_to_string(uint32_t o_type);
 char* get_o_type_flags_string(uint32_t o_type);

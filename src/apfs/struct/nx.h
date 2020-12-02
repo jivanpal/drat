@@ -1,13 +1,14 @@
+#ifndef APFS_STRUCT_NX_H
+#define APFS_STRUCT_NX_H
+
 /**
  * Structures and related items as defined in
  * §5 "Container"
  */
 
-#ifndef APFS_STRUCT_NX_H
-#define APFS_STRUCT_NX_H
-
-#include "general.h"    // for `paddr_t`, `prange_t`, `uuid_t`
-#include "object.h"     // for `obj_phys_t`, `oid_t`, `xid_t`
+#include <stdint.h>
+#include "general.h"    // paddr_t, prange_t, uuid_t
+#include "object.h"     // obj_phys_t, oid_t, xid_t
 
 /** `nx_counter_id_t` --- forward declared for `nx_superblock_t` **/
 

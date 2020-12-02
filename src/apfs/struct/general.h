@@ -1,10 +1,10 @@
+#ifndef APFS_STRUCT_GENERAL_H
+#define APFS_STRUCT_GENERAL_H
+
 /**
  * Structures and related item as defined in
  * §2 "General-Purpose Types"
  */
-
-#ifndef APFS_STRUCT_GENERAL_H
-#define APFS_STRUCT_GENERAL_H
 
 #include <stdint.h>
 

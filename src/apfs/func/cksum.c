@@ -4,6 +4,8 @@
 
 #include "cksum.h"
 
+#include "../io.h"  // nx_block_size
+
 /**
  * Compute or validate the checksum of a given APFS block. This is a helper
  * function for `compute_block_cksum()` and `is_cksum_valid()`.

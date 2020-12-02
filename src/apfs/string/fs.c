@@ -5,6 +5,14 @@
 
 #include "fs.h"
 
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include "object.h"
+
 /**
  * Get a human-readable string that lists the optional feature flags that are
  * set on a given APFS volume superblock.

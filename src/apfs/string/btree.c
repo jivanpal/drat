@@ -5,6 +5,15 @@
 
 #include "btree.h"
 
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "object.h"
+#include "../func/boolean.h"
+#include "../io.h"      // nx_block_size
+
 /**
  * Get a human-readable, comma-delimited list of the flags that are set on a
  * given B-tree node.

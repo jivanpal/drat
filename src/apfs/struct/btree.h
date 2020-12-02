@@ -1,13 +1,13 @@
+#ifndef APFS_STRUCT_BTREE_H
+#define APFS_STRUCT_BTREE_H
+
 /**
  * Structures and related items as defined in
  * §14 "B-Trees"
  */
 
-#ifndef APFS_STRUCT_BTREE_H
-#define APFS_STRUCT_BTREE_H
-
 #include <stdint.h>
-#include "object.h"     // for `obj_phys_t`
+#include "object.h"     // obj_phys_t
 
 /** `nloc_t` --- forward declared for `btree_node_phys_t` **/
 

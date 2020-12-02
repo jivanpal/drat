@@ -1,5 +1,19 @@
 #include "print-fs-records.h"
 
+#include <stddef.h>
+#include <stdio.h>
+
+#include "string/j.h"       // drec_val_to_short_type_string()
+
+#include "struct/object.h"  // constants
+#include "struct/j.h"       // j_key_t, j_dir_stats_*
+#include "struct/snap.h"    // j_snap_*
+#include "struct/sibling.h" // j_sibling_*
+#include "struct/dstream.h" // j_phys_ext_*, j_dstream_id_*, j_file_extent_*
+#include "struct/crypto.h"  // j_crypto_*
+
+#include "io.h"     // nx_block_size
+
 void print_fs_records(j_rec_t** fs_records) {
     size_t num_records = 0;
 
