@@ -106,6 +106,7 @@ export back = ({disk, frompath, topath})->
 # 处理目录
 bdir = ({disk, frompath, topath})->
 	{filelist, dirlist} = await getlist {disk, dir:frompath}
+	# todo 如果path=/ 那么下面的语句会导致 //xxx这种, 如果用if判断又比较丑陋, 没想好咋搞.
 	await back {disk, frompath:"#{frompath}/#{x}", topath:"#{topath}/#{x}"} for x in filelist
 	bdir {disk, frompath:"#{frompath}/#{x}", topath:"#{topath}/#{x}"} for x in dirlist
 
