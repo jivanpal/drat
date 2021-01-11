@@ -108,7 +108,7 @@ bdir = ({disk, frompath, topath})->
 	{filelist, dirlist} = await getlist {disk, dir:frompath}
 	# todo 如果path=/ 那么下面的语句会导致 //xxx这种, 如果用if判断又比较丑陋, 没想好咋搞.
 	await back {disk, frompath:"#{frompath}/#{x}", topath:"#{topath}/#{x}"} for x in filelist
-	bdir {disk, frompath:"#{frompath}/#{x}", topath:"#{topath}/#{x}"} for x in dirlist
+	await bdir {disk, frompath:"#{frompath}/#{x}", topath:"#{topath}/#{x}"} for x in dirlist
 
 		
 
@@ -116,7 +116,7 @@ bdir = ({disk, frompath, topath})->
 export bd = ({disk, frompath, topath})->
 	# 判断目录是否存在, 如果不存在就新建目录
 	await file.newdir topath
-	bdir {disk, frompath, topath}
+	await bdir {disk, frompath, topath}
 	
 
 	
