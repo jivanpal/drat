@@ -76,6 +76,7 @@ getlist = ({disk, dir})->
 	try
 		{ stdout, stderr } = await px "sudo #{cmdpath}/apfs-list /dev/#{disk} 0 \"#{dir}\""
 		{filelist, dirlist} = str2list stdout+stderr
+		console.log chalk.yellowBright "扫描目录 : #{chalk.cyanBright dir} >>>>>>> 文件备份中: #{chalk.cyanBright filelist} "
 		return {filelist, dirlist}
 	catch err
 		console.log chalk.redBright "list error:#{dir}"
@@ -98,7 +99,7 @@ export back = ({disk, frompath, topath})->
 	catch err
 		console.log chalk.redBright "copy error:#{frompath}"
   
-	console.log chalk.yellowBright "copy file : #{chalk.cyanBright frompath} >>>>>>> #{chalk.cyanBright topath}"
+	#console.log chalk.yellowBright "copy file : #{chalk.cyanBright frompath} >>>>>>> #{chalk.cyanBright topath}"
 	#log { stdout, stderr }
 
 
@@ -117,7 +118,8 @@ export bd = ({disk, frompath, topath})->
 	# 判断目录是否存在, 如果不存在就新建目录
 	await file.newdir topath
 	await bdir {disk, frompath, topath}
-	
+
+	console.log chalk.yellowBright "backfinish, you can check error, that write in red word"
 
 	
 	#log { stdout, stderr }
