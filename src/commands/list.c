@@ -31,8 +31,16 @@
 /**
  * Print usage info for this program.
  */
-static void print_usage(char* program_name) {
-    fprintf(stderr, "Usage:   %s <container> <volume ID> <path in volume>\nExample: %s /dev/disk0s2  0  /Users/john/Documents\n\n", program_name, program_name);
+static void print_usage(int argc, char** argv) {
+    fprintf(
+        argc == 0 ? stdout : stderr,
+
+        "Usage:   %s <container> <volume ID> <path in volume>\n"
+        "Example: %s /dev/disk0s2  0  /Users/john/Documents\n",
+        
+        argv[0],
+        argv[0]
+    );
 }
 
 int cmd_list(int argc, char** argv) {
@@ -41,7 +49,7 @@ int cmd_list(int argc, char** argv) {
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
         fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        print_usage(argc, argv);
         return 1;
     }
     
@@ -51,8 +59,8 @@ int cmd_list(int argc, char** argv) {
     bool parse_success = sscanf(argv[2], "%u", &volume_id);
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid volume ID.\n", argv[2]);
-        print_usage(argv[0]);
-        fprintf(stderr, "\n");
+        print_usage(argc, argv);
+        return 1;
     }
 
     char* path_stack = argv[3];

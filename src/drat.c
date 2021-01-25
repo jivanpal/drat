@@ -1,9 +1,12 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "commands.h"
 
-static void print_usage() {
-    fprintf(stderr,
+static void print_usage(bool is_error) {
+    fprintf(
+        is_error ? stderr : stdout,
+
         "Usage: drat <command>\n"
         "\n"
         "List of commands:\n"
@@ -25,13 +28,14 @@ static void print_usage() {
 int main(int argc, char** argv) {
     char* cmd_name = argv[1];
     if (!cmd_name) {
-        print_usage();
-        return -1;
+        print_usage(false);
+        return 0;
     }
 
     command_function* cmd = get_command_function(cmd_name);
     if (!cmd) {
-        fprintf(stderr, "Unrecognised command `%s`.\n", cmd_name);
+        fprintf(stderr, "Unrecognised command `%s`.\n\n", cmd_name);
+        print_usage(true);
         return -1;
     }
 

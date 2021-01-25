@@ -31,8 +31,16 @@
 /**
  * Print usage info for this program.
  */
-static void print_usage(char* program_name) {
-    fprintf(stderr, "Usage:   %s <container> <volume ID> <file-system object ID in volume>\nExample: %s /dev/disk0s2  0  0xd4a7f\n\n", program_name, program_name);
+static void print_usage(int argc, char** argv) {
+    fprintf(
+        argc == 0 ? stdout : stderr,
+        
+        "Usage:   %s <container> <volume ID> <file-system object ID in volume>\n"
+        "Example: %s /dev/disk0s2  0  0xd4a7f\n",
+
+        argv[0],
+        argv[0]
+    );
 }
 
 int cmd_recover_raw(int argc, char** argv) {
@@ -41,7 +49,7 @@ int cmd_recover_raw(int argc, char** argv) {
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
         fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        print_usage(argc, argv);
         return 1;
     }
     
@@ -51,8 +59,8 @@ int cmd_recover_raw(int argc, char** argv) {
     bool parse_success = sscanf(argv[2], "%u", &volume_id);
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid volume ID.\n", argv[2]);
-        print_usage(argv[0]);
-        fprintf(stderr, "\n");
+        print_usage(argc, argv);
+        return 1;
     }
 
     oid_t fs_oid;
@@ -61,9 +69,9 @@ int cmd_recover_raw(int argc, char** argv) {
         parse_success = sscanf(argv[3], "%llu", &fs_oid);
     }
     if (!parse_success) {
-        printf("%s is not a valid block address.\n", argv[3]);
-        print_usage(argv[0]);
-        printf("\n");
+        fprintf(stderr, "%s is not a valid block address.\n", argv[3]);
+        print_usage(argc, argv);
+        return 1;
     }
     
     // Open (device special) file corresponding to an APFS container, read-only

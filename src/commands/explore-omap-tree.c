@@ -19,8 +19,16 @@
 /**
  * Print usage info for this program.
  */
-static void print_usage(char* program_name) {
-    printf("Usage:   %s <container> <root node address>\nExample: %s /dev/disk0s2 0x3af2\n\n", program_name, program_name);
+static void print_usage(int argc, char** argv) {
+    fprintf(
+        argc == 0 ? stdout : stderr,
+        
+        "Usage:   %s <container> <root node address>\n"
+        "Example: %s /dev/disk0s2 0x3af2\n",
+        
+        argv[0],
+        argv[0]    
+    );
 }
 
 int cmd_explore_omap_tree(int argc, char** argv) {
@@ -28,8 +36,8 @@ int cmd_explore_omap_tree(int argc, char** argv) {
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 3) {
-        printf("Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        fprintf(stderr, "Incorrect number of arguments.\n");
+        print_usage(argc, argv);
         return 1;
     }
     
@@ -41,9 +49,9 @@ int cmd_explore_omap_tree(int argc, char** argv) {
         parse_success = sscanf(argv[2], "%llu", &root_node_block_addr);
     }
     if (!parse_success) {
-        printf("%s is not a valid block address.\n", argv[2]);
-        print_usage(argv[0]);
-        printf("\n");
+        fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
+        print_usage(argc, argv);
+        return 1;
     }
     
     // Open (device special) file corresponding to an APFS container, read-only

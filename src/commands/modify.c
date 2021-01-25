@@ -29,8 +29,16 @@
 /**
  * Print usage info for this program.
  */
-static void print_usage(char* program_name) {
-    printf("Usage:   %s <container>\nExample: %s /dev/disk0s2\n\n", program_name, program_name);
+static void print_usage(int argc, char** argv) {
+    fprintf(
+        argc == 0 ? stdout : stderr,
+
+        "Usage:   %s <container>\n"
+        "Example: %s /dev/disk0s2\n",
+        
+        argv[0],
+        argv[0]
+    );
 }
 
 int cmd_modify(int argc, char** argv) {
@@ -41,8 +49,8 @@ int cmd_modify(int argc, char** argv) {
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 2) {
-        printf("Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        fprintf(stderr, "Incorrect number of arguments.\n");
+        print_usage(argc, argv);
         return 1;
     }
     nx_path = argv[1];
