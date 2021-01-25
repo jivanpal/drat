@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 #chalk = require('chalk')
-import {cmd} from 'mlib'
+import {cmd} from 'mcktools/cmd'
 import bdh from './backdirhelp.cs'
 
 

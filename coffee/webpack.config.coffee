@@ -59,6 +59,6 @@ module.exports =
 			name: 'vendors'
 			chunks: 'all'
 
-	resolve: # 解决自动查找index.cs而不是index.js的问题 #lib的配置
-		alias: mlib: path.resolve __dirname, '/Users/bergman/git/_X/code/lib/mcktools/src/'
-		extensions: ['.cs', '.coffee', '.mjs', '.js']
+	#resolve: # 解决自动查找index.cs而不是index.js的问题 #lib的配置
+	#	alias: mlib: path.resolve __dirname, '/Users/bergman/git/_X/code/lib/mcktools/src/'
+	#	extensions: ['.cs', '.coffee', '.mjs', '.js']

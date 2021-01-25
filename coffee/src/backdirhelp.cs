@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 #chalk = require('chalk')
-import {file} from 'mlib'
+import {file} from 'mcktools/cmd'
 import { spawn,exec } from 'child_process'
 import util from 'util'
 import pa from 'path'

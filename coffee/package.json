@@ -10,7 +10,6 @@
 		"backdir": "./dist/api/bin.js",
 		"dir": "./dist/api/bin.js",
 		"bd": "./dist/api/bin.js"
-
 	},
 	"scripts": {
 		"test": "node  ./dist/api/main.js",
@@ -43,6 +42,7 @@
 		"webpack-node-externals": "^2.5.2"
 	},
 	"dependencies": {
-		"chalk": "^4.1.0"
+		"chalk": "^4.1.0",
+		"mcktools": "^1.1.0"
 	}
 }
