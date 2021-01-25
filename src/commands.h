@@ -29,20 +29,22 @@ command_function cmd_recover;
 command_function cmd_resolver;
 command_function cmd_search_last_btree_node;
 command_function cmd_search;
+command_function cmd_version;
 
 static drat_command_t commands[] = {
-    { "explore-fs-tree"         , cmd_explore_fs_tree         },
-    { "explore-omap-tree"       , cmd_explore_omap_tree       },
-    { "inspect"                 , cmd_inspect                 },
-    { "list-raw"                , cmd_list_raw                },
-    { "list"                    , cmd_list                    },
-    { "modify"                  , cmd_modify                  },
-    { "read"                    , cmd_read                    },
-    { "recover-raw"             , cmd_recover_raw             },
-    { "recover"                 , cmd_recover                 },
-    { "resolver"                , cmd_resolver                },
-    { "search-last-btree-node"  , cmd_search_last_btree_node  },
-    { "search"                  , cmd_search                  },
+    { "explore-fs-tree"         , cmd_explore_fs_tree           },
+    { "explore-omap-tree"       , cmd_explore_omap_tree         },
+    { "inspect"                 , cmd_inspect                   },
+    { "list-raw"                , cmd_list_raw                  },
+    { "list"                    , cmd_list                      },
+    { "modify"                  , cmd_modify                    },
+    { "read"                    , cmd_read                      },
+    { "recover-raw"             , cmd_recover_raw               },
+    { "recover"                 , cmd_recover                   },
+    { "resolver"                , cmd_resolver                  },
+    { "search-last-btree-node"  , cmd_search_last_btree_node    },
+    { "search"                  , cmd_search                    },
+    { "version"                 , cmd_version                   },
 };
 
 /**

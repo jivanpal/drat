@@ -22,6 +22,7 @@ static void print_usage(bool is_error) {
         "   resolver                Check if given Virtual OIDs resolve to given Physical OIDs\n"
         "   search-last-btree-node  Search the partition for B-tree nodes, reporting the Physical OID of the last one discovered\n"
         "   search                  Search the partition for blocks with certain features/properties\n"
+        "   version                 Display Drat's version info\n"
     );
 }
 
