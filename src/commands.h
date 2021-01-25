@@ -37,7 +37,7 @@ static drat_command_t commands[] = {
     { "inspect"                 , cmd_inspect                   },
     { "list-raw"                , cmd_list_raw                  },
     { "list"                    , cmd_list                      },
-    { "modify"                  , cmd_modify                    },
+    // { "modify"                  , cmd_modify                    },
     { "read"                    , cmd_read                      },
     { "recover-raw"             , cmd_recover_raw               },
     { "recover"                 , cmd_recover                   },

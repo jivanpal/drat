@@ -13,9 +13,9 @@ to [Apple's official APFS specification (PDF)](https://developer.apple.com/suppo
 Copies of various versions of this spec are included in the `spec` directory for
 archival purposes, particularly in case the online version of the document changes.
 
-Currently, all of Drat's commands (except `modify`, which should not currently
-fit for use) operate in a read-only fashion, as they are intended to be used in
-situations involving data recovery or data forensics.
+Currently, all of Drat's commands (except `modify`, which is currently  diabled
+as it is not fit for use) operate in a read-only fashion, as they are intended
+to be used in situations involving data recovery or data forensics.
 
 ## Build instructions
 

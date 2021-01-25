@@ -15,7 +15,7 @@ static void print_usage(bool is_error) {
         "   inspect                 Inspect APFS partition\n"
         "   list-raw                List directory contents or file info based on its filesystem OID\n"
         "   list                    List directory contents or file info based on its filepath\n"
-        "   modify                  Modify structures on disk to resolve problems\n"
+        // "   modify                  Modify structures on disk to resolve problems\n"
         "   read                    Read a block and display information about it\n"
         "   recover-raw             Recover a file based on its filesystem OID\n"
         "   recover                 Recover a file bsaed on its filepath\n"
