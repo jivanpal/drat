@@ -4,36 +4,44 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "apfs/io.h"
-#include "apfs/func/boolean.h"
-#include "apfs/func/cksum.h"
-#include "apfs/func/btree.h"
+#include "../apfs/io.h"
+#include "../apfs/func/boolean.h"
+#include "../apfs/func/cksum.h"
+#include "../apfs/func/btree.h"
 
-#include "apfs/struct/object.h"
-#include "apfs/struct/nx.h"
-#include "apfs/struct/omap.h"
-#include "apfs/struct/fs.h"
+#include "../apfs/struct/object.h"
+#include "../apfs/struct/nx.h"
+#include "../apfs/struct/omap.h"
+#include "../apfs/struct/fs.h"
 
-#include "apfs/struct/j.h"
-#include "apfs/struct/dstream.h"
-#include "apfs/struct/sibling.h"
-#include "apfs/struct/snap.h"
+#include "../apfs/struct/j.h"
+#include "../apfs/struct/dstream.h"
+#include "../apfs/struct/sibling.h"
+#include "../apfs/struct/snap.h"
 
-#include "apfs/string/object.h"
-#include "apfs/string/nx.h"
-#include "apfs/string/omap.h"
-#include "apfs/string/btree.h"
-#include "apfs/string/fs.h"
-#include "apfs/string/j.h"
+#include "../apfs/string/object.h"
+#include "../apfs/string/nx.h"
+#include "../apfs/string/omap.h"
+#include "../apfs/string/btree.h"
+#include "../apfs/string/fs.h"
+#include "../apfs/string/j.h"
 
 /**
  * Print usage info for this program.
  */
-void print_usage(char* program_name) {
-    printf("Usage:   %s <container>\nExample: %s /dev/disk0s2\n\n", program_name, program_name);
+static void print_usage(int argc, char** argv) {
+    fprintf(
+        argc == 0 ? stdout : stderr,
+
+        "Usage:   %s <container>\n"
+        "Example: %s /dev/disk0s2\n",
+        
+        argv[0],
+        argv[0]
+    );
 }
 
-int main(int argc, char** argv) {
+int cmd_modify(int argc, char** argv) {
     /** Setup **/
 
     setbuf(stdout, NULL);
@@ -41,8 +49,8 @@ int main(int argc, char** argv) {
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 2) {
-        printf("Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        fprintf(stderr, "Incorrect number of arguments.\n");
+        print_usage(argc, argv);
         return 1;
     }
     nx_path = argv[1];

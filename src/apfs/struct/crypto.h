@@ -1,15 +1,16 @@
+#ifndef APFS_STRUCT_CRYPTO_H
+#define APFS_STRUCT_CRYPTO_H
+
 /**
  * Structures and related items as defined in
  * §15 "Encryption"
  */
 
-#ifndef APFS_STRUCT_CRYPTO_H
-#define APFS_STRUCT_CRYPTO_H
-
-#include "general.h"    // for `uuid_t`
-#include "object.h"     // for `obj_phys_t`
-#include "j.h"          // for `j_key_t`
-// #include "cryptotypes.h"     // `j.h` suffices to include `cryptotypes.h`
+#include <stdint.h>
+#include "cryptotypes.h"
+#include "general.h"        // uuid_t
+#include "j.h"              // j_key_t
+#include "object.h"         // obj_phys_t
 
 /** `j_crypto_key_t` **/
 

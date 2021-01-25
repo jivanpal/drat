@@ -4,159 +4,52 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "apfs/io.h"
-#include "apfs/func/boolean.h"
-#include "apfs/func/cksum.h"
-#include "apfs/func/btree.h"
+#include "../apfs/io.h"
+#include "../apfs/func/boolean.h"
+#include "../apfs/func/cksum.h"
+#include "../apfs/func/btree.h"
 
-#include "apfs/struct/object.h"
-#include "apfs/struct/nx.h"
-#include "apfs/struct/omap.h"
-#include "apfs/struct/fs.h"
+#include "../apfs/struct/object.h"
+#include "../apfs/struct/nx.h"
+#include "../apfs/struct/omap.h"
+#include "../apfs/struct/fs.h"
 
-#include "apfs/struct/j.h"
-#include "apfs/struct/dstream.h"
-#include "apfs/struct/sibling.h"
-#include "apfs/struct/snap.h"
+#include "../apfs/struct/j.h"
+#include "../apfs/struct/dstream.h"
+#include "../apfs/struct/sibling.h"
+#include "../apfs/struct/snap.h"
 
-#include "apfs/string/object.h"
-#include "apfs/string/nx.h"
-#include "apfs/string/omap.h"
-#include "apfs/string/btree.h"
-#include "apfs/string/fs.h"
-#include "apfs/string/j.h"
+#include "../apfs/string/object.h"
+#include "../apfs/string/nx.h"
+#include "../apfs/string/omap.h"
+#include "../apfs/string/btree.h"
+#include "../apfs/string/fs.h"
+#include "../apfs/string/j.h"
+
+#include "../apfs/print-fs-records.h"
 
 /**
  * Print usage info for this program.
  */
-void print_usage(char* program_name) {
-    fprintf(stderr, "Usage:   %s <container> <volume ID> <path in volume>\nExample: %s /dev/disk0s2  0  /Users/john/Documents\n\n", program_name, program_name);
+static void print_usage(int argc, char** argv) {
+    fprintf(
+        argc == 0 ? stdout: stderr,
+        
+        "Usage:   %s <container> <volume ID> <file-system object ID in volume>\n"
+        "Example: %s /dev/disk0s2  0  0xd4a7f\n",
+        
+        argv[0],
+        argv[0]    
+    );
 }
 
-void print_fs_records(j_rec_t** fs_records) {
-    size_t num_records = 0;
-
-    for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
-        num_records++;
-        j_rec_t* fs_rec = *fs_rec_cursor;
-
-        j_key_t* hdr = fs_rec->data;
-        fprintf(stderr, "- ");
-
-        switch ( (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT ) {
-            // NOTE: Need to enclose each case in a block `{}` since the
-            // names `key` and `val` are potentially declared multiple times
-            // in this switch-statement (though in practice it is not a
-            // concern since every `case` here ends in a `break`.)
-            case APFS_TYPE_SNAP_METADATA: {
-                j_snap_metadata_key_t* key = fs_rec->data;
-                j_snap_metadata_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "SNAP METADATA");
-            } break;
-            case APFS_TYPE_EXTENT: {
-                j_phys_ext_key_t* key = fs_rec->data;
-                j_phys_ext_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "EXTENT");
-            } break;
-            case APFS_TYPE_INODE: {
-                j_inode_key_t* key = fs_rec->data;
-                j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "INODE");
-            } break;
-            case APFS_TYPE_XATTR: {
-                j_xattr_key_t* key = fs_rec->data;
-                j_xattr_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "XATTR");
-            } break;
-            case APFS_TYPE_SIBLING_LINK: {
-                j_sibling_key_t* key = fs_rec->data;
-                j_sibling_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "SIBLING LINK");
-            } break;
-            case APFS_TYPE_DSTREAM_ID: {
-                j_dstream_id_key_t* key = fs_rec->data;
-                j_dstream_id_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "DSTREAM ID "
-                    " || file ID = %#8llx"
-                    " || ref. count = %u",
-
-                    key->hdr.obj_id_and_type & OBJ_ID_MASK,
-                    val->refcnt
-                );
-            } break;
-            case APFS_TYPE_CRYPTO_STATE: {
-                j_crypto_key_t* key = fs_rec->data;
-                j_crypto_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "CRYPTO STATE");
-            } break;
-            case APFS_TYPE_FILE_EXTENT: {
-                j_file_extent_key_t* key = fs_rec->data;
-                j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
-
-                uint64_t extent_length_bytes = val->len_and_flags & J_FILE_EXTENT_LEN_MASK;
-                uint64_t extent_length_blocks = extent_length_bytes / nx_block_size;
-
-                fprintf(stderr, "FILE EXTENT"
-                    " || file ID = %#8llx"
-                    " || log. addr. = %#10llx"
-                    " || length = %8llu B = %#10llx B = %5llu blocks = %#7llx blocks"
-                    " || phys. block = %#10llx",
-
-                    key->hdr.obj_id_and_type & OBJ_ID_MASK,
-                    key->logical_addr,
-                    extent_length_bytes, extent_length_bytes, extent_length_blocks, extent_length_blocks,
-                    val->phys_block_num
-                );
-            } break;
-            case APFS_TYPE_DIR_REC: {
-                // Spec inorrectly says to use `j_drec_key_t`; see NOTE in `apfs/struct/j.h`
-                j_drec_hashed_key_t*    key = fs_rec->data;
-                j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "DIR REC"
-                    " || target ID = %#8llx"
-                    " || name = %s",
-
-                    val->file_id,
-                    key->name
-                );
-            } break;
-            case APFS_TYPE_DIR_STATS: {
-                j_dir_stats_key_t* key = fs_rec->data;
-                // Spec incorrectly says to use `j_drec_val_t`; we use `j_dir_stats_val_t`
-                j_dir_stats_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "DIR STATS");
-            } break;
-            case APFS_TYPE_SNAP_NAME: {
-                j_snap_name_key_t* key = fs_rec->data;
-                j_snap_name_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "SNAP NAME");
-            } break;
-            case APFS_TYPE_SIBLING_MAP: {
-                j_sibling_map_key_t* key = fs_rec->data;
-                j_sibling_map_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "SIBLING MAP");
-            } break;
-            case APFS_TYPE_INVALID:
-                fprintf(stderr, "INVALID");
-                break;
-            default:
-                fprintf(stderr, "(unknown)");
-                break;
-        }
-
-        fprintf(stderr, "\n");
-    }
-
-    fprintf(stderr, "\n");
-}
-
-int main(int argc, char** argv) {
+int cmd_list_raw(int argc, char** argv) {
     setbuf(stdout, NULL);
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
         fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        print_usage(argc, argv);
         return 1;
     }
     
@@ -166,11 +59,20 @@ int main(int argc, char** argv) {
     bool parse_success = sscanf(argv[2], "%u", &volume_id);
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid volume ID.\n", argv[2]);
-        print_usage(argv[0]);
-        fprintf(stderr, "\n");
+        print_usage(argc, argv);
+        return 1;
     }
 
-    char* path_stack = argv[3];
+    oid_t fs_oid;
+    parse_success = sscanf(argv[3], "0x%llx", &fs_oid);
+    if (!parse_success) {
+        parse_success = sscanf(argv[3], "%llu", &fs_oid);
+    }
+    if (!parse_success) {
+        fprintf(stderr, "%s is not a valid block address.\n", argv[3]);
+        print_usage(argc, argv);
+        return 1;
+    }
     
     // Open (device special) file corresponding to an APFS container, read-only
     fprintf(stderr, "Opening file at `%s` in read-only mode ... ", nx_path);
@@ -539,96 +441,15 @@ int main(int argc, char** argv) {
     }
     fprintf(stderr, "OK.\n");
 
-    oid_t fs_oid = 0x2;
-
     j_rec_t** fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, (xid_t)(~0) );
     if (!fs_records) {
         fprintf(stderr, "No records found with OID 0x%llx.\n", fs_oid);
         return -1;
     }
 
-    char* path = malloc(strlen(path_stack) + 1);
-    if (!path) {
-        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `path`.\n");
-        return -1;
-    }
-    memcpy(path, path_stack, strlen(path_stack) + 1);
-
-    char* path_element;
-    while ( (path_element = strsep(&path, "/")) != NULL ) {
-        // If path element is empty string, skip it
-        if (*path_element == '\0') {
-            continue;
-        }
-        
-        signed int matching_record_index = -1;
-        for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
-            j_rec_t* fs_rec = *fs_rec_cursor;
-            j_key_t* hdr = fs_rec->data;
-            if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_DIR_REC ) {
-                j_drec_hashed_key_t* key = fs_rec->data;   
-                if (strcmp((char*)key->name, path_element) == 0) {
-                    matching_record_index = fs_rec_cursor - fs_records;
-                    break;
-                }
-            }
-        }
-
-        if (matching_record_index == -1) {
-            // No match
-            fprintf(stderr, "Could not find a dentry for that path. Exiting.\n");
-            return -1;
-        }
-
-        // Get the file ID of the matching record's target
-        j_rec_t* fs_rec = fs_records[matching_record_index];
-        j_drec_val_t* val = fs_rec->data + fs_rec->key_len;
-
-        // Get the records for the target
-        fs_oid = val->file_id;
-        free_j_rec_array(fs_records);
-        fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, (xid_t)(~0) );
-    }
-
-    fprintf(stderr, "\nRecords for file-system object %#llx -- `%s` --\n", fs_oid, path_stack);
+    fprintf(stderr, "\nRecords for file-system object %#llx\n", fs_oid);
     // `fs_records` now contains the records for the item at the specified path
     print_fs_records(fs_records);
-
-    // Output content from all matching file extents
-    char* buffer = malloc(nx_block_size);
-    if (!buffer) {
-        fprintf(stderr, "Could not allocate sufficient memory for `buffer`.\n");
-        return -1;
-    }
-
-    bool found_file_extent = false;
-    for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
-        j_rec_t* fs_rec = *fs_rec_cursor;
-        j_key_t* hdr = fs_rec->data;
-        if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_FILE_EXTENT ) {
-            found_file_extent = true;
-            j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
-
-            // Output the content from this particular file extent
-            uint64_t block_addr = val->phys_block_num;
-
-            uint64_t extent_len_blocks = (val->len_and_flags & J_FILE_EXTENT_LEN_MASK) / nx_block_size;
-            for (uint64_t i = 0;   i < extent_len_blocks;   i++, block_addr++) {
-                if (read_blocks(buffer, block_addr, 1) != 1) {
-                    fprintf(stderr, "\n\nEncountered an error reading block %#llx (block %llu of %llu). Exiting.\n\n", block_addr, i+1, extent_len_blocks);
-                    return -1;
-                }
-                
-                if (fwrite(buffer, nx_block_size, 1, stdout) != 1) {
-                    fprintf(stderr, "\n\nEncountered an error writing block %llu of %llu to `stdout`. Exiting.\n\n", i+1, extent_len_blocks);
-                    return -1;
-                }
-            }
-        }
-    }
-    if (!found_file_extent) {
-        fprintf(stderr, "Could not find any file extents for the specified path.\n");
-    }
 
     free_j_rec_array(fs_records);
     

@@ -8,56 +8,55 @@ LDFLAGS=$(FLAGS)
 
 ### Directory definitions ###
 SRCDIR=src
-OBJDIR=obj
-BINDIR=bin
+OUTDIR=out
 
-### Target paths ###
-TARGETS		:= \
-	apfs-read \
-	apfs-inspect \
-	apfs-explore-omap-tree \
-	apfs-explore-fs-tree \
-	apfs-search \
-	apfs-search-last-btree-node \
-	apfs-resolver \
-	apfs-modify \
-	apfs-list \
-	apfs-recover \
-	apfs-list-raw \
-	apfs-recover-raw
-SOURCES		:= $(wildcard $(SRCDIR)/*.c)
-HEADERS		:= $(wildcard $(SRCDIR)/*.h) $(wildcard $(SRCDIR)/*/*.h) $(wildcard $(SRCDIR)/*/*/*.h)
-OBJECTS		:= $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
-BINARIES	:= $(TARGETS:%=$(BINDIR)/%)
+### Source paths ###
+HEADERS		:= $(shell find $(SRCDIR) -name '*.h')
+SOURCES		:= $(shell find $(SRCDIR) -name '*.c')
+CMD_SRCS	:= $(wildcard $(SRCDIR)/commands/*.c)
+BIN_SRCS	:= $(wildcard $(SRCDIR)/*.c)
+
+# Target paths
+GCHS		:= $(HEADERS:$(SRCDIR)/%.h=$(OUTDIR)/%.gch)
+OBJECTS		:= $(SOURCES:$(SRCDIR)/%.c=$(OUTDIR)/%.o)
+COMMANDS	:= $(CMD_SRCS:$(SRCDIR)/commands/%.c=%)
+BINARIES	:= $(BIN_SRCS:$(SRCDIR)/%.c=%)
 
 ### Targets ###
 
-# Makes all targets (binaries)
-.PHONY: all
-all:	$(TARGETS)
-	@echo "All done. The binaries are in the \`$(BINDIR)\` directory."
+.PHONY: binaries
+binaries: $(BINARIES)
 
-# Removes all binaries and object files
+.PHONY: commands
+commands: $(COMMANDS)
+
+.PHONY: headers
+headers: $(GCHS)
+
+$(BINARIES): %: $(OUTDIR)/%.o $(OBJECTS)
+	@echo "BINARIES +++ $< +++ $@"
+	$(LD) $^ $(LDFLAGS) -o $@
+	@echo
+
+# Make `<command_name>` an alias of `out/commands/<command_name>.o`
+$(COMMANDS): %: $(OUTDIR)/commands/%.o
+
+$(OBJECTS): $(OUTDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
+	@echo "OBJECTS +++ $< +++ $@"
+	@[ -d $(@D) ] || (mkdir -p $(@D) && echo "Created directory \`$(@D)\`.")
+	$(CC) $(CFLAGS) -c "$<" -o "$@"
+	@echo
+
+$(GCHS): $(OUTDIR)/%.gch: $(SRCDIR)/%.h
+	@echo "GCHS +++ $< +++ $@"
+	@[ -d $(@D) ] || (mkdir -p $(@D) && echo "Created directory \`$(@D)\`.")
+	$(CC) $(CFLAGS) -c "$<" -o "$@"
+	@echo
+
+.PHONY: all
+all: binaries headers
+	@echo "All done. The binaries are in the top-level directory (the same directory as the Makefile)."
+
 .PHONY: clean
 clean:
-	rm -rf $(BINDIR) $(OBJDIR)
-	find . -name '*.gch' -delete
-
-# Makes the target `binary-name` an alias of `bin/binary-name`
-.PHONY: $(TARGETS)
-$(TARGETS):		%:				$(BINDIR)/%
-
-$(BINARIES):	$(BINDIR)/%:	$(OBJDIR)/%.o
-	@[ -d $(BINDIR) ] || (mkdir -p $(BINDIR) && echo "Created directory \`$(BINDIR)/\`.")
-	@$(LD) $^ $(LDFLAGS) -o $@
-	@echo "$^\t==> $@"
-
-$(OBJECTS):		$(OBJDIR)/%.o:	$(SRCDIR)/%.c $(HEADERS)
-	@[ -d $(OBJDIR) ] || (mkdir -p $(OBJDIR) && echo "Created directory \`$(OBJDIR)\`.")
-	@$(CC) $(CFLAGS) -c $< -o $@
-	@echo "$<\t==> $@ "
-
-# This target exists to allow test compilation of
-# headers, e.g. `make src/apfs/struct/object.gch`
-$(HEADERS:%.h=%.gch):	%.gch:		%.h
-	@$(CC) $(CFLAGS) -c $< -o $@
+	rm -rf $(BINARIES) $(OUTDIR)

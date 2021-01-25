@@ -4,32 +4,40 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "apfs/io.h"
-#include "apfs/struct/general.h"
+#include "../apfs/io.h"
+#include "../apfs/struct/general.h"
 
-#include "apfs/func/boolean.h"
-#include "apfs/func/cksum.h"
+#include "../apfs/func/boolean.h"
+#include "../apfs/func/cksum.h"
 
-#include "apfs/string/object.h"
-#include "apfs/string/nx.h"
-#include "apfs/string/btree.h"
-#include "apfs/string/omap.h"
-#include "apfs/string/fs.h"
+#include "../apfs/string/object.h"
+#include "../apfs/string/nx.h"
+#include "../apfs/string/btree.h"
+#include "../apfs/string/omap.h"
+#include "../apfs/string/fs.h"
 
 /**
  * Print usage info for this program.
  */
-void print_usage(char* program_name) {
-    printf("Usage:   %s <container> <root node address>\nExample: %s /dev/disk0s2 0x3af2\n\n", program_name, program_name);
+static void print_usage(int argc, char** argv) {
+    fprintf(
+        argc == 0 ? stdout : stderr,
+        
+        "Usage:   %s <container> <root node address>\n"
+        "Example: %s /dev/disk0s2 0x3af2\n",
+        
+        argv[0],
+        argv[0]    
+    );
 }
 
-int main(int argc, char** argv) {
+int cmd_explore_omap_tree(int argc, char** argv) {
     printf("\n");
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 3) {
-        printf("Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        fprintf(stderr, "Incorrect number of arguments.\n");
+        print_usage(argc, argv);
         return 1;
     }
     
@@ -41,9 +49,9 @@ int main(int argc, char** argv) {
         parse_success = sscanf(argv[2], "%llu", &root_node_block_addr);
     }
     if (!parse_success) {
-        printf("%s is not a valid block address.\n", argv[2]);
-        print_usage(argv[0]);
-        printf("\n");
+        fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
+        print_usage(argc, argv);
+        return 1;
     }
     
     // Open (device special) file corresponding to an APFS container, read-only

@@ -4,39 +4,44 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "apfs/io.h"
-#include "apfs/struct/general.h"
-#include "apfs/struct/j.h"
-#include "apfs/struct/const.h"
-#include "apfs/struct/dstream.h"
-#include "apfs/struct/sibling.h"
-#include "apfs/struct/snap.h"
+#include "../apfs/io.h"
+#include "../apfs/struct/general.h"
+#include "../apfs/struct/j.h"
+#include "../apfs/struct/const.h"
+#include "../apfs/struct/dstream.h"
+#include "../apfs/struct/sibling.h"
+#include "../apfs/struct/snap.h"
 
-#include "apfs/func/boolean.h"
-#include "apfs/func/cksum.h"
-#include "apfs/func/btree.h"
+#include "../apfs/func/boolean.h"
+#include "../apfs/func/cksum.h"
+#include "../apfs/func/btree.h"
 
-#include "apfs/string/object.h"
-#include "apfs/string/nx.h"
-#include "apfs/string/btree.h"
-#include "apfs/string/omap.h"
-#include "apfs/string/fs.h"
-#include "apfs/string/j.h"
+#include "../apfs/string/object.h"
+#include "../apfs/string/nx.h"
+#include "../apfs/string/btree.h"
+#include "../apfs/string/omap.h"
+#include "../apfs/string/fs.h"
+#include "../apfs/string/j.h"
 
-/**
- * Print usage info for this program.
- */
-void print_usage(char* program_name) {
-    printf("Usage:   %s <container> <fs tree root node address> <omap tree root node address>\nExample: %s /dev/disk0s2 0xd02a4 0x3af2\n\n", program_name, program_name);
+static void print_usage(int argc, char** argv) {
+    fprintf(
+        argc == 0 ? stdout : stderr,
+        
+        "Usage:   %s <container> <fs tree root node address> <omap tree root node address>\n"
+        "Example: %s /dev/disk0s2 0xd02a4 0x3af2\n",
+        
+        argv[0],
+        argv[0]
+    );
 }
 
-int main(int argc, char** argv) {
+int cmd_explore_fs_tree(int argc, char** argv) {
     printf("\n");
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {
-        printf("Incorrect number of arguments.\n");
-        print_usage(argv[0]);
+        fprintf(stderr, "Incorrect number of arguments.\n");
+        print_usage(argc, argv);
         return 1;
     }
 
@@ -49,9 +54,9 @@ int main(int argc, char** argv) {
         parse_success = sscanf(argv[2], "%llu", &fs_root_addr);
     }
     if (!parse_success) {
-        printf("%s is not a valid block address.\n", argv[2]);
-        print_usage(argv[0]);
-        printf("\n");
+        fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
+        print_usage(argc, argv);
+        return 1;
     }
 
     // Capture <omap tree root node address>
@@ -61,9 +66,9 @@ int main(int argc, char** argv) {
         parse_success = sscanf(argv[3], "%llu", &omap_root_addr);
     }
     if (!parse_success) {
-        printf("%s is not a valid block address.\n", argv[3]);
-        print_usage(argv[0]);
-        printf("\n");
+        fprintf(stderr, "%s is not a valid block address.\n", argv[3]);
+        print_usage(argc, argv);
+        return 1;
     }
     
     // Open (device special) file corresponding to an APFS container, read-only

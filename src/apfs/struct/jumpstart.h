@@ -1,13 +1,14 @@
+#ifndef APFS_STRUCT_JUMPSTART_H
+#define APFS_STRUCT_JUMPSTART_H
+
 /**
  * Structures and related items as defined in
  * §4 "EFI Jumpstart"
  */
 
-#ifndef APFS_STRUCT_JUMPSTART_H
-#define APFS_STRUCT_JUMPSTART_H
-
-#include "general.h"    // for `prange_t`
-#include "object.h"     // for `obj_phys_t`
+#include <stdint.h>
+#include "general.h"    // prange_t
+#include "object.h"     // obj_phys_t
 
 /** `nx_efi_jumpstart_t` **/
 

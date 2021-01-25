@@ -1,10 +1,10 @@
+#ifndef APFS_STRUCT_XF_H
+#define APFS_STRUCT_XF_H
+
 /**
  * Structures and related items as defined in
  * §11 "Extended Fields"
  */
-
-#ifndef APFS_STRUCT_XF_H
-#define APFS_STRUCT_XF_H
 
 #include <stdint.h>
 
