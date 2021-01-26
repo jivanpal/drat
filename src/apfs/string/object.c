@@ -125,9 +125,6 @@ char* get_o_type_string(uint32_t o_type) {
 
     // This string is a legal `sprintf()` format string.
     char* default_string = "Unknown type (0x%08x) --- perhaps this type was introduced in a later version of APFS than that published on 2019-02-27.";
-    
-    // Add 8 to account for `%x` being replaced with up to 8 characters.
-    size_t max_mem_required = strlen(default_string) + 8;
 
     size_t NUM_FLAGS = 22;
     uint32_t flag_constants[] = {
@@ -180,6 +177,7 @@ char* get_o_type_string(uint32_t o_type) {
     };
 
     // Allocate sufficient memory to store the longest flag string.
+    size_t max_mem_required = strlen(default_string) + 8;   // Add 8 to account for `%x` being replaced with up to 8 characters.
     for (uint32_t i = 0; i < NUM_FLAGS; i++) {
         size_t flag_string_length = strlen(flag_strings[i]);
         if (max_mem_required < flag_string_length) {
@@ -195,17 +193,13 @@ char* get_o_type_string(uint32_t o_type) {
     }
     
     // Set the right string
-    memcpy(result_string, default_string, strlen(default_string) + 1);
     uint32_t masked_o_type = o_type & OBJECT_TYPE_MASK;
+    snprintf(result_string, max_mem_required, default_string, masked_o_type);
     for (size_t i = 0; i < NUM_FLAGS; i++) {
         if (masked_o_type == flag_constants[i]) {
             memcpy(result_string, flag_strings[i], strlen(flag_strings[i]) + 1);
+            break;
         }
-    }
-
-    // If no string set (due to no flags present), then report "Unknown type".
-    if (strlen(result_string) == 0) {
-        sprintf(result_string, default_string, masked_o_type);
     }
 
     // De-allocate excess memory
@@ -235,6 +229,8 @@ char* get_o_subtype_string(uint32_t o_subtype) {
     // pointer that is allocated using `malloc()` rather than a stack pointer.
 
     // Check if `o_subtype` is a value representing a regular type.
+    // That is, return the result of `get_o_type_string()` unless that result
+    // begins with "Unknown type".
     char* result_string = get_o_type_string(o_subtype);
     if (strstr(result_string, "Unknown type") != result_string) {
         return result_string;
@@ -246,9 +242,6 @@ char* get_o_subtype_string(uint32_t o_subtype) {
 
     // This string is a legal `sprintf()` format string.
     char* default_string = "Unknown subtype (0x%08x) --- perhaps this subtype was introduced in a later version of APFS than that published on 2019-02-27.";
-    
-    // Add 8 to account for `%x` being replaced with up to 8 characters.
-    size_t max_mem_required = strlen(default_string) + 8;
 
     size_t NUM_FLAGS = 8;
 
@@ -276,6 +269,7 @@ char* get_o_subtype_string(uint32_t o_subtype) {
     };
 
     // Allocate sufficient memory to store the longest flag string.
+    size_t max_mem_required = strlen(default_string) + 8;   // Add 8 to account for `%x` being replaced with up to 8 characters.
     for (uint32_t i = 0; i < NUM_FLAGS; i++) {
         size_t flag_string_length = strlen(flag_strings[i]);
         if (max_mem_required < flag_string_length) {
@@ -294,6 +288,7 @@ char* get_o_subtype_string(uint32_t o_subtype) {
     for (size_t i = 0; i < NUM_FLAGS; i++) {
         if (masked_o_subtype == flag_constants[i]) {
             memcpy(result_string, flag_strings[i], strlen(flag_strings[i]) + 1);
+            break;
         }
     }
 
