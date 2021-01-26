@@ -33,7 +33,7 @@
  */
 static void print_usage(int argc, char** argv) {
     fprintf(
-        argc == 0 ? stdout : stderr,
+        argc == 1 ? stdout : stderr,
         
         "Usage:   %s <container> <volume ID> <path in volume>\n"
         "Example: %s /dev/disk0s2  0  /Users/john/Documents\n",
@@ -44,6 +44,11 @@ static void print_usage(int argc, char** argv) {
 }
 
 int cmd_recover(int argc, char** argv) {
+    if (argc == 1) {
+        print_usage(argc, argv);
+        return 0;
+    }
+    
     setbuf(stdout, NULL);
 
     // Extrapolate CLI arguments, exit if invalid

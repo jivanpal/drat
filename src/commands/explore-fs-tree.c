@@ -25,7 +25,7 @@
 
 static void print_usage(int argc, char** argv) {
     fprintf(
-        argc == 0 ? stdout : stderr,
+        argc == 1 ? stdout : stderr,
         
         "Usage:   %s <container> <fs tree root node address> <omap tree root node address>\n"
         "Example: %s /dev/disk0s2 0xd02a4 0x3af2\n",
@@ -36,7 +36,10 @@ static void print_usage(int argc, char** argv) {
 }
 
 int cmd_explore_fs_tree(int argc, char** argv) {
-    printf("\n");
+    if (argc == 1) {
+        print_usage(argc, argv);
+        return 0;
+    }
 
     // Extrapolate CLI arguments, exit if invalid
     if (argc != 4) {

@@ -1,6 +1,6 @@
 This directory contains one `.c` source file for each command which Drat
 supports. To add support for new commands, we use a system similar to that of
-`git`, where new commands are declared in `src/commands.h` once thery are
+`git`, where new commands are declared in `src/commands.h` once they are
 implemented. To add a new command `my-command`, do the following:
 
 1. Create a file `src/commands/my-command.c` where your command will be defined.
