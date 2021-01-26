@@ -22,24 +22,27 @@
  *      It is the caller's responsibility to ensure that `root_node` satisfies
  *      these criteria; if it does not, behaviour is undefined.
  * 
- * oid:         The OID of the object search for in the object map B-tree
- *      `root_node`. That is, the result returned will pertain to an object
- *      found in the object map that has the given OID.
+ * oid:         The Virtual OID of the object to search for in the object map
+ *      B-tree whose root node is `root_node`. That is, the result returned will
+ *      pertain to an object found in the object map that has the specified OID.
  * 
  * max_xid:     The highest XID to consider for the given OID. That is, the
  *      result returned will pertain to the single object found in the object
  *      map that has the given OID, and also whose XID is the highest among all
  *      objects in the object map that have the same OID but whose XIDs do not
- *      exceed `max_xid`.
+ *      exceed `max_xid`. To consider all XIDs (that is, to just return the
+ *      object with the highest XID among those objects with the specified OID),
+ *      you can specify `~0` or `-1`.
  * 
  * RETURN VALUE:
- *      A pointer to an object map value corresponding to the unique object
- *      whose OID and XID satisfy the criteria described above for the
- *      parameters `oid` and `max_xid`. If no object exists with the given OID,
- *      a NULL pointer is returned.
+ *      A pointer to an object map entry (key/value pair) corresponding to the
+ *      unique object whose OID and XID satisfy the criteria described above for
+ *      the parameters `oid` and `max_xid`. If no such entry exists, a NULL
+ *      pointer is returned. The key-part is included so that the caller see
+ *      the XID of the returned entry.
  *      This pointer must be freed when it is no longer needed.
  */
-omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid_t max_xid) {
+omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid, xid_t max_xid) {
     // Create a copy of the root node to use as the current node we're working with
     btree_node_phys_t* node = malloc(nx_block_size);
     if (!node) {
@@ -53,7 +56,8 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
     char* key_start = toc_start + node->btn_table_space.len;
     char* val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
 
-    // We'll need access to the B-tree info after discarding our copy of the root node
+    // We'll need access to the B-tree info after discarding our copy of the
+    // root node, so create a copy of this info
     btree_info_t* bt_info = malloc(sizeof(btree_info_t));
     if (!bt_info) {
         fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `bt_info`.\n");
@@ -64,7 +68,8 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
     // Descend the B-tree to find the target key–value pair
     while (true) {
         if (!(node->btn_flags & BTNODE_FIXED_KV_SIZE)) {
-            // fprintf(stderr, "\nget_btree_phys_omap_val: Object map B-trees don't have variable size keys and values ... do they?\n");
+            // TODO: Handle this case
+            fprintf(stderr, "\nget_btree_phys_omap_val: Object map B-trees don't have variable size keys and values ... do they?\n");
             
             free(bt_info);
             free(node);
@@ -74,50 +79,53 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
         // TOC entries are instances of `kvoff_t`
         kvoff_t* toc_entry = toc_start;
 
-        // Find the correct TOC entry, i.e. the last TOC entry whose:
-        // - OID doesn't exceed the given OID; or
-        // - OID matches the given OID, and XID doesn't exceed the given XID
+        /**
+         * Find the correct TOC entry, i.e. the last TOC entry whose:
+         * - OID doesn't exceed the given OID; or
+         * - OID matches the given OID, and XID doesn't exceed the given XID
+         */
         for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
             omap_key_t* key = key_start + toc_entry->k;
-            if (key->ok_oid > oid) {
+            if (key->ok_oid > oid  ||  (key->ok_oid == oid && key->ok_xid > max_xid)) {
                 toc_entry--;
-                break;
-            }
-            if (key->ok_oid == oid) {
-                // if (key->ok_xid > max_xid) {
-                //     toc_entry--;
-                //     break;
-                // }
-                // if (key->ok_xid == max_xid) {
-                //     break;
-                // }
                 break;
             }
         }
 
-        // One of the following is now true about `toc_entry`:
-        // (a) it points to the correct entry to descend.
-        // (b) it points before `toc_start` if no records with the desired OID
-        //      exist in this B-tree.
-        // (c) it points directly after the last TOC entry if we should descend
-        //      the last node.
+        /**
+         * One of the following is now true about `toc_entry`:
+         * 
+         * (a) it points before `toc_start` if no matching records exist
+         *      in this B-tree.
+         * (b) it points directly after the last TOC entry if we should descend
+         *      the last node.
+         * (c) it points to the correct entry to descend.
+         */
+        
+        // Handle case (a)
         if ((char*)toc_entry < toc_start) {
             free(bt_info);
             free(node);
             return NULL;
         }
+
+        // Convert case (b) into case (c)
         if (toc_entry - (kvoff_t*)toc_start == node->btn_nkeys) {
             toc_entry--;
         }
 
-        // fprintf(stderr, "\n- get_btree_phys_omap_val: Picked entry %lu\n", toc_entry - (kvoff_t*)toc_start);
+        // Handle case (c)
+
+        #ifdef DEBUG
+        fprintf(stderr, "\n- get_btree_phys_omap_val: Picked entry %lu\n", toc_entry - (kvoff_t*)toc_start);
+        #endif
 
         // If this is a leaf node, return the object map value
         if (node->btn_flags & BTNODE_LEAF) {
-            // If the object doesn't have the specified OID, then no sufficient
-            // object with that OID exists in the B-tree.
+            // If the object doesn't have the specified OID or its XID exceeds
+            // the specifed maximum, then no matching object exists in the B-tree.
             omap_key_t* key = key_start + toc_entry->k;
-            if (key->ok_oid != oid) {
+            if (key->ok_oid != oid || key->ok_xid > max_xid) {
                 free(bt_info);
                 free(node);
                 return NULL;
@@ -125,16 +133,18 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
 
             omap_val_t* val = val_end - toc_entry->v;
 
-            omap_val_t* return_val = malloc(sizeof(omap_val_t));
-            if (!return_val) {
-                fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `return_val`.\n");
+            omap_entry_t* omap_entry = malloc(sizeof(omap_entry_t));
+            if (!omap_entry) {
+                fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `omap_entry`.\n");
                 exit(-1);
             }
-            memcpy(return_val, val, sizeof(omap_val_t));
+
+            memcpy(&(omap_entry->key), key, sizeof(omap_key_t));
+            memcpy(&(omap_entry->val), val, sizeof(omap_val_t));
             
             free(bt_info);
             free(node);
-            return return_val;
+            return omap_entry;
         }
 
         // Else, read the corresponding child node into memory and loop
@@ -145,10 +155,9 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
             exit(-1);
         }
 
-        // if (!is_cksum_valid(node)) {
-        //     fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Checksum of node at block 0x%llx did not validate.\n", *child_node_addr);
-        //     exit(-1);
-        // }
+        if (!is_cksum_valid(node)) {
+            fprintf(stderr, "\nget_btree_phys_omap_val: Checksum of node at block 0x%llx did not validate. Proceeding anyway as if it did.\n", *child_node_addr);
+        }
 
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
@@ -216,7 +225,7 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
      * chosen `i` levels beneath the root level, out of the keys within the
      * node that key was chosen from.
      *
-     * Since these B+ trees do not container pointers to their siblings, this
+     * Since these B+ trees do not contain pointers to their siblings, this
      * info is needed in order to easily walk the tree after we find the first
      * record with the given OID.
      */
@@ -388,48 +397,49 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
      * shorter
      */
     while (true) {
-        // TODO: DEBUG --- REMOVE
-        // fprintf(stderr, "(");
-        // for (i = 0; i < vol_fs_root_node->btn_level; i++) {
-        //     fprintf(stderr, "%u, ", desc_path[i]);
-        // }
-        // fprintf(stderr, "%u)\n", desc_path[i]);
-        //
-        // if (vol_fs_root_node->btn_level == 3) {
+        #ifdef DEBUG
+        fprintf(stderr, "(");
+        for (i = 0; i < vol_fs_root_node->btn_level; i++) {
+            fprintf(stderr, "%u, ", desc_path[i]);
+        }
+        fprintf(stderr, "%u)\n", desc_path[i]);
+        
+        if (vol_fs_root_node->btn_level == 3) {
 
-        //     if ( desc_path[0] == 5
-        //         && desc_path[1] == 12
-        //         && desc_path[2] == 63
-        //         // && desc_path[3] == 0
-        //     ) {
-        //         fprintf(stderr, "Skip!");
-        //         desc_path[2]++;
-        //         desc_path[3] = 0;
-        //         continue;
-        //     }
+            if ( desc_path[0] == 5
+                && desc_path[1] == 12
+                && desc_path[2] == 63
+                // && desc_path[3] == 0
+            ) {
+                fprintf(stderr, "Skip!");
+                desc_path[2]++;
+                desc_path[3] = 0;
+                continue;
+            }
 
-        //     if ( desc_path[0] == 5
-        //         && desc_path[1] == 12
-        //         && desc_path[2] == 77
-        //         // && desc_path[3] == 0
-        //     ) {
-        //         fprintf(stderr, "Skip!");
-        //         desc_path[2]++;
-        //         desc_path[3] = 0;
-        //         continue;
-        //     }
+            if ( desc_path[0] == 5
+                && desc_path[1] == 12
+                && desc_path[2] == 77
+                // && desc_path[3] == 0
+            ) {
+                fprintf(stderr, "Skip!");
+                desc_path[2]++;
+                desc_path[3] = 0;
+                continue;
+            }
 
-        //     if ( desc_path[0] == 5
-        //         && desc_path[1] == 12
-        //         && desc_path[2] == 78
-        //         // && desc_path[3] == 0
-        //     ) {
-        //         fprintf(stderr, "Skip!");
-        //         desc_path[2]++;
-        //         desc_path[3] = 0;
-        //         continue;
-        //     }
-        // }
+            if ( desc_path[0] == 5
+                && desc_path[1] == 12
+                && desc_path[2] == 78
+                // && desc_path[3] == 0
+            ) {
+                fprintf(stderr, "Skip!");
+                desc_path[2]++;
+                desc_path[3] = 0;
+                continue;
+            }
+        }
+        #endif
 
         // Reset current node and pointers to the root node
         memcpy(node, vol_fs_root_node, nx_block_size);
