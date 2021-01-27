@@ -167,10 +167,10 @@ omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid,
 
 /**
  * Free memory allocated for a file-system records array that
- * was created by a call to `get_btree_virt_fs_records()`.
+ * was created by a call to `get_fs_records()`.
  * 
  * records_array:   A pointer to an array of pointers to instances of `j_rec_t`,
- *                  as returned by a call to `get_btree_virt_fs_records()`.
+ *                  as returned by a call to `get_fs_records()`.
  */
 void free_j_rec_array(j_rec_t** records_array) {
     if (!records_array) {
@@ -188,7 +188,7 @@ void free_j_rec_array(j_rec_t** records_array) {
  * given file-system root tree.
  * 
  * vol_omap_root_node:
- *      A pointer to the root node of the object map tree of the APFS volume
+ *      A pointer to the root node of the object map B-tree of the APFS volume
  *      which the given file-system root tree belongs to. This is needed in
  *      order to resolve the Virtual OIDs of objects listed in the file-system
  *      root tree to their respective block addresses within the APFS container,
@@ -203,7 +203,8 @@ void free_j_rec_array(j_rec_t** records_array) {
  * max_xid:
  *      The maximum XID to consider for a file-system object/entry. That is,
  *      no object whose XID exceeds this value will be present in the array
- *      of file-system rescords returned by this function.
+ *      of file-system rescords returned by this function. To consider all XIDs,
+ *      specify `~0` or `-1`.
  * 
  * RETURN VALUE:
  *      A pointer to the head of an array of pointers to instances of `j_rec_t`.
@@ -212,25 +213,33 @@ void free_j_rec_array(j_rec_t** records_array) {
  *      array is not explicitly returned to the caller, but the last pointer in
  *      the array returned will be a NULL pointer.
  * 
- *      When the data in the array is no longer needed, the pointer that was
- *      returned by this function should be passed to `free_j_rec_array()`
- *      in order to free the memory allocated by this function via internal
- *      calls to `malloc()` and `realloc()`.
+ *      When the data in the array is no longer needed, it is the caller's
+ *      responsibility to free the associated memory by passing the pointer
+ *      that was returned by this function to `free_j_rec_array()`.
  */
 j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_t* vol_fs_root_node, oid_t oid, xid_t max_xid) {
-
     /**
      * `desc_path` describes the path we have taken to descend down the file-
-     * system root tree. The value of `desc_path[i]` is the index of the key
+     * system root tree. Since these B+ trees do not contain pointers to their
+     * siblings, this info is needed in order to easily walk the tree after we
+     * find the first record with the given OID.
+     * 
+     * The value of `desc_path[i]` is the index of the key
      * chosen `i` levels beneath the root level, out of the keys within the
-     * node that key was chosen from.
-     *
-     * Since these B+ trees do not contain pointers to their siblings, this
-     * info is needed in order to easily walk the tree after we find the first
-     * record with the given OID.
+     * node that key was chosen from. The length of `desc_path` is the height
+     * of the tree.
+     * 
+     * For example, suppose the height of the tree is 4, and:
+     * 
+     * 1. we descend to the 1st child (index 0) of the root node (level 3); then
+     * 2. we descend to the 3rd child (index 2) of that level 2 node; then
+     * 3. we descend to the 2nd child (index 1) of that level 1 node; then
+     * 4. we are currently looking at the 4th entry (index 3) of that leaf node;
+     * 
+     * then `desc_path` will be equal to the array `{0, 2, 1, 3}`.
      */
     uint32_t desc_path[vol_fs_root_node->btn_level + 1];
-    uint16_t i = 0;     // `i` keeps tracks of how many descents we've made from the root node.
+    uint16_t i = 0;     // `i` keeps tracks of how many descents we've made from the root node thus far.
     
     // Initialise the array of records which will be returned to the caller
     size_t num_records = 0;
@@ -241,7 +250,7 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
     }
     records[0] = NULL;
 
-    // Create a copy of the root node to use as the current node we're working with
+    // Create a copy of the filesystem tree's root node to use as the current node we're working with
     btree_node_phys_t* node = malloc(nx_block_size);
     if (!node) {
         fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `node`.\n");
@@ -249,12 +258,13 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
     }
     memcpy(node, vol_fs_root_node, nx_block_size);
 
-    // Pointers to areas of the node
+    // Pointers to areas of the root node
     char* toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
     char* key_start = toc_start + node->btn_table_space.len;
     char* val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
 
-    // We may need access to the B-tree info after discarding our copy of the root node
+    // We'll need access to the B-tree info after discarding our copy of the
+    // root node, so create a copy of this info
     btree_info_t* bt_info = malloc(sizeof(btree_info_t));
     if (!bt_info) {
         fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `bt_info`.\n");
@@ -265,8 +275,9 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
     // Find the first (leftmost/least) record in the tree with the given OID
     while (true) {
         if (node->btn_flags & BTNODE_FIXED_KV_SIZE) {
+            // TODO: Handle this case
             fprintf(stderr, "\nget_fs_records: File-system root B-trees don't have fixed size keys and values ... do they?\n");
-            
+
             free(bt_info);
             free(node);
             free_j_rec_array(records);
@@ -276,78 +287,99 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
         // TOC entries are instances of `kvloc_t`
         kvloc_t* toc_entry = toc_start;
 
-        // Determine which entry in this node we should descend
+        // Determine which entry in this node we should descend; we break from
+        // this loop once we have determined the right entry.
         for (desc_path[i] = 0;    desc_path[i] < node->btn_nkeys;    desc_path[i]++, toc_entry++) {
             j_key_t* key = key_start + toc_entry->k.off;
             oid_t record_oid = key->obj_id_and_type & OBJ_ID_MASK;
 
-            if (record_oid == oid) {
-                if (node->btn_flags & BTNODE_LEAF) {
-                    // This is the first entry in this leaf node with the given
-                    // OID, and thus the first record in the whole tree with
-                    // the given OID
+            /** Handle leaf nodes **/
+
+            if (node->btn_flags & BTNODE_LEAF) {
+                if (record_oid == oid) {
+                    /**
+                     * This is the first matching record, and`desc_path`
+                     * now describes the path to it in the tree.
+                     */
                     break;
                 }
 
-                // A record with the given OID may exist as a descendant of the
-                // previous entry; backtrack so we descend that entry ...
+                if (record_oid > oid) {
+                    /**
+                     * If a record with the desired OID existed, we would've
+                     * encountered it by now, so no such records exist.
+                     */
+                    goto no_matching_records;
+                }
+
+                assert(record_oid < oid);
+                continue;   // Look at the next record
+            }
+
+            /** Handle non-leaf nodes **/
+            assert(!(node->btn_flags & BTNODE_LEAF));
+
+            if (record_oid >= oid) {
+                /**
+                 * We've encountered the first entry in this non-leaf node
+                 * whose key states an OID that is greater than or equal to the
+                 * desired OID. Thus, if this *isn't* the first entry in this
+                 * node, we descend the previous entry.
+                 */
                 if (desc_path[i] != 0) {
                     desc_path[i]--;
                     toc_entry--;
-                }
-                // ... unless this is the first entry in the node, in which
-                // case, backtracking is impossible, and this is the entry we
-                // should descend
-                break;
-            }
-
-            if (record_oid > oid) {
-                if (node->btn_flags & BTNODE_LEAF) {
-                    // If a record with the given OID exists in this leaf node,
-                    // we would've encountered it by now. Hence, this leaf node
-                    // contains no entries with the given OID, and so no record
-                    // with the given OID exists in the whole tree
-                    free(bt_info);
-                    free(node);
-                    free_j_rec_array(records);
-                    return NULL;
+                    break;
                 }
 
-                // We just passed the entry we want to descend; backtrack
-                desc_path[i]--;
-                toc_entry--;
-                break;
+                /**
+                 * However, if this *is* the first entry in this node, we only
+                 * descend it if its key's stated OID matches the desired OID;
+                 * else it exceeds the desired OID, and thus no records with the
+                 * desired OID exist *in the whole tree*.
+                 */
+                if (record_oid == oid) {
+                    break;
+                }
+                goto no_matching_records;
             }
+
+            assert(record_oid < oid);
+            // Implicit `continue`; look at the next entry.
         }
 
         /**
          * One of the following is now true about `toc_entry`:
-         * (a) it points to the correct entry to descend.
-         * (b) it points before `toc_start` if no records with the desired OID
-         *      exist in this B-tree.
-         * (c) it points directly after the last TOC entry; in which case:
+         * 
+         * (a) it points directly after the last TOC entry; in which case:
          *      (i)  if this is a leaf node, we looked into it because the first
-         *              entry of the next node has the desired OID. As such,
-         *              don't adjust `desc_path`; it's logical value already
-         *              targets the next node, and this iwll be handled by the
-         *              next while loop.
+         *              entry in the next leaf node has the desired OID.
+         *              As such, don't adjust `desc_path`; its logical value
+         *              already targets the next node, and this will be handled
+         *              by the next while loop. For example, if `n` is the
+         *              number of entries in this node, and `desc_path` equals
+         *              `{1, 2, n}`, then this really refers to the path
+         *              `{1, 3, 0}`, and so `desc_path` will be changed to
+         *              `{1, 3, 0}` accordingly so that the right record is
+         *              eaxmined on next loop.
          *      (ii) if this is a non-leaf node, we should descend the last 
          *              entry.
+         * (b) it points to the correct entry to descend.
          */
-        if ((char*)toc_entry < toc_start) {
-            free(bt_info);
-            free(node);
-            free_j_rec_array(records);
-            return NULL;
-        }
-        // If this is a leaf node, then it contains the first record with the
-        // given OID, and `desc_path` desribes the path taken to reach this
-        // node (unless it describes an out of bounds path, as described in
-        // case (c)(i) above). Break from the while-loop so that we can walk
-        // along the tree to get the rest of the records with the given OID.
+
+
+        /**
+         * If this is a leaf node, then we have finished descending the tree,
+         * and `desc_path` describes the path to the first record with the
+         * desired OID. We break from this while-loop (the descent loop) and
+         * enter the next while-loop (the walk loop), which should behave
+         * correctly based on the vale of `desc_path`.
+         */
         if (node->btn_flags & BTNODE_LEAF) {
             break;
         }
+
+        // Convert case (a)(ii) to case (b)
         if (toc_entry - (kvloc_t*)toc_start == node->btn_nkeys) {
             desc_path[i]--;
             toc_entry--;
@@ -382,7 +414,7 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
         i++;
     }
 
-    /*
+    /**
      * Now that we've found the first record with the given OID, walk along the
      * tree to get the rest of the records with that OID.
      * 
@@ -557,4 +589,10 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
             val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
         }
     }
+
+    no_matching_records:
+    free(bt_info);
+    free(node);
+    free_j_rec_array(records);
+    return NULL;
 }
