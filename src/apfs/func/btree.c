@@ -43,6 +43,8 @@
  *      This pointer must be freed when it is no longer needed.
  */
 omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid, xid_t max_xid) {
+    btree_info_t* bt_info = (char*)root_node + nx_block_size - sizeof(btree_info_t);
+    
     // Create a copy of the root node to use as the current node we're working with
     btree_node_phys_t* node = malloc(nx_block_size);
     if (!node) {
@@ -56,22 +58,12 @@ omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid,
     char* key_start = toc_start + node->btn_table_space.len;
     char* val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
 
-    // We'll need access to the B-tree info after discarding our copy of the
-    // root node, so create a copy of this info
-    btree_info_t* bt_info = malloc(sizeof(btree_info_t));
-    if (!bt_info) {
-        fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `bt_info`.\n");
-        exit(-1);
-    }
-    memcpy(bt_info, val_end, sizeof(btree_info_t));
-
     // Descend the B-tree to find the target key–value pair
     while (true) {
         if (!(node->btn_flags & BTNODE_FIXED_KV_SIZE)) {
             // TODO: Handle this case
             fprintf(stderr, "\nget_btree_phys_omap_val: Object map B-trees don't have variable size keys and values ... do they?\n");
             
-            free(bt_info);
             free(node);
             return NULL;
         }
@@ -104,7 +96,6 @@ omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid,
         
         // Handle case (a)
         if ((char*)toc_entry < toc_start) {
-            free(bt_info);
             free(node);
             return NULL;
         }
@@ -126,7 +117,6 @@ omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid,
             // the specifed maximum, then no matching object exists in the B-tree.
             omap_key_t* key = key_start + toc_entry->k;
             if (key->ok_oid != oid || key->ok_xid > max_xid) {
-                free(bt_info);
                 free(node);
                 return NULL;
             }
@@ -142,7 +132,6 @@ omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid,
             memcpy(&(omap_entry->key), key, sizeof(omap_key_t));
             memcpy(&(omap_entry->val), val, sizeof(omap_val_t));
             
-            free(bt_info);
             free(node);
             return omap_entry;
         }
