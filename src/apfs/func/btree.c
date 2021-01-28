@@ -218,6 +218,10 @@ void free_j_rec_array(j_rec_t** records_array) {
  *      that was returned by this function to `free_j_rec_array()`.
  */
 j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_t* vol_fs_root_node, oid_t oid, xid_t max_xid) {
+    btree_info_t* bt_info = (char*)vol_fs_root_node + nx_block_size - sizeof(btree_info_t);
+
+    uint16_t tree_height = vol_fs_root_node->btn_level + 1;
+
     /**
      * `desc_path` describes the path we have taken to descend down the file-
      * system root tree. Since these B+ trees do not contain pointers to their
@@ -238,19 +242,15 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
      * 
      * then `desc_path` will be equal to the array `{0, 2, 1, 3}`.
      */
-    uint32_t desc_path[vol_fs_root_node->btn_level + 1];
-    uint16_t i = 0;     // `i` keeps tracks of how many descents we've made from the root node thus far.
-    
-    // Initialise the array of records which will be returned to the caller
-    size_t num_records = 0;
-    j_rec_t** records = malloc(sizeof(j_rec_t*));
-    if (!records) {
-        fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `records`.\n");
-        exit(-1);
-    }
-    records[0] = NULL;
+    uint32_t desc_path[tree_height];
 
-    // Create a copy of the filesystem tree's root node to use as the current node we're working with
+    /**
+     * Let `node` be the working node (the FS tree node that we're currently
+     * looking at), and copy the FS tree's root node there. We do this so that
+     * when we look at child nodes later, we can copy them to `node` without
+     * losing access to the root node, an instance of which will still be
+     * present as `vol_fs_root_node`.
+     */
     btree_node_phys_t* node = malloc(nx_block_size);
     if (!node) {
         fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `node`.\n");
@@ -258,37 +258,30 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
     }
     memcpy(node, vol_fs_root_node, nx_block_size);
 
-    // Pointers to areas of the root node
+    // Pointers to areas of the working node
     char* toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
     char* key_start = toc_start + node->btn_table_space.len;
     char* val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
 
-    // We'll need access to the B-tree info after discarding our copy of the
-    // root node, so create a copy of this info
-    btree_info_t* bt_info = malloc(sizeof(btree_info_t));
-    if (!bt_info) {
-        fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `bt_info`.\n");
-        exit(-1);
-    }
-    memcpy(bt_info, val_end, sizeof(btree_info_t));
-
-    // Find the first (leftmost/least) record in the tree with the given OID
-    while (true) {
+    /**
+     * DESCENT LOOP
+     * Descend the tree to find the first record in the tree with the desired OID.
+     */
+    for (uint16_t i = 0; i < tree_height; i++) {
         if (node->btn_flags & BTNODE_FIXED_KV_SIZE) {
             // TODO: Handle this case
             fprintf(stderr, "\nget_fs_records: File-system root B-trees don't have fixed size keys and values ... do they?\n");
-
-            free(bt_info);
-            free(node);
-            free_j_rec_array(records);
-            return NULL;
+            exit(-1);
         }
 
         // TOC entries are instances of `kvloc_t`
         kvloc_t* toc_entry = toc_start;
 
-        // Determine which entry in this node we should descend; we break from
-        // this loop once we have determined the right entry.
+        /**
+         * Determine which entry in this node we should descend; we break from
+         * this loop once we have determined the right entry or looked at all
+         * of them.
+         */
         for (desc_path[i] = 0;    desc_path[i] < node->btn_nkeys;    desc_path[i]++, toc_entry++) {
             j_key_t* key = key_start + toc_entry->k.off;
             oid_t record_oid = key->obj_id_and_type & OBJ_ID_MASK;
@@ -298,7 +291,7 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
             if (node->btn_flags & BTNODE_LEAF) {
                 if (record_oid == oid) {
                     /**
-                     * This is the first matching record, and`desc_path`
+                     * This is the first matching record, and `desc_path`
                      * now describes the path to it in the tree.
                      */
                     break;
@@ -309,7 +302,8 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
                      * If a record with the desired OID existed, we would've
                      * encountered it by now, so no such records exist.
                      */
-                    goto no_matching_records;
+                    free(node);
+                    return NULL;
                 }
 
                 assert(record_oid < oid);
@@ -324,7 +318,8 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
                  * We've encountered the first entry in this non-leaf node
                  * whose key states an OID that is greater than or equal to the
                  * desired OID. Thus, if this *isn't* the first entry in this
-                 * node, we descend the previous entry.
+                 * node, we descend the previous entry, as a record with the
+                 * desired OID may exist in that sub-tree.
                  */
                 if (desc_path[i] != 0) {
                     desc_path[i]--;
@@ -341,7 +336,9 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
                 if (record_oid == oid) {
                     break;
                 }
-                goto no_matching_records;
+                
+                free(node);
+                return NULL;
             }
 
             assert(record_oid < oid);
@@ -351,17 +348,13 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
         /**
          * One of the following is now true about `toc_entry`:
          * 
-         * (a) it points directly after the last TOC entry; in which case:
-         *      (i)  if this is a leaf node, we looked into it because the first
-         *              entry in the next leaf node has the desired OID.
-         *              As such, don't adjust `desc_path`; its logical value
-         *              already targets the next node, and this will be handled
-         *              by the next while loop. For example, if `n` is the
-         *              number of entries in this node, and `desc_path` equals
-         *              `{1, 2, n}`, then this really refers to the path
-         *              `{1, 3, 0}`, and so `desc_path` will be changed to
-         *              `{1, 3, 0}` accordingly so that the right record is
-         *              eaxmined on next loop.
+         * (a) it points directly after the last TOC entry, in which case:
+         *      (i)  if this is a leaf node, we're looking at it because the
+         *              first record in the *next* leaf node has the desired
+         *              OID, or no records with the desired OID exist in the
+         *              whole tree. We just break from the descent loop, and the
+         *              walk loop will handle the current value of `desc_path`
+         *              correctly.
          *      (ii) if this is a non-leaf node, we should descend the last 
          *              entry.
          * (b) it points to the correct entry to descend.
@@ -374,210 +367,207 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
          * desired OID. We break from this while-loop (the descent loop) and
          * enter the next while-loop (the walk loop), which should behave
          * correctly based on the vale of `desc_path`.
+         * 
+         * This handles case (a)(i) above, and also case (b) when we're looking
+         * at a leaf node.
          */
         if (node->btn_flags & BTNODE_LEAF) {
             break;
         }
 
-        // Convert case (a)(ii) to case (b)
+        /** Convert case (a)(ii) to case (b) */
         if (toc_entry - (kvloc_t*)toc_start == node->btn_nkeys) {
             desc_path[i]--;
             toc_entry--;
         }
 
-        // Else, read the corresponding child node into memory and loop
+        /**
+         * Else, read the corresponding child node into memory and loop.
+         * This handles case (b) when we're looking at a non-leaf node.
+         */
+
         oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
-        omap_val_t* child_node_omap_val = get_btree_phys_omap_val(vol_omap_root_node, *child_node_virt_oid, max_xid);
-        if (!child_node_omap_val) {
-            fprintf(stderr, "get_fs_records: Need to descend to node with Virtual OID 0x%llx, but the file-system object map lists no objects with this Virtual OID.\n", *child_node_virt_oid);
-            
-            free(bt_info);
-            free(node);
-            free_j_rec_array(records);
-            return NULL;
+        omap_entry_t* child_node_omap_entry = get_btree_phys_omap_entry(vol_omap_root_node, *child_node_virt_oid, max_xid);
+        if (!child_node_omap_entry) {
+            fprintf(stderr, "\nABORT: get_fs_records: Need to descend to node with Virtual OID 0x%llx, but the volume object map lists no objects with this Virtual OID.\n", *child_node_virt_oid);
+            exit(-1);
         }
         
-        if (read_blocks(node, child_node_omap_val->ov_paddr, 1) != 1) {
-            fprintf(stderr, "\nABORT: get_fs_records: Failed to read block 0x%llx.\n", child_node_omap_val->ov_paddr);
+        if (read_blocks(node, child_node_omap_entry->val.ov_paddr, 1) != 1) {
+            fprintf(stderr, "\nABORT: get_fs_records: Failed to read block 0x%llx.\n", child_node_omap_entry->val.ov_paddr);
             exit(-1);
         }
 
+        // `node` is now the child node we will scan on next loop
+
         if (!is_cksum_valid(node)) {
-            fprintf(stderr, "\nABORT: get_fs_records: Checksum of node at block 0x%llx did not validate.\n", child_node_omap_val->ov_paddr);
+            fprintf(stderr, "\nABORT: get_fs_records: Checksum of node at block 0x%llx did not validate.\n", child_node_omap_entry->val.ov_paddr);
             exit(-1);
         }
 
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
         val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
-
-        i++;
     }
 
+    // Initialise the array of records which will be returned to the caller
+    size_t num_records = 0;
+    j_rec_t** records = malloc(sizeof(j_rec_t*));
+    if (!records) {
+        fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `records`.\n");
+        exit(-1);
+    }
+    records[0] = NULL;
+
     /**
+     * WALK LOOP
+     * 
      * Now that we've found the first record with the given OID, walk along the
      * tree to get the rest of the records with that OID.
      * 
-     * We do so by following `desc_path`, which describes the path to the the
-     * next leaf-node entry in order, and then adjusting the values in
-     * `desc_path` so that our next descent from the root takes us to the next
-     * unvisited leaf-node entry in order.
-     * 
-     * TODO: This procedure could be optimised by walking along leaf nodes
-     * directly rather than making a new descent from the root just to find the
-     * sibling of an entry in a leaf node --- HINT: make `desc_path` one entry
-     * shorter
+     * We do so by following `desc_path`, which describes the descent path to a
+     * record in the tree, and then adjusting the value of `desc_path` so that
+     * it refers to the next record in tree, so that when we loop, we visit
+     * that next record.
      */
     while (true) {
         #ifdef DEBUG
+        // Print the contents of `desc_path`
         fprintf(stderr, "(");
-        for (i = 0; i < vol_fs_root_node->btn_level; i++) {
+        for (i = 0; i < tree_height - 1; i++) {
             fprintf(stderr, "%u, ", desc_path[i]);
         }
         fprintf(stderr, "%u)\n", desc_path[i]);
-        
-        if (vol_fs_root_node->btn_level == 3) {
-
-            if ( desc_path[0] == 5
-                && desc_path[1] == 12
-                && desc_path[2] == 63
-                // && desc_path[3] == 0
-            ) {
-                fprintf(stderr, "Skip!");
-                desc_path[2]++;
-                desc_path[3] = 0;
-                continue;
-            }
-
-            if ( desc_path[0] == 5
-                && desc_path[1] == 12
-                && desc_path[2] == 77
-                // && desc_path[3] == 0
-            ) {
-                fprintf(stderr, "Skip!");
-                desc_path[2]++;
-                desc_path[3] = 0;
-                continue;
-            }
-
-            if ( desc_path[0] == 5
-                && desc_path[1] == 12
-                && desc_path[2] == 78
-                // && desc_path[3] == 0
-            ) {
-                fprintf(stderr, "Skip!");
-                desc_path[2]++;
-                desc_path[3] = 0;
-                continue;
-            }
-        }
         #endif
 
-        // Reset current node and pointers to the root node
+        // Reset working node and pointers to the root node
         memcpy(node, vol_fs_root_node, nx_block_size);
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
         val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
 
-        for (i = 0; i <= vol_fs_root_node->btn_level; i++) {
+        // Descend to the record described by `desc_path`.
+        for (uint16_t i = 0; i < tree_height; i++) {
             if (node->btn_flags & BTNODE_FIXED_KV_SIZE) {
+                // TODO: Handle this case
                 fprintf(stderr, "\nget_fs_records: File-system root B-trees don't have fixed size keys and values ... do they?\n");
                 
-                free(bt_info);
                 free(node);
                 free_j_rec_array(records);
                 return NULL;
             }
 
+            /**
+             * If `desc_path[i]` isn't a valid entry index in this node, that
+             * means we've already looked at all the entries in this node, and
+             * should look at the next node on this level.
+             */
             if (desc_path[i] >= node->btn_nkeys) {
-                // We've already gone through the last entry in this node.
-
+                /**
+                 * If this is a root node, then there are no other nodes on this
+                 * level; we've gone through the whole tree, return the results.
+                 */
                 if (node->btn_flags & BTNODE_ROOT) {
-                    // We've gone through the whole tree; return the results
                     free(node);
-                    free(bt_info);
                     return records;
                 }
                 
-                // Prep `desc_path` to take us to the leftmost descendant of
-                // this node's sibling; then break from this for-loop so that
-                // we loop inside the while-loop, i.e. make a new descent from
-                // the root.
+                /**
+                 * Else, we adjust the value of `desc_path` so that it refers
+                 * to the leftmost descendant of the next node on this level.
+                 * We then break from this for-loop so that we loop inside the
+                 * while-loop (the walk loop), which will result in us making
+                 * a new descent from the root based on the new value of
+                 * `desc_path`.
+                 */
                 desc_path[i - 1]++;
-                for (uint16_t j = i; j <= vol_fs_root_node->btn_level; j++) {
+                for (uint16_t j = i; j < tree_height; j++) {
                     desc_path[j] = 0;
                 }
                 break;
             }
 
-            // TOC entries are instances of `kvloc_t`; look at the entry
-            // described by `desc_path`
-            kvloc_t* toc_entry = (kvloc_t*)toc_start + desc_path[i];
+            
 
-            // If this is a leaf node, we have the next
-            // record; add it to the records array
+            /**
+             * Handle leaf nodes:
+             * The entry we're looking at is the next record, so add it to the
+             * records array, then adjust `desc_path` and loop.
+             */
             if (node->btn_flags & BTNODE_LEAF) {
-                j_key_t* key = key_start + toc_entry->k.off;
-                oid_t record_oid = key->obj_id_and_type & OBJ_ID_MASK;
+                // TOC entries are instances of `kvloc_t`.
+                // Walk along this leaf node
+                for (
+                    kvloc_t* toc_entry = (kvloc_t*)toc_start + desc_path[i];
+                    desc_path[i] < node->btn_nkeys;
+                    desc_path[i]++, toc_entry++
+                ) {
+                    j_key_t* key = key_start + toc_entry->k.off;
+                    oid_t record_oid = key->obj_id_and_type & OBJ_ID_MASK;
 
-                if (record_oid != oid) {
-                    // This record doesn't have the right OID, so we must have
-                    // found all of the relevant records; return the results
-                    free(bt_info);
-                    free(node);
-                    return records;
+                    if (record_oid != oid) {
+                        // This record doesn't have the right OID, so we must have
+                        // found all of the relevant records; return the results
+                        free(node);
+                        return records;
+                    }
+
+                    char* val = val_end - toc_entry->v.off;
+
+                    records[num_records] = malloc(sizeof(j_rec_t) + toc_entry->k.len + toc_entry->v.len);
+                    if (!records[num_records]) {
+                        fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `records[%lu]`.\n", num_records);
+                        exit(-1);
+                    }
+                    
+                    records[num_records]->key_len = toc_entry->k.len;
+                    records[num_records]->val_len = toc_entry->v.len;
+                    memcpy(records[num_records]->data,                                  key,  records[num_records]->key_len);
+                    memcpy(records[num_records]->data + records[num_records]->key_len,  val,  records[num_records]->val_len);
+
+                    num_records++;
+
+                    records = realloc(records, (num_records + 1) * sizeof(j_rec_t*));
+                    if (!records) {
+                        fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `records`.\n");
+                    }
+                    records[num_records] = NULL;
                 }
 
-                char* val = val_end - toc_entry->v.off;
-
-                records[num_records] = malloc(sizeof(j_rec_t) + toc_entry->k.len + toc_entry->v.len);
-                if (!records[num_records]) {
-                    fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `records[%lu]`.\n", num_records);
-                    exit(-1);
-                }
-                
-                records[num_records]->key_len = toc_entry->k.len;
-                records[num_records]->val_len = toc_entry->v.len;
-                memcpy(
-                    records[num_records]->data,
-                    key,
-                    records[num_records]->key_len
-                );
-                memcpy(
-                    records[num_records]->data + records[num_records]->key_len,
-                    val,
-                    records[num_records]->val_len
-                );
-
-                num_records++;
-                records = realloc(records, (num_records + 1) * sizeof(j_rec_t*));
-                if (!records) {
-                    fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `records`.\n");
-                }
-                records[num_records] = NULL;
-
-                // Prep `desc_path` for the next descent from the root node,
-                // then actually start the next descent from the root node.
-                desc_path[i]++;
+                /**
+                 * We've run off the end of this leaf node, and `desc_path` now
+                 * refers to the first record of the next leaf node.
+                 * Loop so that we correctly make a new descent to that record
+                 * from the root node.
+                 */
                 break;
             }
 
-            // Else, read the corresponding child node into memory and loop
+            /**
+             * Handle non-leaf nodes:
+             * Read the child node that this entry points to, then loop.
+             */
+            assert(!(node->btn_flags & BTNODE_LEAF));
+
+            // We look at the TOC entry corresponding to the child node we need
+            // to descend to.
+
+            // TOC entries are instances of `kvloc_t`.
+            kvloc_t* toc_entry = (kvloc_t*)toc_start + desc_path[i];
+
             oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
             omap_val_t* child_node_omap_val = get_btree_phys_omap_val(vol_omap_root_node, *child_node_virt_oid, max_xid);
             if (!child_node_omap_val) {
-                fprintf(stderr, "get_fs_records: Need to descend to node with Virtual OID 0x%llx, but the file-system object map lists no objects with this Virtual OID.\n", *child_node_virt_oid);
-                
-                free(bt_info);
-                free(node);
-                free_j_rec_array(records);
-                return NULL;
+                fprintf(stderr, "\nABORT: get_fs_records: Need to descend to node with Virtual OID 0x%llx, but the file-system object map lists no objects with this Virtual OID.\n", *child_node_virt_oid);
+                exit(-1);
             }
             
             if (read_blocks(node, child_node_omap_val->ov_paddr, 1) != 1) {
                 fprintf(stderr, "\nABORT: get_fs_records: Failed to read block 0x%llx.\n", child_node_omap_val->ov_paddr);
                 exit(-1);
             }
+
+            // `node` is now the child node that we will examine on next loop
 
             if (!is_cksum_valid(node)) {
                 fprintf(stderr, "\nABORT: get_fs_records: Checksum of node at block 0x%llx did not validate.\n", child_node_omap_val->ov_paddr);
@@ -589,10 +579,4 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
             val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
         }
     }
-
-    no_matching_records:
-    free(bt_info);
-    free(node);
-    free_j_rec_array(records);
-    return NULL;
 }
