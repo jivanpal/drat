@@ -72,7 +72,7 @@ typedef struct {
  * However, the type `j_drec_hashed_key_t` (seen below) is defined in the spec
  * but not used anywhere in the spec; and upon closer inspection, the keys I
  * have encountered in practice exclusively appear to be instances of
- * `j_drec_hased_key_t`.
+ * `j_drec_hashed_key_t`.
  * 
  * As such, either:
  * (a) `j_drec_key_t` has been silently deprecated as of 2019-10-31 and replaced
