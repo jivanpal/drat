@@ -321,13 +321,13 @@ int cmd_list(int argc, char** argv) {
         return -1;
     }
     for (uint32_t i = 0; i < num_file_systems; i++) {
-        omap_val_t* fs_val = get_btree_phys_omap_val(nx_omap_btree, nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
-        if (!fs_val) {
-            fprintf(stderr, "\nABORT: No objects with OID 0x%llx exist in `nx_omap_btree`.\n", nxsb->nx_fs_oid[i]);
+        omap_entry_t* fs_entry = get_btree_phys_omap_entry(nx_omap_btree, nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
+        if (!fs_entry) {
+            fprintf(stderr, "\nABORT: No objects with Virtual OID 0x%llx and maximum XID 0x%llx exist in `nx_omap_btree`.\n", nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
             return -1;
         }
-        if (read_blocks(apsbs + i, fs_val->ov_paddr, 1) != 1) {
-            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_val->ov_paddr);
+        if (read_blocks(apsbs + i, fs_entry->val.ov_paddr, 1) != 1) {
+            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_entry->val.ov_paddr);
             return -1;
         }
     }
@@ -411,12 +411,12 @@ int cmd_list(int argc, char** argv) {
 
     fprintf(stderr, "The file-system tree root for this volume has Virtual OID 0x%llx.\n", apsb->apfs_root_tree_oid);
     fprintf(stderr, "Looking up this Virtual OID in the volume object map ... ");
-    omap_val_t* fs_root_val = get_btree_phys_omap_val(fs_omap_btree, apsb->apfs_root_tree_oid, apsb->apfs_o.o_xid);
-    if (!fs_root_val) {
-        fprintf(stderr, "\nABORT: No objects with OID 0x%llx exist in `fs_omap_btree`.\n", apsb->apfs_root_tree_oid);
+    omap_entry_t* fs_root_entry = get_btree_phys_omap_entry(fs_omap_btree, apsb->apfs_root_tree_oid, apsb->apfs_o.o_xid);
+    if (!fs_root_entry) {
+        fprintf(stderr, "\nABORT: No objects with Virtual OID 0x%llx and maximum XID 0x%llx exist in `fs_omap_btree`.\n", apsb->apfs_root_tree_oid, apsb->apfs_o.o_xid);
         return -1;
     }
-    fprintf(stderr, "corresponding block address is 0x%llx.\n", fs_root_val->ov_paddr);
+    fprintf(stderr, "corresponding block address is 0x%llx.\n", fs_root_entry->val.ov_paddr);
 
     fprintf(stderr, "Reading ... ");
     btree_node_phys_t* fs_root_btree = malloc(nx_block_size);
@@ -424,11 +424,11 @@ int cmd_list(int argc, char** argv) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_root_btree`.\n");
         return -1;
     }
-    if (read_blocks(fs_root_btree, fs_root_val->ov_paddr, 1) != 1) {
-        fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_root_val->ov_paddr);
+    if (read_blocks(fs_root_btree, fs_root_entry->val.ov_paddr, 1) != 1) {
+        fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_root_entry->val.ov_paddr);
         return -1;
     }
-    free(fs_root_val);  // No longer need the block address of the file-system root.
+    free(fs_root_entry);  // No longer need the block address of the file-system root.
 
     fprintf(stderr, "validating ... ");
     if (!is_cksum_valid(fs_root_btree)) {

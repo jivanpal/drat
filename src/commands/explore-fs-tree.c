@@ -187,8 +187,8 @@ int cmd_explore_fs_tree(int argc, char** argv) {
             } else {
                 oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
                 printf("   ||   Target child node Virtual OID = %#16llx", *child_node_virt_oid);
-                omap_val_t* child_node_omap_val = get_btree_phys_omap_val( omap_root_node, *child_node_virt_oid, (xid_t)(~0) );
-                if (!child_node_omap_val) {
+                omap_entry_t* child_node_omap_entry = get_btree_phys_omap_entry(omap_root_node, *child_node_virt_oid, (xid_t)(~0));
+                if (!child_node_omap_entry) {
                     printf("  ||  UNRESOLVABLE");
                 } else {
                     btree_node_phys_t* child_node = malloc(nx_block_size);
@@ -196,8 +196,8 @@ int cmd_explore_fs_tree(int argc, char** argv) {
                         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `child_node`.\n");
                         return -1;
                     }
-                    if (read_blocks(child_node, child_node_omap_val->ov_paddr, 1) != 1) {
-                        fprintf(stderr, "\nABORT: Failed to read block %#llx.\n", child_node_omap_val->ov_paddr);
+                    if (read_blocks(child_node, child_node_omap_entry->val.ov_paddr, 1) != 1) {
+                        fprintf(stderr, "\nABORT: Failed to read block %#llx.\n", child_node_omap_entry->val.ov_paddr);
                         return -1;
                     }
 
@@ -325,15 +325,15 @@ int cmd_explore_fs_tree(int argc, char** argv) {
         oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
         printf("Child node has Virtual OID 0x%llx.\n", *child_node_virt_oid);
         
-        omap_val_t* child_node_omap_val = get_btree_phys_omap_val(omap_root_node, *child_node_virt_oid, (xid_t)(~0) /*fs_root_node->btn_o.o_xid*/);
-        if (!child_node_omap_val) {
-            printf("Need to descend to node with Virtual OID 0x%llx, but the object map lists no objects with this Virtual OID.\n", *child_node_virt_oid);
+        omap_entry_t* child_node_omap_entry = get_btree_phys_omap_entry(omap_root_node, *child_node_virt_oid, fs_root_node->btn_o.o_xid);
+        if (!child_node_omap_entry) {
+            printf("Need to descend to node with Virtual OID %#llx and maximum XID %#llx, but the object map lists no objects with this Virtual OID.\n", *child_node_virt_oid, fs_root_node->btn_o.o_xid);
             return 0;
         }
 
-        printf("The object map resolved this Virtual OID to block address 0x%llx. Reading ... ", child_node_omap_val->ov_paddr);
-        if (read_blocks(node, child_node_omap_val->ov_paddr, 1) != 1) {
-            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", child_node_omap_val->ov_paddr);
+        printf("The object map resolved this Virtual OID to block address %#llx. Reading ... ", child_node_omap_entry->val.ov_paddr);
+        if (read_blocks(node, child_node_omap_entry->val.ov_paddr, 1) != 1) {
+            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", child_node_omap_entry->val.ov_paddr);
             return -1;
         }
 
@@ -348,7 +348,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
         key_start = toc_start + node->btn_table_space.len;
         val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
 
-        free(child_node_omap_val);
+        free(child_node_omap_entry);
     }
     
     return 0;

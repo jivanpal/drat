@@ -4,7 +4,16 @@
 #include "../struct/btree.h"
 #include "../struct/omap.h"
 
-omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid_t max_xid);
+/**
+ * Custom data structure used to store the key and value of an object map entry
+ * together.
+ */
+typedef struct {
+    omap_key_t key;
+    omap_val_t val;
+} omap_entry_t;
+
+omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid, xid_t max_xid);
 
 /**
  * Custom data structure used to store a full file-system record (i.e. a single
@@ -23,9 +32,9 @@ omap_val_t* get_btree_phys_omap_val(btree_node_phys_t* root_node, oid_t oid, xid
  * val_len: Length of the file-system record's value-part, in bytes.
  * 
  * data:    Array of `key_len + val_len` bytes of data, of which,
- *          index 0 (inclusive) through `key_len` (exclusive) contain the
- *          key-part data, and index `key_len` (inclusive) through
- *          `key_len + val_len` (exclusive) contain the value-part data.
+ *          index `0` through `key_len - 1` (inclusive) contain the
+ *          key-part data, and index `key_len` through `key_len + val_len - 1`
+ *          (inclusive) contain the value-part data.
  */
 typedef struct {
     uint16_t    key_len;
