@@ -90,7 +90,7 @@ omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid,
          * (a) it points before `toc_start` if no matching records exist
          *      in this B-tree.
          * (b) it points directly after the last TOC entry if we should descend
-         *      the last node.
+         *      the last entry.
          * (c) it points to the correct entry to descend.
          */
         
@@ -111,7 +111,7 @@ omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid,
         fprintf(stderr, "\n- get_btree_phys_omap_val: Picked entry %lu\n", toc_entry - (kvoff_t*)toc_start);
         #endif
 
-        // If this is a leaf node, return the object map value
+        // If this is a leaf node, return the object map entry
         if (node->btn_flags & BTNODE_LEAF) {
             // If the object doesn't have the specified OID or its XID exceeds
             // the specifed maximum, then no matching object exists in the B-tree.
