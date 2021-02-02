@@ -6,7 +6,7 @@ int cmd_version(int argc, char** argv) {
         return 1;
     }
 
-    printf("Drat version 0.1.0\n");
+    printf("Drat version 0.1.1\n");
     
     return 0;
 }

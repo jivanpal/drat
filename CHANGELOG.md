@@ -1,4 +1,24 @@
-# Changelog for v0.1.0 (2021-01-26)
+# Drat changelog
+
+## v0.1.1 (2021-02-02)
+
+- Fixed bug in `get_o_type_string()` where the "Unknown type" output did not
+  correctly display the hex value of the type field
+  (`o_type & OBJECT_TYPE_MASK`).
+
+- Re-implemented (and hopefully fixed all bugs in) the B-tree routines in
+  `src/apfs/func/btree.c`. Of particular note:
+
+  - `get_btree_phys_omap_val()` is deprecated and replaced with
+    `get_btree_phys_omap_entry()`, which allows the caller to see the XID of
+    the returned entry.
+
+  - `get_fs_records()` is now more efficient, as it no longer makes multiple
+    descents from the root node just to access multiple records in the same leaf
+    node. Instead, we now just walk along the leaf node, making new descents
+    only when we need to access a different node.
+
+## v0.1.0 (2021-01-26)
 
 Initial release, basically the same as the prior `apfs-tools` commands, but packaged into a single `drat` command. Recognised commands and their functionality are highly subject to change for now. The current list of commands is:
 
