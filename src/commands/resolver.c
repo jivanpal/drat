@@ -360,13 +360,13 @@ int cmd_resolver(int argc, char** argv) {
         return -1;
     }
     for (uint32_t i = 0; i < num_file_systems; i++) {
-        omap_val_t* fs_val = get_btree_phys_omap_val(nx_omap_btree, nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
-        if (!fs_val) {
-            fprintf(stderr, "\nABORT: No objects with OID 0x%llx exist in `nx_omap_btree`.\n", nxsb->nx_fs_oid[i]);
+        omap_entry_t* fs_entry = get_btree_phys_omap_entry(nx_omap_btree, nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
+        if (!fs_entry) {
+            fprintf(stderr, "\nABORT: No objects with Virtual OID 0x%llx and maximum XID 0x%llx exist in `nx_omap_btree`.\n", nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
             return -1;
         }
-        if (read_blocks(apsbs + i, fs_val->ov_paddr, 1) != 1) {
-            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_val->ov_paddr);
+        if (read_blocks(apsbs + i, fs_entry->val.ov_paddr, 1) != 1) {
+            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", fs_entry->val.ov_paddr);
             return -1;
         }
     }
@@ -541,23 +541,23 @@ int cmd_resolver(int argc, char** argv) {
     for (size_t j = 0; j < NUM_RECORDS; j++) {
         printf("%2lu -- ", j);
         
-        omap_val_t* omap_val = get_btree_phys_omap_val(fs_omap_btree, record_data[j][3], (xid_t)(~0) );
-        if (!omap_val) {
+        omap_entry_t* omap_entry = get_btree_phys_omap_entry(fs_omap_btree, record_data[j][3], (xid_t)(~0) );
+        if (!omap_entry) {
             printf("Could not resolve %#llx --- no such entry in omap tree\n", record_data[j][3]);
             continue;
         }
 
-        if ( (uint64_t)(omap_val->ov_paddr)  ==  record_data[j][2] ) {
+        if ( (uint64_t)(omap_entry->val.ov_paddr)  ==  record_data[j][2] ) {
             printf("OK.\n");
         } else {
             printf( "Failed to resolve %#llx to %#llx --- it resolved to %#llx instead\n",
                 record_data[j][3],
                 record_data[j][2],
-                omap_val->ov_paddr
+                omap_entry->val.ov_paddr
             );
         }
 
-        free(omap_val);
+        free(omap_entry);
     }
     printf("\n\nDONE DONE\n\n");
 
