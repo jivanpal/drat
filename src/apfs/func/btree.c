@@ -476,8 +476,6 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
                 break;
             }
 
-            
-
             /**
              * Handle leaf nodes:
              * The entry we're looking at is the next record, so add it to the
