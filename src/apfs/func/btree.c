@@ -517,6 +517,7 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
                     records = realloc(records, (num_records + 1) * sizeof(j_rec_t*));
                     if (!records) {
                         fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `records`.\n");
+                        exit(-1);
                     }
                     records[num_records] = NULL;
                 }
