@@ -40,7 +40,7 @@ implemented. To add a new command `my-command`, do the following:
      * contained within the respective command's source file.
      */
     // ...
-    command_function cmd_my_command();
+    command_function cmd_my_command;
     // ...
 
     static drat_command_t commands[] = {
