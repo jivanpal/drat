@@ -75,11 +75,18 @@ typedef struct {
 #define OBJECT_TYPE_GBITMAP_TREE        0x0000001a
 #define OBJECT_TYPE_GBITMAP_BLOCK       0x0000001b
 
+#define OBJECT_TYPE_ER_RECOVERY_BLOCK   0x0000001c
+#define OBJECT_TYPE_SNAP_META_EXT       0x0000001d
+#define OBJECT_TYPE_INTEGRITY_META      0x0000001e
+#define OBJECT_TYPE_FEXT_TREE           0x0000001f
+#define OBJECT_TYPE_RESERVED_20         0x00000020
+
 #define OBJECT_TYPE_INVALID             0x00000000
 #define OBJECT_TYPE_TEST                0x000000ff
 
 #define OBJECT_TYPE_CONTAINER_KEYBAG    'keys'
 #define OBJECT_TYPE_VOLUME_KEYBAG       'recs'
+#define OBJECT_TYPE_MEDIA_KEYBAG        'mkey'
 
 /** Object Type Flags **/
 
