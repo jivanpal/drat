@@ -397,7 +397,7 @@ char* get_cpm_flags_string(checkpoint_map_phys_t* cpm) {
     };
 
     char* flag_strings[] = {
-        "Last checkpoint-mapping block in the correspondng checkpoint.",
+        "Last checkpoint-mapping block in the corresponding checkpoint.",
     };
 
     // Allocate sufficient memory for the result string

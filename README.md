@@ -193,7 +193,7 @@ Type flags:         (none)
 Type:               Checkpoint map
 Subtype:            (none/invalid)
 Flags:
-- Last checkpoint-mapping block in the correspondng checkpoint.
+- Last checkpoint-mapping block in the corresponding checkpoint.
 Number of mappings: 5
 --------------------------------------------------------------------------------
 Stored checksum:    0xe25eecc609033666
