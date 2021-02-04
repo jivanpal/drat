@@ -20,7 +20,7 @@
 
   ## Object Map Flags
 
-  - [ ] OMAP_VALID_FLAGS
+  - [x] OMAP_VALID_FLAGS
 
 # §7 Volumes
 

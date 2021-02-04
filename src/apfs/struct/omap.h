@@ -69,6 +69,8 @@ typedef struct {
 #define OMAP_KEYROLLING         0x00000008
 #define OMAP_CRYPTO_GENERATION  0x00000010
 
+#define OMAP_VALID_FLAGS        0x0000001f
+
 /** Object Map Constants **/
 
 #define OMAP_MAX_SNAP_COUNT     UINT32_MAX
