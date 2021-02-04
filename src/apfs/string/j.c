@@ -95,7 +95,7 @@ char* get_j_inode_internal_flags_string(uint64_t internal_flags) {
     char* default_string = "- No internal flags are set.\n";
     size_t default_string_len = strlen(default_string);
     
-    const int NUM_FLAGS = 17;
+    const int NUM_FLAGS = 23;
     
     uint64_t flag_constants[] = {
         INODE_IS_APFS_PRIVATE,
@@ -115,6 +115,12 @@ char* get_j_inode_internal_flags_string(uint64_t internal_flags) {
         INODE_HAS_RSRC_FORK,
         INODE_NO_RSRC_FORK,
         INODE_ALLOCATION_SPILLEDOVER,
+        INODE_FAST_PROMOTE,
+        INODE_HAS_UNCOMPRESSED_SIZE,
+        INODE_IS_PURGEABLE,
+        INODE_WANTS_TO_BE_PURGEABLE,
+        INODE_IS_SYNC_ROOT,
+        INODE_SNAPSHOT_COW_EXEMPTION,
     };
 
     char* flag_strings[] = {
@@ -135,6 +141,12 @@ char* get_j_inode_internal_flags_string(uint64_t internal_flags) {
         "Has a resource fork",
         "Has no resource fork",
         "Fusion drive: file content spilled over from preferred storage tier/device",
+        "Scheduled for promotion from slow storage to fast storage",
+        "Uncompressed size is stored in the inode",
+        "Will be deleted at the next purge",
+        "Should become purgeable when its link count drops to 1",
+        "Is the root of a sync hierarchy for `fileproviderd`",
+        "Exempt from copy-on-write behavior if the data is part of a snapshot",
     };
 
     // Allocate sufficient memory for the result string
@@ -261,6 +273,21 @@ void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {
     printf("Private ID:     0x%llx\n",  val->private_id);
     printf("\n");
 
+    char* tmp_string = NULL;
+    if (val->internal_flags & INODE_HAS_UNCOMPRESSED_SIZE) {
+        if (asprintf(tmp_string, "%llu bytes", val->uncompressed_size) < 0) {
+            fprintf(stderr, "ABORT: %s:%d: call to asprintf() couldn't allocate sufficient memory", __func__, __LINE__);
+            exit(-1);
+        }
+    } else {
+        if (asprintf(tmp_string, "(unknown)") < 0) {
+            fprintf(stderr, "ABORT: %s:%d: call to asprintf() couldn't allocate sufficient memory", __func__, __LINE__);
+            exit(-1);
+        }
+    }
+    printf("Uncompressed size:      %s\n", tmp_string);
+    free(tmp_string);
+
     time_t timestamp = val->create_time / 1000000000;
     printf("Creation time:          %s",    ctime(&timestamp));
     timestamp = val->mod_time / 1000000000;
@@ -279,7 +306,7 @@ void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {
     printf("Mode:   %s\n",  j_inode_mode_to_string(val->mode));
     printf("\n");
 
-    char* tmp_string = get_j_inode_internal_flags_string(val->internal_flags);
+    tmp_string = get_j_inode_internal_flags_string(val->internal_flags);
     printf("Internal flags:\n%s", tmp_string);
     printf("\n");
     free(tmp_string);
@@ -289,12 +316,9 @@ void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {
     printf("\n");
     free(tmp_string);
 
-    printf("No. extended fields:    ");
-    if (!has_xfields) {
-        printf("0\n");
-        return;
-    }
-    printf("%u\n", ((xf_blob_t*)(val->xfields))->xf_num_exts);
+    printf("Number of extended fields:          %u\n",
+        has_xfields ? ((xf_blob_t*)(val->xfields))->xf_num_exts : 0
+    );
     
     // TODO: Print actual details of extended fields/attributes
 }
