@@ -26,15 +26,15 @@
 
   ## `apfs_superblock_t`
 
-  - [ ] apfs_cloneinfo_id_epoch
-  - [ ] apfs_cloneinfo_xid
-  - [ ] apfs_snap_meta_ext_oid
-  - [ ] apfs_volume_group_id
-  - [ ] apfs_integrity_meta_oid
-  - [ ] apfs_fext_tree_oid
-  - [ ] apfs_fext_tree_type
-  - [ ] reserved_type
-  - [ ] reserved_oid
+  - [x] apfs_cloneinfo_id_epoch
+  - [x] apfs_cloneinfo_xid
+  - [x] apfs_snap_meta_ext_oid
+  - [x] apfs_volume_group_id
+  - [x] apfs_integrity_meta_oid
+  - [x] apfs_fext_tree_oid
+  - [x] apfs_fext_tree_type
+  - [x] reserved_type
+  - [x] reserved_oid
 
   ## Volume Flags
 

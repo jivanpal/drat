@@ -554,5 +554,12 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
      * - apfs_modified_by
      * - apfs_root_to_xid
      * - apfs_er_state_oid
+     * - apfs_cloneinfo_id_epoch
+     * - apfs_cloneinfo_xid
+     * - apfs_snap_meta_ext_oid
+     * - apfs_volume_group_id
+     * - apfs_integrity_meta_oid
+     * - apfs_fext_tree_oid
+     * - apfs_fext_tree_type
      */
 }

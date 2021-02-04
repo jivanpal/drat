@@ -80,10 +80,30 @@ typedef struct {
     uint32_t    apfs_next_doc_id;
 
     uint16_t    apfs_role;
-    uint16_t    apfs_reserved;
+    uint16_t    reserved;
 
     xid_t       apfs_root_to_xid;
     oid_t       apfs_er_state_oid;
+
+// Fields introduced in revision 2020-05-15
+
+    // Fields supported on macOS 10.13.3+
+    uint64_t    apfs_cloneinfo_id_epoch;
+    uint64_t    apfs_cloneinfo_xid;
+
+    // Fields supported on macOS 10.15+
+    oid_t       apfs_snap_meta_ext_oid;
+    uuid_t      apfs_volume_group_id;
+
+// Fields introduced in revision 2020-06-22
+    
+    // Fields supported on macOS 11+
+    oid_t       apfs_integrity_meta_oid;
+    oid_t       apfs_fext_tree_oid;
+    uint32_t    apfs_fext_tree_type;
+    
+    uint32_t    reserved_type;
+    oid_t       reserved_oid;
 } apfs_superblock_t;
 
 /** Volume Flags **/
