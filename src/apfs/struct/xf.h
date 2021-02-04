@@ -20,7 +20,7 @@ typedef struct {
     uint16_t    x_size;
 } x_field_t;
 
-/// Extended-Field Types ///
+/** Extended-Field Types **/
 
 #define DREC_EXT_TYPE_SIBLING_ID        1
 
@@ -40,7 +40,7 @@ typedef struct {
 #define INO_EXT_TYPE_RDEV               14
 
 
-/// Extended-Field Flags ///
+/** Extended-Field Flags **/
 
 #define XF_DATA_DEPENDENT       0x0001
 #define XF_DO_NOT_COPY          0x0002
