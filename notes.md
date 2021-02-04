@@ -135,16 +135,16 @@
 
   ## Protection Classes
 
-  - [ ] PROTECTION_CLASS_M
+  - [x] PROTECTION_CLASS_M
 
   ## Encryption Identifiers
 
-  - [ ] APFS_UNASSIGNED_CRYPTO_ID
+  - [x] APFS_UNASSIGNED_CRYPTO_ID
 
   ## Keybag Tags
 
-  - [ ] KB_TAG_WRAPPING_M_KEY
-  - [ ] KB_TAG_VOLUME_M_KEY
+  - [x] KB_TAG_WRAPPING_M_KEY
+  - [x] KB_TAG_VOLUME_M_KEY
 
 # §16 Sealed Volumes
 
