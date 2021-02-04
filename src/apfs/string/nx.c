@@ -304,10 +304,35 @@ char* get_nx_flags_string(nx_superblock_t* nxsb) {
 void print_nx_superblock(nx_superblock_t* nxsb) {
     print_obj_phys(nxsb); // `nxsb` is equivalent to `&(nxsb->nx_o)`.
 
-    printf("Keybag location: starts at %#llx, spans %#llx blocks\n", nxsb->nx_keylocker.pr_start_paddr, nxsb->nx_keylocker.pr_block_count);
+    printf("Keybag location: ");
+    if (nxsb->nx_keylocker.pr_block_count == 0) {
+        printf("none (spans 0 blocks)\n");
+    } else {
+        printf(
+            "first block %#llx, spans %llu (%#llx) blocks (last block %#llx)\n",
+            nxsb->nx_keylocker.pr_start_paddr,
+            nxsb->nx_keylocker.pr_block_count,
+            nxsb->nx_keylocker.pr_block_count,
+            nxsb->nx_keylocker.pr_start_paddr + nxsb->nx_keylocker.pr_block_count - 1
+        );
+    }
+
+    printf("Media keybag location: ");
+    if (nxsb->nx_mkb_locker.pr_block_count == 0) {
+        printf("none (spans 0 blocks)\n");
+    } else {
+        printf(
+            "first block %#llx, spans %llu (%#llx) blocks (last block %#llx)\n",
+            nxsb->nx_mkb_locker.pr_start_paddr,
+            nxsb->nx_mkb_locker.pr_block_count,
+            nxsb->nx_mkb_locker.pr_block_count,
+            nxsb->nx_mkb_locker.pr_start_paddr + nxsb->nx_mkb_locker.pr_block_count - 1
+        );
+    }
+
 
     char magic_string[] = {
-        (char)nxsb->nx_magic,
+        (char)(nxsb->nx_magic),
         (char)(nxsb->nx_magic >> 8),
         (char)(nxsb->nx_magic >> 16),
         (char)(nxsb->nx_magic >> 24),
@@ -315,8 +340,22 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
     };
     printf("Magic string:       %s\n",          magic_string);
 
+    printf(
+        "Latest version of Apple APFS software that mounted this container: "
+        "%llu.%llu.%llu.%llu.%llu\n",
+
+         nxsb->nx_newest_mounted_version >> 40,
+        (nxsb->nx_newest_mounted_version >> 30) & ~(~0ULL << 10),
+        (nxsb->nx_newest_mounted_version >> 20) & ~(~0ULL << 10),
+        (nxsb->nx_newest_mounted_version >> 10) & ~(~0ULL << 10),
+        (nxsb->nx_newest_mounted_version)       & ~(~0ULL << 10)
+    );
+
     printf("Block size:         %u bytes\n",    nxsb->nx_block_size);
-    printf("Block count:        %llu\n",        nxsb->nx_block_count);
+    printf("Block count:        %llu (last block %#llx)\n",
+        nxsb->nx_block_count,
+        nxsb->nx_block_count - 1
+    );
     
     char* features_string = get_nx_features_string(nxsb);
     printf("Supported features:\n%s", features_string);

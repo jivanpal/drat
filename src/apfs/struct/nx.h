@@ -78,6 +78,10 @@ typedef struct {
     oid_t       nx_fusion_mt_oid;
     oid_t       nx_fusion_wbc_oid;
     prange_t    nx_fusion_wbc;
+
+    uint64_t    nx_newest_mounted_version;
+
+    prange_t    nx_mkb_locker;
 } nx_superblock_t;
 
 /** Container Flags **/

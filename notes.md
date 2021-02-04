@@ -13,8 +13,8 @@
 
   ## `nx_superblock_t`
 
-  - [ ] nx_newest_mounted_version
-  - [ ] nx_mkb_locker
+  - [x] nx_newest_mounted_version
+  - [x] nx_mkb_locker
 
 # §6 Object Maps
 
