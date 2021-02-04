@@ -28,18 +28,22 @@ char* get_apfs_features_string(apfs_superblock_t* apsb) {
     char* default_string = "- No volume feature flags are set.\n";
     size_t default_string_len = strlen(default_string);
     
-    const int NUM_FLAGS = 3;
+    const int NUM_FLAGS = 5;
     
     uint64_t flag_constants[] = {
         APFS_FEATURE_DEFRAG_PRERELEASE,
         APFS_FEATURE_HARDLINK_MAP_RECORDS,
         APFS_FEATURE_DEFRAG,
+        APFS_FEATURE_STRICTATIME,
+        APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE,
     };
 
     char* flag_strings[] = {
         "Reserved --- To avoid data corruption, this flag must not be set; this flag enabled a prerelease version of the defragmentation system in macOS 10.13 versions. Itʼs ignored by macOS 10.13.6 and later.",
         "This volume has hardlink map records.",
         "Defragmentation is supported.",
+        "File access times are updated every time a file is read.",
+        "This volume supports mounting a system and data volume as a single user-visible volume.",
     };
 
     // Allocate sufficient memory for the result string

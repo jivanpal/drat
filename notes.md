@@ -55,8 +55,8 @@
 
   ## Optional Volume Feature Flags
 
-  - [ ] APFS_FEATURE_STRICTATIME
-  - [ ] APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE
+  - [x] APFS_FEATURE_STRICTATIME
+  - [x] APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE
 
   ## Incompatible Volume Feature Flags
 
