@@ -154,4 +154,4 @@
 
   ## `spaceman_free_queue_entry_t`
 
-  - [ ] *New datatype* `spaceman_free_queue_entry_t`
+  - [x] *New datatype* `spaceman_free_queue_entry_t`
