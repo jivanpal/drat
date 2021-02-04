@@ -172,13 +172,16 @@ char* get_apfs_incompatible_features_string(apfs_superblock_t* apsb) {
     char* default_string = "- No backward-incompatible volume feature flags are set.\n";
     size_t default_string_len = strlen(default_string);
     
-    const int NUM_FLAGS = 4;
+    const int NUM_FLAGS = 7;
 
     uint64_t flag_constants[] = {
         APFS_INCOMPAT_CASE_INSENSITIVE,
         APFS_INCOMPAT_DATALESS_SNAPS,
         APFS_INCOMPAT_ENC_ROLLED,
         APFS_INCOMPAT_NORMALIZATION_INSENSITIVE,
+        APFS_INCOMPAT_INCOMPLETE_RESTORE,
+        APFS_INCOMPAT_SEALED_VOLUME,
+        APFS_INCOMPAT_RESERVED_40,
     };
 
     char* flag_strings[] = {
@@ -186,6 +189,9 @@ char* get_apfs_incompatible_features_string(apfs_superblock_t* apsb) {
         "At least one snapshot with no data exists for this volume.",
         "This volume's encryption has changed keys at least once.",
         "Filenames on this volume are normalization insensitive.",
+        "This volume is being restored, or a restore operation to this volume was uncleanly aborted.",
+        "This volume is sealed (cannot be modified).",
+        "Reserved flag (0x40).",
     };
 
     // Allocate sufficient memory for the result string

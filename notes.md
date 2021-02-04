@@ -60,8 +60,8 @@
 
   ## Incompatible Volume Feature Flags
 
-  - [ ] APFS_INCOMPAT_INCOMPLETE_RESTORE
-  - [ ] APFS_INCOMPAT_SEALED_VOLUME
+  - [x] APFS_INCOMPAT_INCOMPLETE_RESTORE
+  - [x] APFS_INCOMPAT_SEALED_VOLUME
 
 # §8 File-System Objects
 
