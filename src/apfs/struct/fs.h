@@ -123,13 +123,24 @@ typedef struct {
 #define APFS_VOL_ROLE_USER          0x0002
 #define APFS_VOL_ROLE_RECOVERY      0x0004
 #define APFS_VOL_ROLE_VM            0x0008
-
 #define APFS_VOL_ROLE_PREBOOT       0x0010
 #define APFS_VOL_ROLE_INSTALLER     0x0020
-#define APFS_VOL_ROLE_DATA          0x0040
-#define APFS_VOL_ROLE_BASEBAND      0x0080
 
-#define APFS_VOL_ROLE_RESERVED_200  0x0200
+#define APFS_VOLUME_ENUM_SHIFT      6
+
+#define APFS_VOL_ROLE_DATA          ( 1 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0040 --- formerly defined explicitly as `0x0040`
+#define APFS_VOL_ROLE_BASEBAND      ( 2 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0080 --- formerly defined explicitly as `0x0080`
+
+// Roles supported since revision 2020-05-15 --- macOS 10.15+, iOS 13+
+#define APFS_VOL_ROLE_UPDATE        ( 3 << APFS_VOLUME_ENUM_SHIFT)  // = 0x00c0
+#define APFS_VOL_ROLE_XART          ( 4 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0100
+#define APFS_VOL_ROLE_HARDWARE      ( 5 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0140
+#define APFS_VOL_ROLE_BACKUP        ( 6 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0180
+#define APFS_VOL_ROLE_RESERVED_7    ( 7 << APFS_VOLUME_ENUM_SHIFT)  // = 0x01c0 --- spec also uses the name `APFS_VOL_ROLE_SIDECAR`, but that could be an error
+#define APFS_VOL_ROLE_RESERVED_8    ( 8 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0200 --- formerly named `APFS_VOL_ROLE_RESERVED_200`
+#define APFS_VOL_ROLE_ENTERPRISE    ( 9 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0240
+#define APFS_VOL_ROLE_RESERVED_10   (10 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0280
+#define APFS_VOL_ROLE_PRELOGIN      (11 << APFS_VOLUME_ENUM_SHIFT)  // = 0x02c0
 
 /** Optional Volume Feature Flags **/
 
