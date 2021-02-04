@@ -96,7 +96,7 @@ typedef struct {
 #define APFS_FS_RUN_SPILLOVER_CLEANER   0x00000020LL
 #define APFS_FS_ALWAYS_CHECK_EXTENTREF  0x00000040LL
 
-#define APFS_FS_FALGS_VALID_MASK      ( \
+#define APFS_FS_FLAGS_VALID_MASK      ( \
       APFS_FS_UNENCRYPTED               \
     | APFS_FS_RESERVED_2                \
     | APFS_FS_RESERVED_4                \
