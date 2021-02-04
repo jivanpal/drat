@@ -38,8 +38,8 @@
 
   ## Volume Flags
 
-  - [ ] APFS_FS_RESERVED_80
-  - [ ] APFS_FS_RESERVED_100
+  - [x] APFS_FS_RESERVED_80
+  - [x] APFS_FS_RESERVED_100
 
   ## Volume Roles
 

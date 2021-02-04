@@ -253,7 +253,7 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
     char* default_string = "- No flags are set.\n";
     size_t default_string_len = strlen(default_string);
     
-    const int NUM_FLAGS = 7;
+    const int NUM_FLAGS = 9;
 
     uint64_t flag_constants[] = {
         APFS_FS_UNENCRYPTED,
@@ -263,6 +263,8 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
         APFS_FS_SPILLEDOVER,
         APFS_FS_RUN_SPILLOVER_CLEANER,
         APFS_FS_ALWAYS_CHECK_EXTENTREF,
+        APFS_FS_RESERVED_80,
+        APFS_FS_RESERVED_100,
     };
     
     char* flag_strings[] = {
@@ -273,6 +275,8 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
         "Volume has run out of allocated space on SSD, so has spilled over to other drives.",
         "Volume has spilled over and spillover cleaner must be run.",
         "When deciding whether to overwrite a file extent, always consult the extent reference tree.",
+        "Reserved flag (0x80).",
+        "Reserved flag (0x100).",
     };
 
     // Allocate sufficient memory for the result string
