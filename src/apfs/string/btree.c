@@ -28,20 +28,22 @@ char* get_btn_flags_string(btree_node_phys_t* btn) {
     char* default_string = "(none)";
     size_t default_string_len = strlen(default_string);
     
-    uint8_t NUM_FLAGS = 4;
-    
+    uint8_t NUM_FLAGS = 6;
     uint16_t flag_constants[] = {
         BTNODE_ROOT,
         BTNODE_LEAF,
         BTNODE_FIXED_KV_SIZE,
+        BTNODE_HASHED,
+        BTNODE_NOHEADER,
         BTNODE_CHECK_KOFF_INVAL,
     };
-
     char* flag_strings[] = {
         "Root node",
         "Leaf node",
         "Fixed size for keys and values",
-        "In transient state --- should never appear on disk"
+        "Contains child node hashes",
+        "Doesn't have an object header",
+        "In transient state (key offsets are invalid) --- should never appear on disk"
     };
 
     size_t max_mem_required = 0;
@@ -102,7 +104,7 @@ char* get_bt_info_flags_string(btree_info_t* bt_info) {
     char* default_string = "  - No flags are set\n";
     size_t default_string_len = strlen(default_string);
     
-    uint8_t NUM_FLAGS = 7;
+    uint8_t NUM_FLAGS = 9;
     
     uint16_t flag_constants[] = {
         BTREE_UINT64_KEYS,
@@ -112,6 +114,8 @@ char* get_bt_info_flags_string(btree_info_t* bt_info) {
         BTREE_PHYSICAL,
         BTREE_NONPERSISTENT,
         BTREE_KV_NONALIGNED,
+        BTREE_HASHED,
+        BTREE_NOHEADER,
     };
 
     char* flag_strings[] = {
@@ -122,6 +126,8 @@ char* get_bt_info_flags_string(btree_info_t* bt_info) {
         "Child nodes are referred to using Physical OIDs",
         "This B-tree does not persist across unmounts",
         "8-byte alignment of keys and values is not required",
+        "Non-leaf nodes store a hash of their child nodes",
+        "Nodes don't have object headers",
     };
 
     size_t max_mem_required = 0;

@@ -119,17 +119,17 @@
 
   ## `btn_index_node_val_t`
 
-  - [ ] *New datatype* `btn_index_node_val_t`
+  - [x] *New datatype* `btn_index_node_val_t`
 
   ## B-Tree Flags
 
-  - [ ] BTREE_HASHED
-  - [ ] BTREE_NOHEADER
+  - [x] BTREE_HASHED
+  - [x] BTREE_NOHEADER
 
   ## B-Tree Node Flags
 
-  - [ ] BTNODE_HASHED
-  - [ ] BTNODE_NOHEADER
+  - [x] BTNODE_HASHED
+  - [x] BTNODE_NOHEADER
 
 # §15 Encryption
 
