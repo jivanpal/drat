@@ -109,11 +109,11 @@
 
   ## `snap_meta_ext_obj_phys_t`
 
-  - [ ] *New datatype* `snap_meta_ext_obj_phys_t`
+  - [x] *New datatype* `snap_meta_ext_obj_phys_t`
 
   ## `snap_meta_ext_t`
 
-  - [ ] *New datatype* `snap_meta_ext_t`
+  - [x] *New datatype* `snap_meta_ext_t`
 
 # §14 B-Trees
 
