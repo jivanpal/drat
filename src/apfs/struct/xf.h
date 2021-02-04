@@ -38,7 +38,8 @@ typedef struct {
 #define INO_EXT_TYPE_RESERVED_12        12
 #define INO_EXT_TYPE_SPARSE_BYTES       13
 #define INO_EXT_TYPE_RDEV               14
-
+#define INO_EXT_TYPE_PURGEABLE_FLAGS    15
+#define INO_EXT_TYPE_ORIG_SYNC_ROOT_ID  16
 
 /** Extended-Field Flags **/
 

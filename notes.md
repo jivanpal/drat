@@ -102,8 +102,8 @@
 
   ## Extended-Field Types
 
-  - [ ] INO_EXT_TYPE_PURGEABLE_FLAGS
-  - [ ] INO_EXT_TYPE_ORIG_SYNC_ROOT_ID
+  - [x] INO_EXT_TYPE_PURGEABLE_FLAGS
+  - [x] INO_EXT_TYPE_ORIG_SYNC_ROOT_ID
 
 # §13 Snapshot Metadata
 
