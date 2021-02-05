@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §7 "Volumes"
+ * §7 Volumes
  */
 
 #include <stdint.h>
@@ -80,10 +80,30 @@ typedef struct {
     uint32_t    apfs_next_doc_id;
 
     uint16_t    apfs_role;
-    uint16_t    apfs_reserved;
+    uint16_t    reserved;
 
     xid_t       apfs_root_to_xid;
     oid_t       apfs_er_state_oid;
+
+// Fields introduced in revision 2020-05-15
+
+    // Fields supported on macOS 10.13.3+
+    uint64_t    apfs_cloneinfo_id_epoch;
+    uint64_t    apfs_cloneinfo_xid;
+
+    // Fields supported on macOS 10.15+
+    oid_t       apfs_snap_meta_ext_oid;
+    uuid_t      apfs_volume_group_id;
+
+// Fields introduced in revision 2020-06-22
+    
+    // Fields supported on macOS 11+
+    oid_t       apfs_integrity_meta_oid;
+    oid_t       apfs_fext_tree_oid;
+    uint32_t    apfs_fext_tree_type;
+    
+    uint32_t    reserved_type;
+    oid_t       reserved_oid;
 } apfs_superblock_t;
 
 /** Volume Flags **/
@@ -95,8 +115,10 @@ typedef struct {
 #define APFS_FS_SPILLEDOVER             0x00000010LL
 #define APFS_FS_RUN_SPILLOVER_CLEANER   0x00000020LL
 #define APFS_FS_ALWAYS_CHECK_EXTENTREF  0x00000040LL
+#define APFS_FS_RESERVED_80             0x00000080LL
+#define APFS_FS_RESERVED_100            0x00000100LL
 
-#define APFS_FS_FALGS_VALID_MASK      ( \
+#define APFS_FS_FLAGS_VALID_MASK      ( \
       APFS_FS_UNENCRYPTED               \
     | APFS_FS_RESERVED_2                \
     | APFS_FS_RESERVED_4                \
@@ -104,11 +126,12 @@ typedef struct {
     | APFS_FS_SPILLEDOVER               \
     | APFS_FS_RUN_SPILLOVER_CLEANER     \
     | APFS_FS_ALWAYS_CHECK_EXTENTREF    \
+    | APFS_FS_RESERVED_80               \
+    | APFS_FS_RESERVED_100              \
 )
 
 #define APFS_FS_CRYPTOFLAGS   ( \
       APFS_FS_UNENCRYPTED       \
-    | APFS_FS_RESERVED_2        \
     | APFS_FS_ONEKEY            \
 )
 
@@ -120,24 +143,39 @@ typedef struct {
 #define APFS_VOL_ROLE_USER          0x0002
 #define APFS_VOL_ROLE_RECOVERY      0x0004
 #define APFS_VOL_ROLE_VM            0x0008
-
 #define APFS_VOL_ROLE_PREBOOT       0x0010
 #define APFS_VOL_ROLE_INSTALLER     0x0020
-#define APFS_VOL_ROLE_DATA          0x0040
-#define APFS_VOL_ROLE_BASEBAND      0x0080
 
-#define APFS_VOL_ROLE_RESERVED_200  0x0200
+#define APFS_VOLUME_ENUM_SHIFT      6
+
+#define APFS_VOL_ROLE_DATA          ( 1 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0040 --- formerly defined explicitly as `0x0040`
+#define APFS_VOL_ROLE_BASEBAND      ( 2 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0080 --- formerly defined explicitly as `0x0080`
+
+// Roles supported since revision 2020-05-15 --- macOS 10.15+, iOS 13+
+#define APFS_VOL_ROLE_UPDATE        ( 3 << APFS_VOLUME_ENUM_SHIFT)  // = 0x00c0
+#define APFS_VOL_ROLE_XART          ( 4 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0100
+#define APFS_VOL_ROLE_HARDWARE      ( 5 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0140
+#define APFS_VOL_ROLE_BACKUP        ( 6 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0180
+#define APFS_VOL_ROLE_RESERVED_7    ( 7 << APFS_VOLUME_ENUM_SHIFT)  // = 0x01c0 --- spec also uses the name `APFS_VOL_ROLE_SIDECAR`, but that could be an error
+#define APFS_VOL_ROLE_RESERVED_8    ( 8 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0200 --- formerly named `APFS_VOL_ROLE_RESERVED_200`
+#define APFS_VOL_ROLE_ENTERPRISE    ( 9 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0240
+#define APFS_VOL_ROLE_RESERVED_10   (10 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0280
+#define APFS_VOL_ROLE_PRELOGIN      (11 << APFS_VOLUME_ENUM_SHIFT)  // = 0x02c0
 
 /** Optional Volume Feature Flags **/
 
-#define APFS_FEATURE_DEFRAG_PRERELEASE      0x00000001LL
-#define APFS_FEATURE_HARDLINK_MAP_RECORDS   0x00000002LL
-#define APFS_FEATURE_DEFRAG                 0x00000004LL
+#define APFS_FEATURE_DEFRAG_PRERELEASE          0x00000001LL
+#define APFS_FEATURE_HARDLINK_MAP_RECORDS       0x00000002LL
+#define APFS_FEATURE_DEFRAG                     0x00000004LL
+#define APFS_FEATURE_STRICTATIME                0x00000008LL
+#define APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE    0x00000010LL
 
-#define APFS_SUPPORTED_FEATURES_MASK  ( \
-      APFS_FEATURE_DEFRAG               \
-    | APFS_FEATURE_DEFRAG_PRERELEASE    \
-    | APFS_FEATURE_HARDLINK_MAP_RECORDS \
+#define APFS_SUPPORTED_FEATURES_MASK  (     \
+      APFS_FEATURE_DEFRAG                   \
+    | APFS_FEATURE_DEFRAG_PRERELEASE        \
+    | APFS_FEATURE_HARDLINK_MAP_RECORDS     \
+    | APFS_FEATURE_STRICTATIME              \
+    | APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE  \
 )
 
 /** Read-Only Comaptible Volume Feature Flags **/
@@ -146,16 +184,22 @@ typedef struct {
 
 /** Incompatible Volume Feature Flags **/
 
-#define APFS_INCOMPAT_CASE_INSENSITIVE          0x000000001LL
-#define APFS_INCOMPAT_DATALESS_SNAPS            0x000000002LL
-#define APFS_INCOMPAT_ENC_ROLLED                0x000000004LL
-#define APFS_INCOMPAT_NORMALIZATION_INSENSITIVE 0x000000008LL
+#define APFS_INCOMPAT_CASE_INSENSITIVE          0x00000001LL
+#define APFS_INCOMPAT_DATALESS_SNAPS            0x00000002LL
+#define APFS_INCOMPAT_ENC_ROLLED                0x00000004LL
+#define APFS_INCOMPAT_NORMALIZATION_INSENSITIVE 0x00000008LL
+#define APFS_INCOMPAT_INCOMPLETE_RESTORE        0x00000010LL
+#define APFS_INCOMPAT_SEALED_VOLUME             0x00000020LL
+#define APFS_INCOMPAT_RESERVED_40               0x00000040LL
 
 #define APFS_SUPPORTED_INCOMPAT_MASK          ( \
       APFS_INCOMPAT_CASE_INSENSITIVE            \
     | APFS_INCOMPAT_DATALESS_SNAPS              \
     | APFS_INCOMPAT_ENC_ROLLED                  \
     | APFS_INCOMPAT_NORMALIZATION_INSENSITIVE   \
+    | APFS_INCOMPAT_INCOMPLETE_RESTORE          \
+    | APFS_INCOMPAT_SEALED_VOLUME               \
+    | APFS_INCOMPAT_RESERVED_40                 \
 )
 
 #endif // APFS_STRUCT_FS_H

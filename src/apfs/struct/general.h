@@ -3,7 +3,7 @@
 
 /**
  * Structures and related item as defined in
- * §2 "General-Purpose Types"
+ * §2 General-Purpose Types
  */
 
 #include <stdint.h>

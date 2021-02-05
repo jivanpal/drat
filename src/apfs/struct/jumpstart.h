@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §4 "EFI Jumpstart"
+ * §4 EFI Jumpstart
  */
 
 #include <stdint.h>

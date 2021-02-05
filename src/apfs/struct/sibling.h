@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §12 "Siblings"
+ * §12 Siblings
  */
 
 #include <stdint.h>

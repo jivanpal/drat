@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §9 "File-System Constants"
+ * §9 File-System Constants
  */
 
 #include <stdint.h>
@@ -25,8 +25,9 @@ typedef enum {
     APFS_TYPE_DIR_STATS     = 10,
     APFS_TYPE_SNAP_NAME     = 11,
     APFS_TYPE_SIBLING_MAP   = 12,
+    APFS_TYPE_FILE_INFO     = 13,
     
-    APFS_TYPE_MAX_VALID     = 12,
+    APFS_TYPE_MAX_VALID     = 13,
     APFS_TYPE_MAX           = 15,
     
     APFS_TYPE_INVALID       = 15,
@@ -64,17 +65,27 @@ typedef enum {
     INODE_HAS_RSRC_FORK             = 0x00004000,
     INODE_NO_RSRC_FORK              = 0x00008000,
     INODE_ALLOCATION_SPILLEDOVER    = 0x00010000,
+    INODE_FAST_PROMOTE              = 0x00020000,
+    INODE_HAS_UNCOMPRESSED_SIZE     = 0x00040000,
+    INODE_IS_PURGEABLE              = 0x00080000,
+    INODE_WANTS_TO_BE_PURGEABLE     = 0x00100000,
+    INODE_IS_SYNC_ROOT              = 0x00200000,
+    INODE_SNAPSHOT_COW_EXEMPTION    = 0x00400000,
 
-    INODE_INHERITED_INTERNAL_FLAGS  = INODE_MAINTAIN_DIR_STATS,
+    INODE_INHERITED_INTERNAL_FLAGS  = ( \
+          INODE_MAINTAIN_DIR_STATS      \
+        | INODE_SNAPSHOT_COW_EXEMPTION  \
+    ),
     
     INODE_CLONED_INTERNAL_FLAGS     = ( \
           INODE_HAS_RSRC_FORK           \
         | INODE_NO_RSRC_FORK            \
         | INODE_HAS_FINDER_INFO         \
+        | INODE_SNAPSHOT_COW_EXEMPTION  \
     ),
 } j_inode_flags;
 
-#define APFS_VALID_INTERNAL_INODE_FLAGS   ( \
+#define APFS_VALID_INTERNAL_INODE_FLAGS  ( \
       INODE_IS_APFS_PRIVATE                 \
     | INODE_MAINTAIN_DIR_STATS              \
     | INODE_DIR_STATS_ORIGIN                \
@@ -91,9 +102,18 @@ typedef enum {
     | INODE_HAS_RSRC_FORK                   \
     | INODE_NO_RSRC_FORK                    \
     | INODE_ALLOCATION_SPILLEDOVER          \
+    | INODE_FAST_PROMOTE                    \
+    | INODE_HAS_UNCOMPRESSED_SIZE           \
+    | INODE_IS_PURGEABLE                    \
+    | INODE_WANTS_TO_BE_PURGEABLE           \
+    | INODE_IS_SYNC_ROOT                    \
+    | INODE_SNAPSHOT_COW_EXEMPTION          \
 )
 
-#define APFS_INODE_PINNED_MASK  (INODE_PINNED_TO_MAIN | INODE_PINNED_TO_TIER2)
+#define APFS_INODE_PINNED_MASK    ( \
+      INODE_PINNED_TO_MAIN          \
+    | INODE_PINNED_TO_TIER2         \
+)
 
 /** `j_xattr_flags` **/
 
@@ -113,18 +133,23 @@ typedef enum {
 
 /** Inode Numbers **/
 
-#define INVALID_INO_NUM     0
-#define ROOT_DIR_PARENT     1
-#define ROOT_DIR_INO_NUM    2
-#define PRIV_DIR_INO_NUM    3
-#define SNAP_DIR_INO_NUM    6
+#define INVALID_INO_NUM         0
+#define ROOT_DIR_PARENT         1
+#define ROOT_DIR_INO_NUM        2
+#define PRIV_DIR_INO_NUM        3
+#define SNAP_DIR_INO_NUM        6
+#define PURGEABLE_DIR_INO_NUM   7
 
-#define MIN_USER_INO_NUM    16
+#define MIN_USER_INO_NUM        16
+
+#define UNIFIED_ID_SPACE_MARK   0x0800000000000000ULL
 
 /** Extended Attributes Constants **/
 
 #define XATTR_MAX_EMBEDDED_SIZE     3804    // = 3 Ki + 732
 #define SYMLINK_EA_NAME             "com.apple.fs.symlink"
+#define FIRMLINK_EA_NAME            "com.apple.fs.firmlink"
+#define APFS_COW_EXEMPT_COUNT_NAME  "com.apple.fs.cow-exempt-file-count"
 
 /** File-System Object Constants **/
 

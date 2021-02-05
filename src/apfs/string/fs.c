@@ -28,18 +28,22 @@ char* get_apfs_features_string(apfs_superblock_t* apsb) {
     char* default_string = "- No volume feature flags are set.\n";
     size_t default_string_len = strlen(default_string);
     
-    const int NUM_FLAGS = 3;
+    const int NUM_FLAGS = 5;
     
     uint64_t flag_constants[] = {
         APFS_FEATURE_DEFRAG_PRERELEASE,
         APFS_FEATURE_HARDLINK_MAP_RECORDS,
         APFS_FEATURE_DEFRAG,
+        APFS_FEATURE_STRICTATIME,
+        APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE,
     };
 
     char* flag_strings[] = {
         "Reserved --- To avoid data corruption, this flag must not be set; this flag enabled a prerelease version of the defragmentation system in macOS 10.13 versions. Itʼs ignored by macOS 10.13.6 and later.",
         "This volume has hardlink map records.",
         "Defragmentation is supported.",
+        "File access times are updated every time a file is read.",
+        "This volume supports mounting a system and data volume as a single user-visible volume.",
     };
 
     // Allocate sufficient memory for the result string
@@ -168,13 +172,16 @@ char* get_apfs_incompatible_features_string(apfs_superblock_t* apsb) {
     char* default_string = "- No backward-incompatible volume feature flags are set.\n";
     size_t default_string_len = strlen(default_string);
     
-    const int NUM_FLAGS = 4;
+    const int NUM_FLAGS = 7;
 
     uint64_t flag_constants[] = {
         APFS_INCOMPAT_CASE_INSENSITIVE,
         APFS_INCOMPAT_DATALESS_SNAPS,
         APFS_INCOMPAT_ENC_ROLLED,
         APFS_INCOMPAT_NORMALIZATION_INSENSITIVE,
+        APFS_INCOMPAT_INCOMPLETE_RESTORE,
+        APFS_INCOMPAT_SEALED_VOLUME,
+        APFS_INCOMPAT_RESERVED_40,
     };
 
     char* flag_strings[] = {
@@ -182,6 +189,9 @@ char* get_apfs_incompatible_features_string(apfs_superblock_t* apsb) {
         "At least one snapshot with no data exists for this volume.",
         "This volume's encryption has changed keys at least once.",
         "Filenames on this volume are normalization insensitive.",
+        "This volume is being restored, or a restore operation to this volume was uncleanly aborted.",
+        "This volume is sealed (cannot be modified).",
+        "Reserved flag (0x40).",
     };
 
     // Allocate sufficient memory for the result string
@@ -243,7 +253,7 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
     char* default_string = "- No flags are set.\n";
     size_t default_string_len = strlen(default_string);
     
-    const int NUM_FLAGS = 7;
+    const int NUM_FLAGS = 9;
 
     uint64_t flag_constants[] = {
         APFS_FS_UNENCRYPTED,
@@ -253,6 +263,8 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
         APFS_FS_SPILLEDOVER,
         APFS_FS_RUN_SPILLOVER_CLEANER,
         APFS_FS_ALWAYS_CHECK_EXTENTREF,
+        APFS_FS_RESERVED_80,
+        APFS_FS_RESERVED_100,
     };
     
     char* flag_strings[] = {
@@ -263,6 +275,8 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
         "Volume has run out of allocated space on SSD, so has spilled over to other drives.",
         "Volume has spilled over and spillover cleaner must be run.",
         "When deciding whether to overwrite a file extent, always consult the extent reference tree.",
+        "Reserved flag (0x80).",
+        "Reserved flag (0x100).",
     };
 
     // Allocate sufficient memory for the result string
@@ -310,8 +324,8 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
 }
 
 /**
- * Get a human-readable string that lists the role flags that are
- * set on a given APFS volume superblock.
+ * Get a human-readable string describing the role of a given APFS volume
+ * superblock.
  * 
  * apsb:    A pointer to the APFS volume superblock in question.
  * 
@@ -321,13 +335,11 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
  */
 char* get_apfs_role_string(apfs_superblock_t* apsb) {
     // String to use if no flags are set
-    char* default_string = "- This volume has no defined roles\n";
-    size_t default_string_len = strlen(default_string);
+    char* default_string = "(unknown role) (role field value %#llx)";
     
-    const int NUM_FLAGS = 9;
-
-    // `APFS_ROLE_NONE` (0x0) is intentionally ommitted from this array.
-    uint64_t flag_constants[] = {
+    const int NUM_ROLES = 18;
+    uint64_t role_constants[] = {
+        APFS_VOL_ROLE_NONE,
         APFS_VOL_ROLE_SYSTEM,
         APFS_VOL_ROLE_USER,
         APFS_VOL_ROLE_RECOVERY,
@@ -336,29 +348,44 @@ char* get_apfs_role_string(apfs_superblock_t* apsb) {
         APFS_VOL_ROLE_INSTALLER,
         APFS_VOL_ROLE_DATA,
         APFS_VOL_ROLE_BASEBAND,
-        APFS_VOL_ROLE_RESERVED_200,
+        APFS_VOL_ROLE_UPDATE,
+        APFS_VOL_ROLE_XART,
+        APFS_VOL_ROLE_HARDWARE,
+        APFS_VOL_ROLE_BACKUP,
+        APFS_VOL_ROLE_RESERVED_7,
+        APFS_VOL_ROLE_RESERVED_8,
+        APFS_VOL_ROLE_ENTERPRISE,
+        APFS_VOL_ROLE_RESERVED_10,
+        APFS_VOL_ROLE_PRELOGIN,
     };
-    
-    char* flag_strings[] = {
-        "Root volume (contains a root directory for the system)",
-        "Home volume (contains users' home directories)",
-        "Recovery volume (contains a recovery system)",
-        "Swap volume (used as swap space for virtual memory)",
-        "Preboot volume (contains files needed to boot from an encrypted volumes)",
-        "Installer volume (used by the OS installer)",
-        "Data volume (contains mutable data)",
-        "Baseband volume (sed by the radio firmware)",
-        "Reserved flag (0x200)",
+    char* role_strings[] = {
+        "(no role)",
+        "System (contains a root directory for the system)",
+        "User (contains users' home directories)",
+        "Recovery (contains a recovery system)",
+        "Virtual memory (used as swap space for virtual memory)",
+        "Preboot (contains files needed to boot from an encrypted volumes)",
+        "Installer (used by the OS installer)",
+        "Data (contains mutable data)",
+        "Baseband (used by the radio firmware)",
+        "Update (used by the software update mechanism)",
+        "xART (used to manage OS access to secure user data",
+        "Hardware (used for firmware data)",
+        "Backup (used by Time Machine to store backups)",
+        "Reserved role 7 (Sidecar?) (role field value 0x1c0)",
+        "Reserved role 8 (role field value 0x200)",
+        "Enterprise (used to store enterprise-managed data)",
+        "Reserved role 10 (role field value 0x280)",
+        "Pre-login (used to store system data used before login)",
     };
 
     // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
+    size_t max_mem_required = strlen(default_string) + 1;   // `+1` accounts for format specifier "%#llx" becoming up to 6 characters
+    for (int i = 0; i < NUM_ROLES; i++) {
+        size_t role_string_length = strlen(role_strings[i]);
+        if (max_mem_required < role_string_length) {
+            max_mem_required = role_string_length;
+        }
     }
     max_mem_required++; // Make room for terminating NULL byte
 
@@ -368,27 +395,21 @@ char* get_apfs_role_string(apfs_superblock_t* apsb) {
         exit(-1);
     }
 
-    char* cursor = result_string;
+    // Make `result_string` an empty string so that we can easily test the
+    // case that no role matches.
+    *result_string = '\0';
 
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (apsb->apfs_role & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
+    for (int i = 0; i < NUM_ROLES; i++) {
+        if (apsb->apfs_role == role_constants[i]) {
+            memcpy(result_string, role_strings[i], strlen(role_strings[i]) + 1);
+            break;
         }
     }
 
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
+    // If no role matches, use the default string.
+    if (strlen(result_string) == 0) {
+        snprintf(result_string, max_mem_required, default_string, apsb->apfs_role);
     }
-
-    *cursor = '\0';
 
     // Free up excess allocated memory.
     result_string = realloc(result_string, strlen(result_string) + 1);
@@ -406,7 +427,7 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("\n");
 
     char magic_string[] = {
-        (char)apsb->apfs_magic,
+        (char)(apsb->apfs_magic),
         (char)(apsb->apfs_magic >> 8),
         (char)(apsb->apfs_magic >> 16),
         (char)(apsb->apfs_magic >> 24),
@@ -417,9 +438,14 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("\n");
 
     printf("Volume name:        ### %s ###\n",  apsb->apfs_volname);
+    
+    char* tmp_string = get_apfs_role_string(apsb);
+    printf("Role:               %s", tmp_string);
+    free(tmp_string);
+    
     printf("\n");
 
-    char* tmp_string = get_apfs_fs_flags_string(apsb);
+    tmp_string = get_apfs_fs_flags_string(apsb);
     printf("Flags:\n%s", tmp_string);
     free(tmp_string);
 
@@ -433,10 +459,6 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
 
     tmp_string = get_apfs_incompatible_features_string(apsb);
     printf("Backward-incompatible features:\n%s", tmp_string);
-    free(tmp_string);
-
-    tmp_string = get_apfs_role_string(apsb);
-    printf("Roles:\n%s", tmp_string);
     free(tmp_string);
     
     printf("\n");
@@ -532,5 +554,12 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
      * - apfs_modified_by
      * - apfs_root_to_xid
      * - apfs_er_state_oid
+     * - apfs_cloneinfo_id_epoch
+     * - apfs_cloneinfo_xid
+     * - apfs_snap_meta_ext_oid
+     * - apfs_volume_group_id
+     * - apfs_integrity_meta_oid
+     * - apfs_fext_tree_oid
+     * - apfs_fext_tree_type
      */
 }

@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §19 "Fusion"
+ * §19 Fusion
  */
 
 #include <stdint.h>

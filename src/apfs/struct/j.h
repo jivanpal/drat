@@ -3,11 +3,11 @@
 
 /**
  * Structures and related items as defined in
- * §8 "File-System Objects"
+ * §8 File-System Objects
  */
 
 #include <stdint.h>
-#include "const.h"          // mode_t
+#include "jconst.h"          // mode_t
 #include "cryptotypes.h"    // cp_key_class_t
 
 /** `j_key_t` **/
@@ -16,9 +16,11 @@ typedef struct {
     uint64_t    obj_id_and_type;
 } __attribute__((packed))   j_key_t;
 
-#define OBJ_ID_MASK     0x0fffffffffffffffULL
-#define OBJ_TYPE_MASK   0xf000000000000000ULL
-#define OBJ_TYPE_SHIFT  60
+#define OBJ_ID_MASK         0x0fffffffffffffffULL
+#define OBJ_TYPE_MASK       0xf000000000000000ULL
+#define OBJ_TYPE_SHIFT      60
+
+#define SYSTEM_OBJ_ID_MARK  0x0fffffff00000000ULL
 
 /** `j_inode_key_t` **/
 
@@ -54,7 +56,7 @@ typedef struct {
     gid_t           group;
     mode_t          mode;
     uint16_t        pad1;
-    uint64_t        pad2;
+    uint64_t        uncompressed_size;  // formerly `pad2`
     uint8_t         xfields[];
 } __attribute__((packed))   j_inode_val_t;
 
@@ -66,7 +68,7 @@ typedef struct {
     uint8_t     name[0];
 } __attribute__((packed))   j_drec_key_t;
 
-/*
+/**
  * NOTE: The spec says that if a file-system record is of type
  * `APFS_TYPE_DIR_REC`, then the record's key is an instance of `j_drec_key_t`.
  * However, the type `j_drec_hashed_key_t` (seen below) is defined in the spec

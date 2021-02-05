@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §14 "B-Trees"
+ * §14 B-Trees
  */
 
 #include <stdint.h>
@@ -49,6 +49,15 @@ typedef struct {
     uint64_t            bt_node_count;
 } btree_info_t;
 
+/** `btn_index_node_val_t` **/
+
+#define BTREE_NODE_HASH_SIZE_MAX    64
+
+typedef struct {
+    oid_t       binv_child_oid;
+    uint8_t     binv_child_hash[BTREE_NODE_HASH_SIZE_MAX];
+} btn_index_node_val_t;
+
 /** `kvloc_t` **/
 
 typedef struct {
@@ -72,6 +81,8 @@ typedef struct {
 #define BTREE_PHYSICAL              0x00000010
 #define BTREE_NONPERSISTENT         0x00000020
 #define BTREE_KV_NONALIGNED         0x00000040
+#define BTREE_HASHED                0x00000080
+#define BTREE_NOHEADER              0x00000100
 
 /** B-Tree Table of Contents Constants **/
 
@@ -82,7 +93,11 @@ typedef struct {
 
 #define BTNODE_ROOT                 0x0001
 #define BTNODE_LEAF                 0x0002
+
 #define BTNODE_FIXED_KV_SIZE        0x0004
+#define BTNODE_HASHED               0x0008
+#define BTNODE_NOHEADER             0x0010
+
 #define BTNODE_CHECK_KOFF_INVAL     0x8000
 
 /** B-Tree Node Constants **/

@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §11 "Extended Fields"
+ * §11 Extended Fields
  */
 
 #include <stdint.h>
@@ -20,7 +20,7 @@ typedef struct {
     uint16_t    x_size;
 } x_field_t;
 
-/// Extended-Field Types ///
+/** Extended-Field Types **/
 
 #define DREC_EXT_TYPE_SIBLING_ID        1
 
@@ -38,9 +38,10 @@ typedef struct {
 #define INO_EXT_TYPE_RESERVED_12        12
 #define INO_EXT_TYPE_SPARSE_BYTES       13
 #define INO_EXT_TYPE_RDEV               14
+#define INO_EXT_TYPE_PURGEABLE_FLAGS    15
+#define INO_EXT_TYPE_ORIG_SYNC_ROOT_ID  16
 
-
-/// Extended-Field Flags ///
+/** Extended-Field Flags **/
 
 #define XF_DATA_DEPENDENT       0x0001
 #define XF_DO_NOT_COPY          0x0002

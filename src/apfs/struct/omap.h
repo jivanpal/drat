@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §6 "Object Maps"
+ * §6 Object Maps
  */
 
 #include <stdint.h>
@@ -68,6 +68,8 @@ typedef struct {
 #define OMAP_DECRYPTING         0x00000004
 #define OMAP_KEYROLLING         0x00000008
 #define OMAP_CRYPTO_GENERATION  0x00000010
+
+#define OMAP_VALID_FLAGS        0x0000001f
 
 /** Object Map Constants **/
 

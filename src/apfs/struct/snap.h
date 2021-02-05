@@ -3,10 +3,11 @@
 
 /**
  * Structures and related items as defined in
- * §13 "Snapshot Metadata"
+ * §13 Snapshot Metadata
  */
 
 #include <stdint.h>
+#include "general.h"    // uuid_t
 #include "j.h"          // j_key_t
 #include "object.h"     // oid_t, xid_t
 
@@ -49,5 +50,24 @@ typedef struct {
 typedef enum {
     SNAP_META_PENDING_DATALESS  = 0x00000001,
 } snap_meta_flags;
+
+/** `snap_meta_ext_t` --- forward declared for `snap_meta_ext_obj_phys_t` **/
+
+typedef struct {
+    uint32_t    sme_version;
+
+    uint32_t    sme_flags;
+    xid_t       sme_snap_xid;
+    uuid_t      sme_uuid;
+
+    uint64_t    sme_token;
+} __attribute__((packed))   snap_meta_ext_t;
+
+/** `snap_meta_ext_obj_phys_t` **/
+
+typedef struct {
+    obj_phys_t          smeop_o;
+    snap_meta_ext_t     smeop_sme;
+} __attribute__((packed)) snap_meta_ext_obj_phys_t;
 
 #endif // APFS_STRUCT_SNAP_H

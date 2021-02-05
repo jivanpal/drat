@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §16 "Space Manager"
+ * §17 Space Manager
  */
 
 #include <stdint.h>
@@ -38,12 +38,23 @@ typedef struct {
     paddr_t     cab_cib_addr[];
 } cib_addr_block_t;
 
-/** `spaceman_free_queue_key_t` **/
+/** `spaceman_free_queue_key_t` --- forward declared for `spaceman_free_queue_entry_t` **/
 
 typedef struct {
     xid_t       sfqk_xid;
     paddr_t     sfqk_paddr;
 } spaceman_free_queue_key_t;
+
+/** `spaceman_free_queue_val_t` --- forward declared for `spaceman_free_queue_entry_t` **/
+
+typedef uint64_t spaceman_free_queue_val_t;
+
+/** `spaceman_free_queue_entry_t` **/
+
+typedef struct {
+    spaceman_free_queue_key_t   sfqe_key;
+    spaceman_free_queue_val_t   sfqe_count;
+} spaceman_free_queue_entry_t;
 
 /** `spaceman_free_queue_t` **/
 

@@ -3,9 +3,11 @@
 
 /**
  * Definitions of types used for encryption-related structures, as defined in
- * §15.6 "Encryption Types" --- These types are defined in their own
- * header file rather than being included in `crypto.h`, else there would be
- * a dependency cycle (`j.h` ==> `crypto.h` ==> `j.h`).
+ * §15.6 Encryption Types.
+ * 
+ * These types are defined in their own header file rather than being included
+ * in `crypto.h`, else there would be a dependency cycle
+ * (`j.h` ==> `crypto.h` ==> `j.h`).
  */
 
 #include <stdint.h>

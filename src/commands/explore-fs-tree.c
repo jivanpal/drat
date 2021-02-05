@@ -7,7 +7,7 @@
 #include "../apfs/io.h"
 #include "../apfs/struct/general.h"
 #include "../apfs/struct/j.h"
-#include "../apfs/struct/const.h"
+#include "../apfs/struct/jconst.h"
 #include "../apfs/struct/dstream.h"
 #include "../apfs/struct/sibling.h"
 #include "../apfs/struct/snap.h"

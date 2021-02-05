@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §17 "Reaper"
+ * §17 Reaper
  */
 
 #include <stdint.h>

@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §15 "Encryption"
+ * §15 Encryption
  */
 
 #include <stdint.h>
@@ -53,19 +53,22 @@ typedef struct {
 
 /** Protection Classes **/
 
-#define PROTECTION_CLASS_DIR_NONE   0
-#define PROTECTION_CLASS_A          1
-#define PROTECTION_CLASS_B          2
-#define PROTECTION_CLASS_C          3
-#define PROTECTION_CLASS_D          4
-#define PROTECTION_CLASS_F          6
+#define PROTECTION_CLASS_DIR_NONE    0
+#define PROTECTION_CLASS_A           1
+#define PROTECTION_CLASS_B           2
+#define PROTECTION_CLASS_C           3
+#define PROTECTION_CLASS_D           4
+#define PROTECTION_CLASS_F           6
+#define PROTECTION_CLASS_M          14
 
 #define CP_EFFECTIVE_CLASSMASK      0x0000001f
 
 /** Encryption Identifiers **/
 
-#define CRYPTO_SW_ID        4
-#define CRYPTO_RESERVED_5   5
+#define CRYPTO_SW_ID                4
+#define CRYPTO_RESERVED_5           5
+
+#define APFS_UNASSIGNED_CRYPTO_ID   (~0ULL)
 
 /** `keybag_entry_t` --- forward declared for `kb_locker_t` **/
 
@@ -108,6 +111,9 @@ enum {
     KB_TAG_VOLUME_KEY               = 2,
     KB_TAG_VOLUME_UNLOCK_RECORDS    = 3,
     KB_TAG_VOLUME_PASSPHRASE_HINT   = 4,
+
+    KB_TAG_WRAPPING_M_KEY           = 5,
+    KB_TAG_VOLUME_M_KEY             = 6,
     
     KB_TAG_RESERVED_F8              = 0xf8,
 };

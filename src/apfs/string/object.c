@@ -126,7 +126,7 @@ char* get_o_type_string(uint32_t o_type) {
     // This string is a legal `sprintf()` format string.
     char* default_string = "Unknown type (0x%08x) --- perhaps this type was introduced in a later version of APFS than that published on 2019-02-27.";
 
-    size_t NUM_FLAGS = 22;
+    size_t NUM_FLAGS = 26;
     uint32_t flag_constants[] = {
         OBJECT_TYPE_NX_SUPERBLOCK,
         OBJECT_TYPE_BTREE,
@@ -146,6 +146,10 @@ char* get_o_type_string(uint32_t o_type) {
         OBJECT_TYPE_ER_STATE,
         OBJECT_TYPE_GBITMAP,
         OBJECT_TYPE_GBITMAP_BLOCK,
+        OBJECT_TYPE_ER_RECOVERY_BLOCK,
+        OBJECT_TYPE_SNAP_META_EXT,
+        OBJECT_TYPE_INTEGRITY_META,
+        OBJECT_TYPE_RESERVED_20,
         OBJECT_TYPE_INVALID,
         OBJECT_TYPE_TEST,
         OBJECT_TYPE_CONTAINER_KEYBAG,
@@ -170,7 +174,11 @@ char* get_o_type_string(uint32_t o_type) {
         "Encryption-rolling state",
         "General-purpose bitmap",
         "General purpose bitmap block",
-        "(none/invalid)",
+        "Encryption-rolling recovery block",
+        "Additional snapshot metadata",
+        "Integrity metadata",
+        "Reserved type/subtype (0x20)",
+        "(invalid type / no subtype)",
         "A type reserved for testing (should never appear on disk --- if it does, file a bug against the APFS implementation that created this object)",
         "Container keybag",
         "Volume keybag",
@@ -243,8 +251,7 @@ char* get_o_subtype_string(uint32_t o_subtype) {
     // This string is a legal `sprintf()` format string.
     char* default_string = "Unknown subtype (0x%08x) --- perhaps this subtype was introduced in a later version of APFS than that published on 2019-02-27.";
 
-    size_t NUM_FLAGS = 8;
-
+    size_t NUM_FLAGS = 9;
     uint32_t flag_constants[] = {
         OBJECT_TYPE_SPACEMAN_FREE_QUEUE,
         OBJECT_TYPE_EXTENT_LIST_TREE,
@@ -254,9 +261,8 @@ char* get_o_subtype_string(uint32_t o_subtype) {
         OBJECT_TYPE_OMAP_SNAPSHOT,
         OBJECT_TYPE_FUSION_MIDDLE_TREE,
         OBJECT_TYPE_GBITMAP_TREE,
-
+        OBJECT_TYPE_FEXT_TREE,
     };
-
     char* flag_strings[] = {
         "Space manager free-space queue",
         "Extents-list tree",
@@ -266,6 +272,7 @@ char* get_o_subtype_string(uint32_t o_subtype) {
         "Object map snapshots tree",
         "Fusion inter-drive block-mapping tree",
         "B-tree of general-purpose bitmaps",
+        "B-tree of file extents",
     };
 
     // Allocate sufficient memory to store the longest flag string.
