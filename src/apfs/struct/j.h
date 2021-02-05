@@ -7,7 +7,7 @@
  */
 
 #include <stdint.h>
-#include "const.h"          // mode_t
+#include "jconst.h"          // mode_t
 #include "cryptotypes.h"    // cp_key_class_t
 
 /** `j_key_t` **/
