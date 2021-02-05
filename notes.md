@@ -148,7 +148,7 @@
 
 # §16 Sealed Volumes
 
-- [ ] *New chapter* Sealed Volumes
+- [x] *New chapter* Sealed Volumes
 
 # §17 Space Manager
 
