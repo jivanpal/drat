@@ -1,10 +1,27 @@
-### Compiler/linker definitions ###
-FLAGS=-std=c99 -Werror -Wall -Wextra -Wno-incompatible-pointer-types -Wno-multichar \
--Wno-unused-variable -Wno-unused-parameter
-CC=gcc
-CFLAGS=$(FLAGS)
-LD=gcc
-LDFLAGS=$(FLAGS)
+### Compiler definition ###
+CC := gcc
+CFLAGS := \
+-std=c99 \
+-Werror \
+-Wall \
+-Wextra \
+-Wno-incompatible-pointer-types \
+-Wno-multichar \
+-Wno-unused-variable \
+-Wno-unused-parameter \
+-Wno-missing-field-initializers
+
+### Linker definition ###
+LD := gcc
+LDFLAGS := # Nothing
+
+### On macOS, include <argp.h> from Homebrew package `argp-standalone`
+ifneq ($(OS),Windows_NT)
+	ifeq ($(shell uname -s),Darwin)
+		CFLAGS  += -I/usr/local/Cellar/argp-standalone/1.3/include/
+		LDFLAGS += -L/usr/local/Cellar/argp-standalone/1.3/lib/ -largp
+	endif
+endif
 
 ### Directory definitions ###
 SRCDIR=src

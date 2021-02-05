@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <argp.h>
 
 #include "commands.h"
 

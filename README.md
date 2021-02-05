@@ -13,30 +13,39 @@ to [Apple's official APFS specification (PDF)](https://developer.apple.com/suppo
 Copies of various versions of this spec are included in the `spec` directory for
 archival purposes, particularly in case the online version of the document changes.
 
-Currently, all of Drat's commands (except `modify`, which is currently  diabled
+Currently, all of Drat's commands (except `modify`, which is currently disabled
 as it is not fit for use) operate in a read-only fashion, as they are intended
 to be used in situations involving data recovery or data forensics.
 
 ## Build instructions
+
+If you're running macOS on an Intel Mac, precompiled binaries for versioned
+releases are available on the [releases page](https://github.com/jivanpal/drat/releases).
 
 ### Required software
 
 - `gcc` — Required because we use `__attribute__((packed))`. Tested with
   GCC 10.2.0, installed via [Homebrew](https://brew.sh) (Homebrew GCC 10.2.0).
 
-- `make` — Tested with GNU Make 3.81, as included in Xcode Command Line
-  Tools 12.2.0.0.1.1604628099 for macOS Catalina 10.15.7 (19H15).
+- `make` — Tested with GNU Make 3.81, as included in Xcode Command Line Tools.
 
-Compilation and execution of this toolset has been tested on macOS Catalina
-10.15 (19A603) on an Intel x86 machine (MacBookPro9,2).
+- `<argp.h>` (GNU Argp library) — If compiling on macOS, you can get this by
+  installing the [Homebrew](https://brew.sh) package `argp-standalone`; the
+  Makefile will handle this configuration automatically. If you acquire this
+  library any other way, you will need to configure `CFLAGS` and `LDFLAGS` as
+  appropriate (see lines in `Makefile` after `ifeq ($(shell uname -s),Darwin)`).
+
+Compilation and execution has been tested on macOS Catalina 10.15.7 (19H114) on
+an Intel x86-64 machine (MacBookPro9,2).
 
 ### Compilation
 
-- Ensure that `gcc` is in your `$PATH`, or modify the `CC` value in  `Makefile`
-  to reflect the location of `gcc` on your system, then run `make` from the
-  directory where the Makefile resides. An `out` directory will be created in
-  which the object files will be stored. The final binary `drat` will be stored
-  in the project root, the same directory as the Makefile.
+- Ensure that `gcc` is in your `$PATH`, or modify the `CC` and `LD` values in 
+  `Makefile` to reflect the location of `gcc` on your system.
+  
+- Run `make` from the directory where the Makefile resides. An `out` directory
+  will be created in which the object files will be stored. The final binary
+  `drat` will be stored in the project root, the same directory as the Makefile.
 
 - Header files can be compiled with `make headers`. This is only useful to check
   the headers for compilation errors. Compiled headers will also be stored in
