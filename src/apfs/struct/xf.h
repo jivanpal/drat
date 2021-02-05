@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §11 "Extended Fields"
+ * §11 Extended Fields
  */
 
 #include <stdint.h>

@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §16 "Sealed Volumes"
+ * §16 Sealed Volumes
  */
 
 #include <stdint.h>

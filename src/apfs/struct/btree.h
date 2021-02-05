@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §14 "B-Trees"
+ * §14 B-Trees
  */
 
 #include <stdint.h>

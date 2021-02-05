@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §5 "Container"
+ * §5 Container
  */
 
 #include <stdint.h>

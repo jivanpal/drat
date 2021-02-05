@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §3 "Objects"
+ * §3 Objects
  */
 
 #include <stdint.h>

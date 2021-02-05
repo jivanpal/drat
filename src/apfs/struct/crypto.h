@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §15 "Encryption"
+ * §15 Encryption
  */
 
 #include <stdint.h>

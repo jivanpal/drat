@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §13 "Snapshot Metadata"
+ * §13 Snapshot Metadata
  */
 
 #include <stdint.h>

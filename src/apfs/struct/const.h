@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §9 "File-System Constants"
+ * §9 File-System Constants
  */
 
 #include <stdint.h>

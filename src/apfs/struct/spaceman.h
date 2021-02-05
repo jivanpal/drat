@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §17 "Space Manager"
+ * §17 Space Manager
  */
 
 #include <stdint.h>

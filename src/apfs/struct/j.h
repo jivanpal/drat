@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §8 "File-System Objects"
+ * §8 File-System Objects
  */
 
 #include <stdint.h>

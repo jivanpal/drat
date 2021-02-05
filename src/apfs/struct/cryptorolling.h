@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §18 "Encryption Rolling"
+ * §18 Encryption Rolling
  */
 
 #include <stdint.h>

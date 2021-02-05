@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §6 "Object Maps"
+ * §6 Object Maps
  */
 
 #include <stdint.h>

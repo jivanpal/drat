@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §10 "Data Streams"
+ * §10 Data Streams
  */
 
 #include <stdint.h>

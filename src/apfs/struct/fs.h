@@ -3,7 +3,7 @@
 
 /**
  * Structures and related items as defined in
- * §7 "Volumes"
+ * §7 Volumes
  */
 
 #include <stdint.h>
