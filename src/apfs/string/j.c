@@ -13,14 +13,31 @@
 #include <string.h>
 #include <time.h>
 
-#include <sys/stat.h>
-/**
- * Resolve a missing <sys/stat.h> definition in Xcode Command Line Tools
- * for macOS Mojave. See: https://github.com/jivanpal/apfs-tools/issues/1
- **/
-#ifndef SF_DATALESS
-#define SF_DATALESS 0x40000000
-#endif
+#if defined(__APPLE__) || defined(__BSD__)
+    #include <sys/stat.h>
+    /**
+     * Resolve a missing <sys/stat.h> definition in Xcode Command Line Tools
+     * for macOS Mojave. See: https://github.com/jivanpal/apfs-tools/issues/1
+     **/
+    #ifndef SF_DATALESS
+    #define SF_DATALESS 0x40000000
+    #endif
+#else // ! __APPLE__
+    /**
+     * Define BSD flag constants for portability on non-BSD platforms. These
+     * definitions are borrowed from <sys/stat.h> provided by Xcode Command
+     * Line Tools for macOS Catalina.
+     */
+    #define UF_NODUMP       0x00000001
+    #define UF_IMMUTABLE    0x00000002
+    #define UF_APPEND       0x00000004
+    #define UF_OPAQUE       0x00000008
+    #define UF_HIDDEN       0x00008000
+    #define SF_ARCHIVED     0x00010000
+    #define SF_IMMUTABLE    0x00020000
+    #define SF_APPEND       0x00040000
+    #define SF_DATALESS     0x40000000
+#endif // __APPLE__
 
 #include "../struct/xf.h"
 
