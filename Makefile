@@ -2,6 +2,7 @@
 CC := gcc
 CFLAGS := \
 -std=c99 \
+-D _GNU_SOURCE \
 -Werror \
 -Wall \
 -Wextra \
