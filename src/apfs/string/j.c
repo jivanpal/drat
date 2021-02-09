@@ -68,7 +68,7 @@ void print_j_inode_key(j_inode_key_t* key) {
     print_j_key(key);
 }
 
-char* j_inode_mode_to_string(mode_t mode) {
+char* j_inode_mode_to_string(apfs_mode_t mode) {
     switch (mode & S_IFMT) {
         case S_IFIFO:
             return "Named pipe (FIFO / queue)";

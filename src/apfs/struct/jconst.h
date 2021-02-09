@@ -167,7 +167,11 @@ typedef enum {
 
 /** File Modes **/
 
-typedef uint16_t    mode_t;
+/**
+ * Called `mode_t` in the spec, but this clashes with the GNU `mode_t` on
+ * non-Apple platforms, so we use a distinct name for portability.
+ */
+typedef uint16_t    apfs_mode_t;
 
 #define S_IFMT      0170000
 
