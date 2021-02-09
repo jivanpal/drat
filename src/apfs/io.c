@@ -5,6 +5,8 @@
 
 #include "io.h"
 
+#include <sys/types.h>
+
 char*   nx_path;
 FILE*   nx;
 size_t  nx_block_size = 4096;
