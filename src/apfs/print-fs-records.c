@@ -1,5 +1,6 @@
 #include "print-fs-records.h"
 
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdio.h>
 
@@ -79,9 +80,9 @@ void print_fs_records(j_rec_t** fs_records) {
 
                 fprintf(stderr, "FILE EXTENT"
                     " || file ID = %#8llx"
-                    " || log. addr. = %#10llx"
-                    " || length = %8llu B = %#10llx B = %5llu blocks = %#7llx blocks"
-                    " || phys. block = %#10llx",
+                    " || log. addr. = %#10" PRIx64
+                    " || length = %8" PRIu64 " B = %#10" PRIx64 " B = %5" PRIu64 " blocks = %#7" PRIx64 " blocks"
+                    " || phys. block = %#10" PRIx64,
 
                     key->hdr.obj_id_and_type & OBJ_ID_MASK,
                     key->logical_addr,
@@ -96,7 +97,7 @@ void print_fs_records(j_rec_t** fs_records) {
 
                 fprintf(stderr, "DIR REC"
                     " || %s"
-                    " || target ID = %#8llx"
+                    " || target ID = %#8" PRIx64
                     " || name = %s",
 
                     drec_val_to_short_type_string(val),

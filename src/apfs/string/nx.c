@@ -6,6 +6,7 @@
 
 #include "nx.h"
 
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -309,7 +310,7 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
         printf("none (spans 0 blocks)\n");
     } else {
         printf(
-            "first block %#llx, spans %llu (%#llx) blocks (last block %#llx)\n",
+            "first block %#" PRIx64 ", spans %" PRIu64 " (%#" PRIx64 ") blocks (last block %#" PRIx64 ")\n",
             nxsb->nx_keylocker.pr_start_paddr,
             nxsb->nx_keylocker.pr_block_count,
             nxsb->nx_keylocker.pr_block_count,
@@ -322,7 +323,7 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
         printf("none (spans 0 blocks)\n");
     } else {
         printf(
-            "first block %#llx, spans %llu (%#llx) blocks (last block %#llx)\n",
+            "first block %#" PRIx64 ", spans %" PRIu64 " (%#" PRIx64 ") blocks (last block %#" PRIx64 ")\n",
             nxsb->nx_mkb_locker.pr_start_paddr,
             nxsb->nx_mkb_locker.pr_block_count,
             nxsb->nx_mkb_locker.pr_block_count,
@@ -342,7 +343,7 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
 
     printf(
         "Latest version of Apple APFS software that mounted this container: "
-        "%llu.%llu.%llu.%llu.%llu\n",
+        "%" PRIu64 ".%llu.%llu.%llu.%llu\n",
 
          nxsb->nx_newest_mounted_version >> 40,
         (nxsb->nx_newest_mounted_version >> 30) & ~(~0ULL << 10),
@@ -352,7 +353,7 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
     );
 
     printf("Block size:         %u bytes\n",    nxsb->nx_block_size);
-    printf("Block count:        %llu (last block %#llx)\n",
+    printf("Block count:        %" PRIu64 " (last block %#" PRIx64 ")\n",
         nxsb->nx_block_count,
         nxsb->nx_block_count - 1
     );
@@ -369,18 +370,18 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
     printf("Backward-incompatible features:\n%s", incompatible_features_string);
     free(incompatible_features_string);
     
-    printf("UUID:       0x%016llx%016llx\n",
+    printf("UUID:       0x%016" PRIx64 "%016" PRIx64 "\n",
         *((uint64_t*)(nxsb->nx_uuid) + 1),
         * (uint64_t*)(nxsb->nx_uuid)
     );
-    printf("Next OID:                       0x%llx\n",  nxsb->nx_next_oid);
-    printf("Next XID:                       0x%llx\n",  nxsb->nx_next_xid);
+    printf("Next OID:                       0x%" PRIx64 "\n",  nxsb->nx_next_oid);
+    printf("Next XID:                       0x%" PRIx64 "\n",  nxsb->nx_next_xid);
 
     // TODO: Maybe print `xp_desc` and `xp_data` fields.
 
-    printf("Space manager Ephemeral OID:    0x%llx\n",  nxsb->nx_spaceman_oid);
-    printf("Object map Physical OID:        0x%llx\n",  nxsb->nx_omap_oid);
-    printf("Reaper Ephemeral OID:           0x%llx\n",  nxsb->nx_reaper_oid);
+    printf("Space manager Ephemeral OID:    0x%" PRIx64 "\n",  nxsb->nx_spaceman_oid);
+    printf("Object map Physical OID:        0x%" PRIx64 "\n",  nxsb->nx_omap_oid);
+    printf("Reaper Ephemeral OID:           0x%" PRIx64 "\n",  nxsb->nx_reaper_oid);
 
     char* flags_string = get_nx_flags_string(nxsb);
     printf("Other flags:\n%s", flags_string);
@@ -399,8 +400,8 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
  * cpm:     A pointer to the checkpoint-mapping in question.
  */
 void print_checkpoint_mapping(checkpoint_mapping_t* cpm) {
-    printf("Ephemeral OID:                      0x%llx\n",      cpm->cpm_oid);
-    printf("Logical block address on disk:      0x%llx\n",      cpm->cpm_paddr);
+    printf("Ephemeral OID:                      0x%" PRIx64 "\n",      cpm->cpm_oid);
+    printf("Logical block address on disk:      0x%" PRIx64 "\n",      cpm->cpm_paddr);
 
     char* type_string = get_o_type_string(cpm->cpm_type);
     printf("Object type:                        %s\n",          type_string);
@@ -411,7 +412,7 @@ void print_checkpoint_mapping(checkpoint_mapping_t* cpm) {
     free(subtype_string);
     
     printf("Object size:                        %u bytes\n",    cpm->cpm_size);
-    printf("Associated volume OID (virtual):    0x%llx\n",      cpm->cpm_fs_oid);
+    printf("Associated volume OID (virtual):    0x%" PRIx64 "\n",      cpm->cpm_fs_oid);
 }
 
 /**

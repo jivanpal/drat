@@ -5,6 +5,7 @@
 
 #include "btree.h"
 
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -192,8 +193,8 @@ void print_btree_info(btree_info_t* bt_info) {
 
     printf("- Length of longest key:    %u bytes\n",    bt_info->bt_longest_key);
     printf("- Length of longest value:  %u bytes\n",    bt_info->bt_longest_val);
-    printf("- Number of keys:           %llu\n",        bt_info->bt_key_count);
-    printf("- Number of nodes:          %llu\n",        bt_info->bt_node_count);
+    printf("- Number of keys:           %" PRIu64 "\n",        bt_info->bt_key_count);
+    printf("- Number of nodes:          %" PRIu64 "\n",        bt_info->bt_node_count);
 }
 
 /**
