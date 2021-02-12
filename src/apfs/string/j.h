@@ -10,7 +10,7 @@ char* j_key_type_to_string(uint8_t j_key_type);
 void print_j_key(j_key_t* key);
 void print_j_inode_key(j_inode_key_t* key);
 
-char* j_inode_mode_to_string(mode_t mode);
+char* j_inode_mode_to_string(apfs_mode_t mode);
 char* get_j_inode_internal_flags_string(uint64_t internal_flags);
 char* get_j_inode_bsd_flags_string(uint32_t bsd_flags);
 

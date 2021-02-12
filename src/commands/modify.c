@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "../apfs/io.h"
 #include "../apfs/func/boolean.h"
@@ -169,7 +170,7 @@ int cmd_modify(int argc, char** argv) {
         
         for (size_t i = 0; i < NUM_NODES; i++) {
             if (read_blocks(ref_node, ref_nodes[i][0], 1) != 1) {
-                fprintf(stderr, "\nABORT: Error reading block %#llx.\n", ref_nodes[i][0]);
+                fprintf(stderr, "\nABORT: Error reading block %#" PRIx64 ".\n", ref_nodes[i][0]);
                 return -1;
             }
 

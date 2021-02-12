@@ -4,6 +4,7 @@
 
 #include "btree.h"
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,12 +141,12 @@ omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid,
         paddr_t* child_node_addr = val_end - toc_entry->v;
         
         if (read_blocks(node, *child_node_addr, 1) != 1) {
-            fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Failed to read block 0x%llx.\n", *child_node_addr);
+            fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Failed to read block 0x%" PRIx64 ".\n", *child_node_addr);
             exit(-1);
         }
 
         if (!is_cksum_valid(node)) {
-            fprintf(stderr, "\nget_btree_phys_omap_val: Checksum of node at block 0x%llx did not validate. Proceeding anyway as if it did.\n", *child_node_addr);
+            fprintf(stderr, "\nget_btree_phys_omap_val: Checksum of node at block 0x%" PRIx64 " did not validate. Proceeding anyway as if it did.\n", *child_node_addr);
         }
 
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
@@ -378,19 +379,19 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
         oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
         omap_entry_t* child_node_omap_entry = get_btree_phys_omap_entry(vol_omap_root_node, *child_node_virt_oid, max_xid);
         if (!child_node_omap_entry) {
-            fprintf(stderr, "\nABORT: get_fs_records: Need to descend to node with Virtual OID 0x%llx, but the volume object map lists no objects with this Virtual OID.\n", *child_node_virt_oid);
+            fprintf(stderr, "\nABORT: get_fs_records: Need to descend to node with Virtual OID 0x%" PRIx64 ", but the volume object map lists no objects with this Virtual OID.\n", *child_node_virt_oid);
             exit(-1);
         }
         
         if (read_blocks(node, child_node_omap_entry->val.ov_paddr, 1) != 1) {
-            fprintf(stderr, "\nABORT: get_fs_records: Failed to read block 0x%llx.\n", child_node_omap_entry->val.ov_paddr);
+            fprintf(stderr, "\nABORT: get_fs_records: Failed to read block 0x%" PRIx64 ".\n", child_node_omap_entry->val.ov_paddr);
             exit(-1);
         }
 
         // `node` is now the child node we will scan on next loop
 
         if (!is_cksum_valid(node)) {
-            fprintf(stderr, "\nABORT: get_fs_records: Checksum of node at block 0x%llx did not validate.\n", child_node_omap_entry->val.ov_paddr);
+            fprintf(stderr, "\nABORT: get_fs_records: Checksum of node at block 0x%" PRIx64 " did not validate.\n", child_node_omap_entry->val.ov_paddr);
             exit(-1);
         }
 
@@ -546,19 +547,19 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
             oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
             omap_entry_t* child_node_omap_entry = get_btree_phys_omap_entry(vol_omap_root_node, *child_node_virt_oid, max_xid);
             if (!child_node_omap_entry) {
-                fprintf(stderr, "\nABORT: get_fs_records: Need to descend to node with Virtual OID 0x%llx and maximum XID 0x%llx, but the volume object map lists no such objects.\n", *child_node_virt_oid, max_xid);
+                fprintf(stderr, "\nABORT: get_fs_records: Need to descend to node with Virtual OID 0x%" PRIx64 " and maximum XID 0x%" PRIx64 ", but the volume object map lists no such objects.\n", *child_node_virt_oid, max_xid);
                 exit(-1);
             }
             
             if (read_blocks(node, child_node_omap_entry->val.ov_paddr, 1) != 1) {
-                fprintf(stderr, "\nABORT: get_fs_records: Failed to read block 0x%llx.\n", child_node_omap_entry->val.ov_paddr);
+                fprintf(stderr, "\nABORT: get_fs_records: Failed to read block 0x%" PRIx64 ".\n", child_node_omap_entry->val.ov_paddr);
                 exit(-1);
             }
 
             // `node` is now the child node that we will examine on next loop
 
             if (!is_cksum_valid(node)) {
-                fprintf(stderr, "\nABORT: get_fs_records: Checksum of node at block 0x%llx did not validate.\n", child_node_omap_entry->val.ov_paddr);
+                fprintf(stderr, "\nABORT: get_fs_records: Checksum of node at block 0x%" PRIx64 " did not validate.\n", child_node_omap_entry->val.ov_paddr);
                 exit(-1);
             }
 

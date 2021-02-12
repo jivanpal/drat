@@ -5,6 +5,7 @@
 
 #include "j.h"
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -12,14 +13,31 @@
 #include <string.h>
 #include <time.h>
 
-#include <sys/stat.h>
-/**
- * Resolve a missing <sys/stat.h> definition in Xcode Command Line Tools
- * for macOS Mojave. See: https://github.com/jivanpal/apfs-tools/issues/1
- **/
-#ifndef SF_DATALESS
-#define SF_DATALESS 0x40000000
-#endif
+#if defined(__APPLE__) || defined(__BSD__)
+    #include <sys/stat.h>
+    /**
+     * Resolve a missing <sys/stat.h> definition in Xcode Command Line Tools
+     * for macOS Mojave. See: https://github.com/jivanpal/apfs-tools/issues/1
+     **/
+    #ifndef SF_DATALESS
+    #define SF_DATALESS 0x40000000
+    #endif
+#else // ! __APPLE__
+    /**
+     * Define BSD flag constants for portability on non-BSD platforms. These
+     * definitions are borrowed from <sys/stat.h> provided by Xcode Command
+     * Line Tools for macOS Catalina.
+     */
+    #define UF_NODUMP       0x00000001
+    #define UF_IMMUTABLE    0x00000002
+    #define UF_APPEND       0x00000004
+    #define UF_OPAQUE       0x00000008
+    #define UF_HIDDEN       0x00008000
+    #define SF_ARCHIVED     0x00010000
+    #define SF_IMMUTABLE    0x00020000
+    #define SF_APPEND       0x00040000
+    #define SF_DATALESS     0x40000000
+#endif // __APPLE__
 
 #include "../struct/xf.h"
 
@@ -67,7 +85,7 @@ void print_j_inode_key(j_inode_key_t* key) {
     print_j_key(key);
 }
 
-char* j_inode_mode_to_string(mode_t mode) {
+char* j_inode_mode_to_string(apfs_mode_t mode) {
     switch (mode & S_IFMT) {
         case S_IFIFO:
             return "Named pipe (FIFO / queue)";
@@ -269,13 +287,13 @@ char* get_j_inode_bsd_flags_string(uint32_t bsd_flags) {
 }
 
 void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {
-    printf("Parent ID:      0x%llx\n",  val->parent_id);
-    printf("Private ID:     0x%llx\n",  val->private_id);
+    printf("Parent ID:      0x%" PRIx64 "\n",  val->parent_id);
+    printf("Private ID:     0x%" PRIx64 "\n",  val->private_id);
     printf("\n");
 
     char* tmp_string = NULL;
     if (val->internal_flags & INODE_HAS_UNCOMPRESSED_SIZE) {
-        if (asprintf(tmp_string, "%llu bytes", val->uncompressed_size) < 0) {
+        if (asprintf(tmp_string, "%" PRIu64 " bytes", val->uncompressed_size) < 0) {
             fprintf(stderr, "ABORT: %s:%d: call to asprintf() couldn't allocate sufficient memory", __func__, __LINE__);
             exit(-1);
         }
@@ -326,7 +344,7 @@ void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {
 void print_j_file_extent_key(j_file_extent_key_t* key) {
     print_j_key(key);   // `key` equals `&(key->hdr)`
     printf("\n");
-    printf("Extent offset within file:  %#llx\n", key->logical_addr);
+    printf("Extent offset within file:  %#" PRIx64 "\n", key->logical_addr);
 }
 
 void print_j_file_extent_val(j_file_extent_val_t* val) {
@@ -334,7 +352,7 @@ void print_j_file_extent_val(j_file_extent_val_t* val) {
     // TODO: Print crypto ID
 
     printf("Length (bytes): %llu\n",    val->len_and_flags & J_FILE_EXTENT_LEN_MASK);
-    printf("Start block:    %#llx\n",   val->phys_block_num);
+    printf("Start block:    %#" PRIx64 "\n",   val->phys_block_num);
 }
 
 void print_j_drec_hashed_key(j_drec_hashed_key_t* key) {
@@ -403,7 +421,7 @@ char* drec_val_to_short_type_string(j_drec_val_t* val) {
 }
 
 void print_j_drec_val(j_drec_val_t* val, bool has_xfields) {
-    printf("Dentry Virtual OID:     0x%llx\n", val->file_id);
+    printf("Dentry Virtual OID:     0x%" PRIx64 "\n", val->file_id);
 
     // timestamp converted from nanoseconds since
     // Unix epoch to seconds since Unix epoch.

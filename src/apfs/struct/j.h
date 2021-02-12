@@ -7,7 +7,7 @@
  */
 
 #include <stdint.h>
-#include "jconst.h"          // mode_t
+#include "jconst.h"         // apfs_mode_t
 #include "cryptotypes.h"    // cp_key_class_t
 
 /** `j_key_t` **/
@@ -54,7 +54,7 @@ typedef struct {
     uint32_t        bsd_flags;
     uid_t           owner;
     gid_t           group;
-    mode_t          mode;
+    apfs_mode_t     mode;
     uint16_t        pad1;
     uint64_t        uncompressed_size;  // formerly `pad2`
     uint8_t         xfields[];

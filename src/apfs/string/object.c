@@ -5,6 +5,7 @@
 
 #include "object.h"
 
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -320,9 +321,9 @@ void print_obj_phys(obj_phys_t* obj) {
     char* subtype_string    = get_o_subtype_string(obj->o_subtype);
 
     // Print the info
-    printf("Stored checksum:    0x%016llx\n",   *(uint64_t*)obj);
-    printf("OID:                0x%llx\n",      obj->o_oid);
-    printf("XID:                0x%llx\n",      obj->o_xid);
+    printf("Stored checksum:    0x%016" PRIx64 "\n",   *(uint64_t*)obj);
+    printf("OID:                0x%" PRIx64 "\n",      obj->o_oid);
+    printf("XID:                0x%" PRIx64 "\n",      obj->o_xid);
     printf("Storage type:       %s\n",          o_storage_type_to_string(obj->o_type));
     printf("Type flags:         %s\n",          type_flags_string);
     printf("Type:               %s\n",          type_string);

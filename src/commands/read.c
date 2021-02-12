@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "../apfs/io.h"
 #include "../apfs/struct/general.h"
@@ -42,9 +43,9 @@ int cmd_read(int argc, char** argv) {
     }
     char* nx_path = argv[1];
     paddr_t nx_block_addr = 0x0;
-    bool parse_success = sscanf(argv[2], "0x%llx", &nx_block_addr);
+    bool parse_success = sscanf(argv[2], "0x%" PRIx64 "", &nx_block_addr);
     if (!parse_success) {
-        parse_success = sscanf(argv[2], "%llu", &nx_block_addr);
+        parse_success = sscanf(argv[2], "%" PRIu64 "", &nx_block_addr);
     }
     if (!parse_success) {
         printf("%s is not a valid block address.\n", argv[2]);
@@ -63,7 +64,7 @@ int cmd_read(int argc, char** argv) {
     }
     printf("OK.\n\n");
 
-    printf("Reading block 0x%llx ... ", nx_block_addr);
+    printf("Reading block 0x%" PRIx64 " ... ", nx_block_addr);
     obj_phys_t* block = malloc(nx_block_size);
     if (read_blocks(block, nx_block_addr, 1) == 0) {
         printf("\nEND: Block index %s does not exist in `%s`.\n", argv[2], nx_path);
@@ -77,7 +78,7 @@ int cmd_read(int argc, char** argv) {
     }
     printf("\n");
     
-    printf("Details of block 0x%llx:\n", nx_block_addr);
+    printf("Details of block 0x%" PRIx64 ":\n", nx_block_addr);
     printf("--------------------------------------------------------------------------------\n");
     switch (block->o_type & OBJECT_TYPE_MASK) {
         case OBJECT_TYPE_NX_SUPERBLOCK:

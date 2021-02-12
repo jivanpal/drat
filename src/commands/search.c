@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
+#include <inttypes.h>
 
 #include "../apfs/io.h"
 #include "../apfs/func/boolean.h"
@@ -82,7 +84,7 @@ int cmd_search(int argc, char** argv) {
     printf("OK.\n");
 
     uint64_t num_blocks = ((nx_superblock_t*)block)->nx_block_count;
-    printf("The specified device has %llu = %#llx blocks. Commencing search:\n\n", num_blocks, num_blocks);
+    printf("The specified device has %" PRIu64 " = %#" PRIx64 " blocks. Commencing search:\n\n", num_blocks, num_blocks);
 
     uint64_t num_matches = 0;
 
@@ -165,7 +167,7 @@ int cmd_search(int argc, char** argv) {
     /** Search over all B-tree nodes **/
     if (true) {
         for (uint64_t addr = start_addr;    addr < end_addr;    addr++, addr_index_100 += 100) {
-            printf("\rReading block %#9llx (%6.2f%%) ... ", addr, addr_index_100/addr_range_size);
+            printf("\rReading block %#9" PRIx64 " (%6.2f%%) ... ", addr, addr_index_100/addr_range_size);
 
             if (read_blocks(block, addr, 1) != 1) {
                 if (feof(nx)) {
@@ -174,7 +176,7 @@ int cmd_search(int argc, char** argv) {
                 }
 
                 assert(ferror(nx));
-                printf("- An error occurred whilst reading block %#llx.\n", addr);
+                printf("- An error occurred whilst reading block %#" PRIx64 ".\n", addr);
                 continue;
             }
 
@@ -213,7 +215,7 @@ int cmd_search(int argc, char** argv) {
                             kvoff_t* last_toc_entry = first_toc_entry + node->btn_nkeys - 1;
                             omap_key_t* last_key = key_start + last_toc_entry->k;
 
-                            printf("\rMATCHED %#8llx || Node XID = %#9llx || from (OID, XID) = (%#9llx, %#9llx) => (%#9llx, %#9llx)\n",
+                            printf("\rMATCHED %#8" PRIx64 " || Node XID = %#9" PRIx64 " || from (OID, XID) = (%#9" PRIx64 ", %#9" PRIx64 ") => (%#9" PRIx64 ", %#9" PRIx64 ")\n",
                                 addr,
                                 node->btn_o.o_xid,
                                 first_key->ok_oid,
@@ -235,7 +237,7 @@ int cmd_search(int argc, char** argv) {
                         switch (block->o_oid) {
                             case 0x25e8fa:
                                 num_matches++;
-                                printf("\rMATCHED %#8llx || OID = %#9llx || XID = %#9llx\n", addr, block->o_oid, block->o_xid);
+                                printf("\rMATCHED %#8" PRIx64 " || OID = %#9" PRIx64 " || XID = %#9" PRIx64 "\n", addr, block->o_oid, block->o_xid);
                                 break;
 
                             default:
@@ -291,7 +293,7 @@ int cmd_search(int argc, char** argv) {
                             j_key_t* last_hdr = key_start + last_toc_entry->k.off;
                             uint64_t last_oid = last_hdr->obj_id_and_type & OBJ_ID_MASK;
 
-                            printf("\rMATCHED %#8llx || First record OID: %#llx || Last record OID: %#llx || Node XID: %#llx\n", addr, first_oid, last_oid, node->btn_o.o_xid);
+                            printf("\rMATCHED %#8" PRIx64 " || First record OID: %#" PRIx64 " || Last record OID: %#" PRIx64 " || Node XID: %#" PRIx64 "\n", addr, first_oid, last_oid, node->btn_o.o_xid);
                             
                             // Found a match; don't need to check other entries in this node
                             break;
@@ -318,7 +320,7 @@ int cmd_search(int argc, char** argv) {
                         continue;
                     }
 
-                    printf("LEAF NODE // OID = %#llx // XID = %#llx ... ", node->btn_o.o_oid, node->btn_o.o_xid);
+                    printf("LEAF NODE // OID = %#" PRIx64 " // XID = %#" PRIx64 " ... ", node->btn_o.o_oid, node->btn_o.o_xid);
                     
                     char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
                     char* key_start = toc_start + node->btn_table_space.len;
@@ -432,7 +434,7 @@ int cmd_search(int argc, char** argv) {
                         //         num_matches_in_node++;
                         //         num_matches++;
 
-                        //         printf("MATCHED --- query = %#llx --- match = %s\n", fs_oids[j], key->name);
+                        //         printf("MATCHED --- query = %#" PRIx64 " --- match = %s\n", fs_oids[j], key->name);
                                 
                         //         // Found a match; don't need to compare against other FS OIDs
                         //         break;
@@ -445,7 +447,7 @@ int cmd_search(int argc, char** argv) {
                                 num_matches_in_node++;
                                 num_matches++;
 
-                                printf( "MATCHED --- query = (%#llx, %#llx) --- match = %#llx --- name = %s\n",
+                                printf( "MATCHED --- query = (%#" PRIx64 ", %#" PRIx64 ") --- match = %#" PRIx64 " --- name = %s\n",
                                     fs_oid_ranges[j][0],
                                     fs_oid_ranges[j][1],
                                     val->file_id,
@@ -474,7 +476,7 @@ int cmd_search(int argc, char** argv) {
     if (false) {
         for (size_t block_index = 0;    block_index < NUM_BLOCKS;   block_index++) {
             uint64_t addr = blocks[block_index];
-            printf("\rReading block %2lu: %#llx ... ", block_index, addr);
+            printf("\rReading block %2lu: %#" PRIx64 " ... ", block_index, addr);
 
             if (read_blocks(block, addr, 1) != 1) {
                 if (feof(nx)) {
@@ -483,7 +485,7 @@ int cmd_search(int argc, char** argv) {
                 }
 
                 assert(ferror(nx));
-                printf("- An error occurred whilst reading block %#llx.\n", addr);
+                printf("- An error occurred whilst reading block %#" PRIx64 ".\n", addr);
                 continue;
             }
 
@@ -493,12 +495,12 @@ int cmd_search(int argc, char** argv) {
             char* key_start = (char*)first_toc_entry + node->btn_table_space.len;
             j_key_t* hdr = key_start + first_toc_entry->k.off;
 
-            // printf("--- first record type = %#llx\n", (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT );
-            printf("--- node OID = %#16llx\n", node->btn_o.o_oid);
+            // printf("--- first record type = %#" PRIx64 "\n", (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT );
+            printf("--- node OID = %#16" PRIx64 "\n", node->btn_o.o_oid);
         }
     }
 
-    printf("\n\nFinished search; found %llu results.\n\n", num_matches);
+    printf("\n\nFinished search; found %" PRIu64 " results.\n\n", num_matches);
     
     return 0;
 }

@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "../apfs/io.h"
 #include "../apfs/struct/general.h"
@@ -47,9 +48,9 @@ int cmd_explore_omap_tree(int argc, char** argv) {
     char* nx_path = argv[1];
     
     paddr_t root_node_block_addr;
-    bool parse_success = sscanf(argv[2], "0x%llx", &root_node_block_addr);
+    bool parse_success = sscanf(argv[2], "0x%" PRIx64 "", &root_node_block_addr);
     if (!parse_success) {
-        parse_success = sscanf(argv[2], "%llu", &root_node_block_addr);
+        parse_success = sscanf(argv[2], "%" PRIu64, &root_node_block_addr);
     }
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
@@ -69,7 +70,7 @@ int cmd_explore_omap_tree(int argc, char** argv) {
     printf("OK.\n\n");
 
     // Read the specified root node
-    printf("Reading block 0x%llx ... ", root_node_block_addr);
+    printf("Reading block 0x%" PRIx64 " ... ", root_node_block_addr);
     btree_node_phys_t* root_node = malloc(nx_block_size);
     if (!root_node) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `root_node`.\n");
@@ -134,17 +135,17 @@ int cmd_explore_omap_tree(int argc, char** argv) {
                 omap_key_t* key = key_start + toc_entry->k;
                 omap_val_t* val = val_end   - toc_entry->v;
                 if (read_blocks(block, val->ov_paddr, 1) != 1) {
-                    fprintf(stderr, "\nABORT: read_blocks: Error reading block %#llx.\n", val->ov_paddr);
+                    fprintf(stderr, "\nABORT: read_blocks: Error reading block %#" PRIx64 ".\n", val->ov_paddr);
                     return -1;
                 }
 
                 printf(
                     "- %3u:"
-                    "  OID = %#9llx"
-                    "  ||  XID = %#9llx"
-                    "  ||  Target block = %#9llx"
-                    "  ||  Target's actual OID = %#9llx (%s)"
-                    "  ||  Target's actual XID = %#9llx (%s)\n", 
+                    "  OID = %#9" PRIx64 ""
+                    "  ||  XID = %#9" PRIx64 ""
+                    "  ||  Target block = %#9" PRIx64 ""
+                    "  ||  Target's actual OID = %#9" PRIx64 " (%s)"
+                    "  ||  Target's actual XID = %#9" PRIx64 " (%s)\n", 
                     
                     i,
                     key->ok_oid,
@@ -161,8 +162,8 @@ int cmd_explore_omap_tree(int argc, char** argv) {
 
                 printf(
                     "- %3u:"
-                    "  OID = %#9llx"
-                    "  ||  XID = %#9llx\n",
+                    "  OID = %#9" PRIx64 ""
+                    "  ||  XID = %#9" PRIx64 "\n",
                     
                     i,
                     key->ok_oid,
@@ -196,9 +197,9 @@ int cmd_explore_omap_tree(int argc, char** argv) {
         // Else, read the corresponding child node into `node` and loop
         paddr_t* child_node_addr = val_end - toc_entry->v;
 
-        printf("Child node resides at adress 0x%llx. Reading ... ", *child_node_addr);
+        printf("Child node resides at adress 0x%" PRIx64 ". Reading ... ", *child_node_addr);
         if (read_blocks(node, *child_node_addr, 1) != 1) {
-            fprintf(stderr, "\nABORT: Failed to read block 0x%llx.\n", *child_node_addr);
+            fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", *child_node_addr);
             return -1;
         }
 

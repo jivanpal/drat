@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "../apfs/io.h"
 #include "../apfs/func/boolean.h"
@@ -82,17 +83,17 @@ int cmd_search_last_btree_node(int argc, char** argv) {
     printf("OK.\n");
 
     uint64_t num_blocks = ((nx_superblock_t*)block)->nx_block_count;
-    printf("The specified device has %llu = %#llx blocks. Commencing search:\n\n", num_blocks, num_blocks);
+    printf("The specified device has %" PRIu64 " = %#" PRIx64 " blocks. Commencing search:\n\n", num_blocks, num_blocks);
 
     uint64_t num_matches = 0;
     uint64_t first_match_addr = 0;
     uint64_t last_match_addr = 0;
 
-    printf("First match: %#llx\n", first_match_addr);
-    printf("Last match:  %#llx\n", last_match_addr);
+    printf("First match: %#" PRIx64 "\n", first_match_addr);
+    printf("Last match:  %#" PRIx64 "\n", last_match_addr);
 
     for (uint64_t addr = 0xa5e3b; addr < 0x13adf2; addr++) {
-        printf("\rReading %#llx ...", addr);
+        printf("\rReading %#" PRIx64 " ...", addr);
 
         if (read_blocks(block, addr, 1) != 1) {
             if (feof(nx)) {
@@ -101,7 +102,7 @@ int cmd_search_last_btree_node(int argc, char** argv) {
             }
 
             assert(ferror(nx));
-            printf("- An error occurred whilst reading block %#llx.\n", addr);
+            printf("- An error occurred whilst reading block %#" PRIx64 ".\n", addr);
             continue;
         }
 
@@ -124,13 +125,13 @@ int cmd_search_last_btree_node(int argc, char** argv) {
                 // move up one line,
                 // clear whole line (which reads "First match: 0x...")
                 printf("\r\033[2K\033[A\033[2K\033[A\033[2K");
-                printf("First match: %#llx\n", first_match_addr);
-                printf("Last match:  %#llx\n", last_match_addr);
+                printf("First match: %#" PRIx64 "\n", first_match_addr);
+                printf("Last match:  %#" PRIx64 "\n", last_match_addr);
             }
         }
     }
 
-    printf("\n\nFinished search; found %llu results.\n\n", num_matches);
+    printf("\n\nFinished search; found %" PRIu64 " results.\n\n", num_matches);
     
     return 0;
 }
