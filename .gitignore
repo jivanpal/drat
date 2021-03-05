@@ -3,5 +3,4 @@
 
 /drat
 /out/
-
-*.gch
+/docs/_build/
