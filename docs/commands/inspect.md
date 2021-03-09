@@ -1,5 +1,6 @@
-# {class}`inspect`
+(command_inspect)=
 
-```{todo}
-Describe this
+# {command}`inspect`
+
+```{todo} Describe this
 ```

@@ -12,13 +12,5 @@ partitions.
 This documentation covers version 0.2.x of the software.
 
 ```{toctree}
-:numbered:
-
 commands/index
 ```
-
-# Indices and tables
-
-- {ref}`genindex`
-% - {ref}`modindex`
-- {ref}`search`
