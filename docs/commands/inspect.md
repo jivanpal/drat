@@ -12,7 +12,7 @@ state.
 ## Example usage and output
 
 ```
-$ sudo drat --container /dev/disk2s2 inspect
+$ drat --container /dev/disk2s2 inspect
 
 Opening file at `/dev/disk2s2` in read-only mode ... OK.
 Simulating a mount of the APFS container.

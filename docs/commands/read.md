@@ -10,7 +10,7 @@ description of a given block in an APFS container.
 ## Example usage and output
 
 ```
-$ sudo drat --container /dev/disk2s2 read --block 0x3af2
+$ drat --container /dev/disk2s2 read --block 0x3af2
 
 Opening file at `/dev/disk0s2` in read-only mode ... OK.
 
