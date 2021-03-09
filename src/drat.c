@@ -3,14 +3,16 @@
 #include <argp.h>
 
 #include "commands.h"
+#include "legal.h"
 
 static void print_usage(bool is_error) {
     fprintf(
         is_error ? stderr : stdout,
-
+        
         "Usage: drat <command>\n"
         "\n"
         "List of commands:\n"
+        "   about                   Display Drat's \"about\" info (version, copyright, warranty, license)\n"
         "   explore-fs-tree         Explore filesystem B-tree\n"
         "   explore-omap-tree       Explore object map B-tree\n"
         "   inspect                 Inspect APFS partition\n"
@@ -23,13 +25,13 @@ static void print_usage(bool is_error) {
         "   resolver                Check if given Virtual OIDs resolve to given Physical OIDs\n"
         "   search-last-btree-node  Search the partition for B-tree nodes, reporting the Physical OID of the last one discovered\n"
         "   search                  Search the partition for blocks with certain features/properties\n"
-        "   version                 Display Drat's version info\n"
     );
 }
 
 int main(int argc, char** argv) {
     char* cmd_name = argv[1];
     if (!cmd_name) {
+        printf(VERSION_AND_COPYRIGHT_STRING "\n");
         print_usage(false);
         return 0;
     }

@@ -17,6 +17,7 @@ typedef struct {
  * Function prototypes; function implementations are
  * contained within the respective command's source file.
  */
+command_function cmd_about;
 command_function cmd_explore_fs_tree;
 command_function cmd_explore_omap_tree;
 command_function cmd_inspect;
@@ -29,9 +30,9 @@ command_function cmd_recover;
 command_function cmd_resolver;
 command_function cmd_search_last_btree_node;
 command_function cmd_search;
-command_function cmd_version;
 
 static drat_command_t commands[] = {
+    { "about"                   , cmd_about                     },
     { "explore-fs-tree"         , cmd_explore_fs_tree           },
     { "explore-omap-tree"       , cmd_explore_omap_tree         },
     { "inspect"                 , cmd_inspect                   },
@@ -44,7 +45,6 @@ static drat_command_t commands[] = {
     { "resolver"                , cmd_resolver                  },
     { "search-last-btree-node"  , cmd_search_last_btree_node    },
     { "search"                  , cmd_search                    },
-    { "version"                 , cmd_version                   },
 };
 
 /**
