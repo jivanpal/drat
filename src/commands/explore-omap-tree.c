@@ -159,15 +159,18 @@ int cmd_explore_omap_tree(int argc, char** argv) {
         } else {
             for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
                 omap_key_t* key = key_start + toc_entry->k;
+                omap_val_t* val = val_end - toc_entry->v;
 
                 printf(
                     "- %3u:"
-                    "  OID = %#9" PRIx64 ""
-                    "  ||  XID = %#9" PRIx64 "\n",
+                    "  OID = %#9" PRIx64
+                    "  ||  XID = %#9" PRIx64
+                    "  ||  Target child node = %#9"PRIx64"\n",
                     
                     i,
                     key->ok_oid,
-                    key->ok_xid
+                    key->ok_xid,
+                    val->ov_paddr
                 );
             }
         } 
