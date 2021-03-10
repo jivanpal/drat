@@ -56,7 +56,7 @@ $ drat --container /dev/disk2s2 explore-omap-tree
 
 $ drat --container partition-dump.bin explore-omap-tree --volume 2
 
-$ drat --container /dev/disk2s2 explore-omap-tree --volume 'Preboot' --max-xid 0x56f2e00
+$ drat --container /dev/disk2s2 explore-omap-tree --volume-name Preboot --max-xid 0x56f2e00
 
 $ drat --container partition-dump.bin explore-omap-tree --omap 0xd1395
 ```
