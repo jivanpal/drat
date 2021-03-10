@@ -197,7 +197,7 @@ int cmd_explore_omap_tree(int argc, char** argv) {
         // Else, read the corresponding child node into `node` and loop
         paddr_t* child_node_addr = val_end - toc_entry->v;
 
-        printf("Child node resides at adress 0x%" PRIx64 ". Reading ... ", *child_node_addr);
+        printf("Child node resides at address 0x%" PRIx64 ". Reading ... ", *child_node_addr);
         if (read_blocks(node, *child_node_addr, 1) != 1) {
             fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", *child_node_addr);
             return -1;
