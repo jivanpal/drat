@@ -12,5 +12,6 @@ partitions.
 This documentation covers version 0.2.x of the software.
 
 ```{toctree}
+global-arguments/index
 commands/index
 ```
