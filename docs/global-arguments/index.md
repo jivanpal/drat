@@ -8,6 +8,7 @@ which provides a detailed description of the argument and its functionality:
 | Argument                    | Summary |
 | :--                         | :-- |
 | {ref}`argument_container`   | The path to the APFS partition/container to work with |
+| {ref}`argument_block-size`  | The block size of the APFS container |
 | {ref}`argument_volume`      | The volume to work with |
 | {ref}`argument_max-xid`     | The maximum transaction ID to consider |
 | {ref}`argument_oid`         | The object ID or IDs to work with |
@@ -16,6 +17,7 @@ which provides a detailed description of the argument and its functionality:
 :hidden:
 
 container
+block-size
 volume
 max-xid
 oid
