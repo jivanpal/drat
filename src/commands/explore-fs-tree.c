@@ -204,6 +204,8 @@ int cmd_explore_fs_tree(int argc, char** argv) {
 
                     if (*((uint64_t*)child_node) == 0) {
                         printf("  ||  ZEROED OUT");
+                    } else {
+                        printf("  ||  maps to: %#9"PRIx64"", child_node_omap_entry->val.ov_paddr);
                     }
 
                     free (child_node);
