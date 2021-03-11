@@ -2,6 +2,8 @@
 
 # {drat-command}`explore-fs-tree`
 
+## Description
+
 The {drat-command}`explore-fs-tree` command provides an interface via which you
 can explore a filesystem B-tree (or subtree). You specify the B-tree either:
 

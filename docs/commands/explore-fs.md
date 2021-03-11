@@ -2,6 +2,8 @@
 
 # {drat-command}`explore-fs`
 
+## Description
+
 The {drat-command}`explore-fs` command provides an interface via which you can
 explore a volume's filesystem. That is, you can interactively navigate through
 the filesystem, viewing the filesystem records for any filesystem object. When
