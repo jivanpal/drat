@@ -45,14 +45,13 @@ will be explored using the most recent object map. If one or the other is
 specified, but not both, that's an error.
 
 When the command is run, Drat will display the entries within the specified
-B-tree (root) node, each of which is a key given by an (FSOID, FSRT) pair. You
-will then be prompted to choose an entry by specifying its index and pressing
-ENTER. Drat will then read the corresponding child node and display its
-entries. You can repeat this process of entry selection until you select an
-entry in a leaf node, after which Drat will display info about the
-corresponding record in the tree. Pressing ENTER at this point will exit Drat.
-At any point, you can specify `..` instead of a valid entry index to go back to
-the parent node.
+B-tree (root) node, each of which is a key given by an (FSOID, FSRT) pair.
+You will then be prompted to choose an entry by entering its index. Drat will
+then read the corresponding child node and display its entries. You can repeat
+this process of entry selection until you select an entry in a leaf node, after
+which Drat will display info about the corresponding record in the tree. At any
+point, you can enter `..` to go back to the parent node, or enter nothing to
+exit Drat.
 
 When viewing a non-leaf node, human-readable descriptions of the record type
 are shown in the *FSRT* column, and an extra column,
@@ -80,9 +79,9 @@ This is a B-tree root node for a filesystem.
 Height of tree is 4.
 Node has 13 entries, as follows:
 +-------+------------------+------------------------------+
-| Index | Key              | Target child node            |
-|       +-----------+------+--------------+---------------+
-|       |     FSOID | FSRT |  Virtual OID | Block address |
+|       |           |      | Target child node            |
+| Index |     FSOID | FSRT |--------------+---------------+
+|       |           |      |  Virtual OID | Block address |
 +-------+-----------+------+--------------+---------------+
 |     0 |       0x1 | 0x9  |   0xdd29 ( ) |       0xed993 |
 |     1 |   0xaf3a4 | 0x5  |  0x2f77e ( ) |       0xe0a41 |
@@ -99,15 +98,15 @@ Node has 13 entries, as follows:
 |    12 | 0x16e1f95 | 0x3  | 0x690b02 ( ) |       0xd5c8f |
 +-------+-----------+------+--------------+---------------+
 Current path: (_, _, _, _)
-Choose an entry [0-12, ..]: 1
+Choose an entry [.., 0-12]: 1
 
 Child node has Virtual OID 0x2f77e, maps to block 0xe0a41.
 Reading block 0xe0a41 ... validating ... OK.
 Node has 94 entries, as follows:
 +-------+-----------------+------------------------------+
-| Index | Key             | Target child node            |
-|       +----------+------+--------------+---------------+
-|       |    FSOID | FSRT |  Virtual OID | Block address |
+|       |          |      | Target child node            |
+| Index |    FSOID | FSRT |--------------+---------------+
+|       |          |      |  Virtual OID | Block address |
 +-------+----------+------+--------------+---------------+
 |     0 |  0xaf3a4 | 0x5  |  0x18ef1 ( ) |       0xd894c |
 |     1 |  0xaf9d9 | 0x8  |  0x18f71 ( ) |       0xdfe02 |
@@ -205,15 +204,15 @@ Node has 94 entries, as follows:
 |    93 | 0xa21883 | 0x3  | 0x2a728c ( ) |       0xd9965 |
 +-------+----------+------+--------------+---------------+
 Current path: (1, _, _, _)
-Choose an entry [0-93, ..]: 30
+Choose an entry [.., 0-93]: 30
 
 Child node has Virtual OID 0x32f01, maps to block 0xd89df.
 Reading block 0xd89df ... validating ... OK.
 Node has 65 entries, as follows:
 +-------+-----------------+------------------------------+
-| Index | Key             | Target child node            |
-|       +----------+------+--------------+---------------+
-|       |    FSOID | FSRT |  Virtual OID | Block address |
+|       |          |      | Target child node            |
+| Index |    FSOID | FSRT |--------------+---------------+
+|       |          |      |  Virtual OID | Block address |
 +-------+----------+------+--------------+---------------+
 |     0 | 0x183213 | 0x3  |  0x32efd ( ) |       0xd6494 |
 |     1 | 0x183bf7 | 0x3  |  0x32f89 ( ) |       0xd128c |
@@ -282,15 +281,13 @@ Node has 65 entries, as follows:
 |    64 | 0x1d5e9c | 0x3  |  0x67303 ( ) |       0xe852e |
 +-------+----------+------+--------------+---------------+
 Current path: (1, 30, _, _)
-Choose an entry [0-64, ..]: 17
+Choose an entry [.., 0-64]: 17
 
 Child node has Virtual OID 0x3d79b, maps to block 0xeae76.
 Reading block 0xeae76 ... validating ... OK.
 Node has 30 entries, as follows:
-+-------+-----------------------------+
-| Index | Key                         |
-|       +----------+------------------+
-|       |    FSOID | FSRT             |
++-------+----------+------------------+
+| Index |    FSOID | FSRT             |
 +-------+----------+------------------+
 |     0 | 0x18e7cb | 0x4, xattr       |
 |     1 | 0x18e7cc | 0x3, inode       |
@@ -303,28 +300,32 @@ Node has 30 entries, as follows:
 |     8 | 0x18e7cd | 0x8, file extent |
 |     9 | 0x18e825 | 0x3, inode       |
 |    10 | 0x18e825 | 0x4, xattr       |
-|    11 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da65 || Inode name = 83bc0baa3881f265_0
-|    12 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da72 || Inode name = d3c975fa1a9b20f6_0
-|    13 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da6b || Inode name = df7b00085ba675ef_0
-|    14 | 0x18e825 | 0x9, dentry      || Inode FSOID =  0x18e828 || Inode name = index-dir
-|    15 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da6f || Inode name = f3faf2ae921d9bf5_0
-|    16 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da71 || Inode name = 41a6c187467c47e1_0
-|    17 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da6c || Inode name = 9b7fc9e7916c2c7c_0
-|    18 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da73 || Inode name = a20bc29b43958149_0
-|    19 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da70 || Inode name = 9bffce5feb2725f3_0
-|    20 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da67 || Inode name = fd78b4182656630a_0
-|    21 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da66 || Inode name = fc39fc87aa0a667a_0
-|    22 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da6a || Inode name = 083f607b0ffe8511_0
-|    23 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da64 || Inode name = d4e4cca6484c1eb2_0
-|    24 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da68 || Inode name = c15c8b176db7917c_0
-|    25 | 0x18e825 | 0x9, dentry      || Inode FSOID =  0x18e827 || Inode name = index
-|    26 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da69 || Inode name = 1b12bbc9cb4a5267_0
-|    27 | 0x18e825 | 0x9, dentry      || Inode FSOID = 0x169da74 || Inode name = a28d674c00625ded_0
+|       |          |                  |+-------------+----------------+--------------------+
+|       |          |                  || Inode FSOID | Inode type     | Inode name         |
+|       |          |                  |+-------------+----------------+--------------------+
+|    11 | 0x18e825 | 0x9, dentry      ||   0x169da65 | 0x4, directory | 83bc0baa3881f265_0 |
+|    12 | 0x18e825 | 0x9, dentry      ||   0x169da72 | 0x4, directory | d3c975fa1a9b20f6_0 |
+|    13 | 0x18e825 | 0x9, dentry      ||   0x169da6b | 0x4, directory | df7b00085ba675ef_0 |
+|    14 | 0x18e825 | 0x9, dentry      ||    0x18e828 | 0x4, directory | index-dir          |
+|    15 | 0x18e825 | 0x9, dentry      ||   0x169da6f | 0x4, directory | f3faf2ae921d9bf5_0 |
+|    16 | 0x18e825 | 0x9, dentry      ||   0x169da71 | 0x4, directory | 41a6c187467c47e1_0 |
+|    17 | 0x18e825 | 0x9, dentry      ||   0x169da6c | 0x4, directory | 9b7fc9e7916c2c7c_0 |
+|    18 | 0x18e825 | 0x9, dentry      ||   0x169da73 | 0x4, directory | a20bc29b43958149_0 |
+|    19 | 0x18e825 | 0x9, dentry      ||   0x169da70 | 0x4, directory | 9bffce5feb2725f3_0 |
+|    20 | 0x18e825 | 0x9, dentry      ||   0x169da67 | 0x4, directory | fd78b4182656630a_0 |
+|    21 | 0x18e825 | 0x9, dentry      ||   0x169da66 | 0x4, directory | fc39fc87aa0a667a_0 |
+|    22 | 0x18e825 | 0x9, dentry      ||   0x169da6a | 0x4, directory | 083f607b0ffe8511_0 |
+|    23 | 0x18e825 | 0x9, dentry      ||   0x169da64 | 0x4, directory | d4e4cca6484c1eb2_0 |
+|    24 | 0x18e825 | 0x9, dentry      ||   0x169da68 | 0x4, directory | c15c8b176db7917c_0 |
+|    25 | 0x18e825 | 0x9, dentry      ||    0x18e827 | 0x4, directory | index              |
+|    26 | 0x18e825 | 0x9, dentry      ||   0x169da69 | 0x4, directory | 1b12bbc9cb4a5267_0 |
+|    27 | 0x18e825 | 0x9, dentry      ||   0x169da74 | 0x4, directory | a28d674c00625ded_0 |
+|       |          |                  |+-------------+----------------+--------------------+
 |    28 | 0x18e827 | 0x3, inode       |
 |    29 | 0x18e827 | 0x4, xattr       |
 +-------+----------+------------------+
 Current path: (1, 30, 17, _)
-Choose an entry [0-29]: 13
+Choose an entry [.., 0-29]: 13
 
 Record data for entry 13:
   METADATA:
@@ -343,5 +344,5 @@ Record data for entry 13:
     - Dentry type:            Regular file
     - No. extended fields:    0
 Current path: (1, 30, 17, 31)
-Choose an entry [ENTER, ..]: 
+Choose an entry [..]: 
 ```
