@@ -1,6 +1,6 @@
 (command_list)=
 
-# {command}`list`
+# {drat-command}`list`
 
 ```{todo} Describe this
 ```

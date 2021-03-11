@@ -1,6 +1,6 @@
 (command_search)=
 
-# {command}`search`
+# {drat-command}`search`
 
 ```{todo} Describe this
 ```

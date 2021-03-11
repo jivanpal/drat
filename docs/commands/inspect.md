@@ -1,10 +1,10 @@
 (command_inspect)=
 
-# {command}`inspect`
+# {drat-command}`inspect`
 
 ## Description
 
-The {command}`inspect` command inspects all aspects of an APFS container,
+The {drat-command}`inspect` command inspects all aspects of an APFS container,
 primarily by simulating the process of mounting it. It displays info about the
 inspection process, reporting info, warnings, and errors about the container's
 state.

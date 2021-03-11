@@ -1,10 +1,10 @@
 (command_about)=
 
-# {command}`about`
+# {drat-command}`about`
 
 ## Description
 
-The {command}`about` command displays Drat's "about" info.
+The {drat-command}`about` command displays Drat's "about" info.
 
 ## Example usage and output
 

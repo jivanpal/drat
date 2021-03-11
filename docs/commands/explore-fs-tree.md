@@ -1,8 +1,8 @@
 (command_explore-fs-tree)=
 
-# {command}`explore-fs-tree`
+# {drat-command}`explore-fs-tree`
 
-The {command}`explore-fs-tree` command provides an interface via which you
+The {drat-command}`explore-fs-tree` command provides an interface via which you
 can explore a filesystem B-tree (or subtree). You specify the B-tree either:
 
 - directly, by specifying the block address of a B-tree (root) node via
@@ -21,7 +21,7 @@ can explore a filesystem B-tree (or subtree). You specify the B-tree either:
 You must also specify an object map so that the Virtual object IDs used in the
 filesystem tree to refer to other nodes within it can be resolved to block
 addresses in order to locate the nodes. You specify the object map either
-directly or indirectly as described in {command}`explore-omap-tree`.
+directly or indirectly as described in {drat-command}`explore-omap-tree`.
 
 Direct and indirect specifications may be mixed, in which case direct
 specifications take precedence. In particular:

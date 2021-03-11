@@ -1,10 +1,10 @@
 (command_resolve-virtual-oids)=
 
-# {command}`resolve-virtual-oids`
+# {drat-command}`resolve-virtual-oids`
 
 ## Description
 
-The {command}`resolve-virtual-oids` command takes one or more Virtual OIDs and
+The {drat-command}`resolve-virtual-oids` command takes one or more Virtual OIDs and
 uses one or more object maps to resolve each Virtual OID to one or more block
 addresses. It can also be used to programatically check whether a given Virtual
 OID maps to a given block address, or do such checks in a batch — that is,

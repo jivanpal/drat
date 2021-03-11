@@ -1,10 +1,10 @@
 (command_explore-omap-tree)=
 
-# {command}`explore-omap-tree`
+# {drat-command}`explore-omap-tree`
 
 ## Description
 
-The {command}`explore-omap-tree` command provides an interface via which you
+The {drat-command}`explore-omap-tree` command provides an interface via which you
 can explore an object map B-tree (or subtree). You specify the B-tree either:
 
 - directly, by specifying the block address of a B-tree (root) node via

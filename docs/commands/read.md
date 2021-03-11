@@ -1,10 +1,10 @@
 (command_read)=
 
-# {command}`read`
+# {drat-command}`read`
 
 ## Description
 
-The {command}`read` command prints a nicely formatted, human-readable
+The {drat-command}`read` command prints a nicely formatted, human-readable
 description of a given block in an APFS container.
 
 ## Example usage and output

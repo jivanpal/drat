@@ -1,6 +1,6 @@
 (command_recover)=
 
-# {command}`recover`
+# {drat-command}`recover`
 
 ```{todo} Describe this
 ```
