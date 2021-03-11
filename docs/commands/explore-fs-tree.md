@@ -39,6 +39,11 @@ specifications take precedence. In particular:
     given, the volume specification is only used to determine the filesystem
     tree to explore.
 
+If both the filesystem tree and object map are unspecified, the default is
+`--volume 0`; that is, the most recent filesystem tree of the first volume
+will be explored using the most recent object map. If one or the other is
+specified, but not both, that's an error.
+
 When the command is run, Drat will display the entries within the specified
 B-tree (root) node, each of which is a key given by an (FSOID, FSRT) pair. You
 will then be prompted to choose an entry by specifying its index and pressing

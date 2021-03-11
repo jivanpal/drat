@@ -4,7 +4,13 @@
 
 ## Description
 
-The {drat-command}`about` command displays Drat's "about" info.
+The {drat-command}`about` command (and its alias {drat-command}`version`)
+displays Drat's "about" info. This includes the:
+
+- version number;
+- copyright notice;
+- warranty notice; and
+- license details.
 
 ## Example usage and output
 
