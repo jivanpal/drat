@@ -417,6 +417,18 @@ char* get_apfs_role_string(apfs_superblock_t* apsb) {
     return result_string;
 }
 
+void print_apfs_modified_by(apfs_modified_by_t* data) {
+    printf("- ID: %s\n", data->id);
+
+    // Dividing timestamps by 10^9 to convert APFS timestamps (Unix timestamps
+    // in nanoseconds) to Unix timestamps in seconds.
+    // Trailing '\n' is provided by the result of `ctime()`.
+    time_t timestamp = data->timestamp  / 1000000000;
+    printf("- Timestamp: %s", ctime(&timestamp));
+
+    printf("- Last XID: %"PRIx64"\n", data->last_xid);
+}
+
 /**
  * Print a nicely formatted string describing the data contained in a given
  * APFS volume superblock.
@@ -549,10 +561,15 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
         * (uint64_t*)(apsb->apfs_vol_uuid)
     );
 
+    printf("Formatted by:\n");
+    print_apfs_modified_by(&(apsb->apfs_formatted_by));
+    printf("\n");
+
+    printf("Last modified by:\n");
+    print_apfs_modified_by(&(apsb->apfs_modified_by));
+
     /*
      * TODO: Print the following fields:
-     * - apfs_formatted_by
-     * - apfs_modified_by
      * - apfs_root_to_xid
      * - apfs_er_state_oid
      * - apfs_cloneinfo_id_epoch
