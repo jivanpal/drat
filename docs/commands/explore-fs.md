@@ -54,18 +54,18 @@ Finding volume 0:
   - Reading block 0xd25cd ... validating ... OK.
   - Container's object mappings tree has Physical OID 0xdb5ce.
   - Reading block 0xdb5ce ... validating ... OK.
-- Finding superblock of volume 0:
+- Finding volume 0's superblock:
   - Volume 0 has Virtual OID 0x402, maps to block 0xd8e59.
   - Reading block 0xd8e59 ... validating ... OK.
   - Volume name: macOS - Data
 
-Finding object mappings tree of volume:
+Finding volume's object mappings tree:
 - Volume's object map has Physical OID 0xd66c6.
 - Reading block 0xd66c6 ... validating ... OK.
 - Volume's object mappings tree has Physical OID 0xd196a.
 - Reading block 0xd196a ... validating ... OK.
 
-Finding filesystem tree of volume:
+Finding volume's filesystem tree:
 - Filesystem tree has Virtual OID 0x404, maps to block 0xcfcf3.
 - Reading block 0xcfcf3 ... validating ... OK.
 
@@ -105,7 +105,7 @@ Filesystem object has 25 records, as follows:
 |    24 | 0x9, dentry ||    0x144d51 | 0x8, regular file | .aliases            |
 +-------+-------------++-------------+-------------------+---------------------+
 Current path: /Users/john
-Choose a record [.., 0-24, /<inode name>], @<xattr name>: 4
+Choose a record [.., 0-24, /<inode name>, @<xattr name>]: 4
 
 Finding records for FSOID 0x5a288d ... OK.
 Filesystem object has 5 records, as follows:

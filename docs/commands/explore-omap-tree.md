@@ -22,8 +22,8 @@ can explore an object map B-tree (or subtree). You specify the B-tree either:
     {argument}`max-xid` (the most recent object map with a transaction ID that
     doesn't exceed the one specified will be explored).
 
-If no such arguments are specified, Drat assumes `--volume -1 --max-xid -1`.
-That is, it will explore the most recent container object map B-tree.
+If no such arguments are specified, the default is `--volume -1 --max-xid -1`.
+That is, Drat will explore the most recent container object map B-tree.
 
 When the command is run, Drat will display the entries within the specified
 B-tree (root) node, each of which is a key given by an (OID, XID) pair. You
@@ -39,15 +39,13 @@ When viewing a non-leaf node, an extra column, *Target child node*, is shown
 for convenience, which displays the address of the child node that the entry
 points to.
 
-When viewing a leaf node, some extra columns are shown for convenience.
-The *Target block* column shows what block address the given (OID,&nbsp;XID)
-pair maps to. The *Target's actual OID* and *Target's actual XID* columns
-display the OID and XID that appear in the actual data contained in that block.
-Following each of these values appears a checkbox, `( )`. If the actual OID/XID
-does not match the expected OID/XID (the OID/XID which the object map had
-mapped in the first place to the address of the block being examined), then the
-checkbox will be filled with an X, `(X)`, to highlight the fact that this
-mapping is bad. A proper object map will have no such filled checkboxes.
+When viewing a leaf node, an extra set of columns, *Target block*, is shown,
+which displays the *Address* of the block that each (OID, XID) pair maps to, as
+well as the *Actual OID* and *Actual XID* that appear in the data contained in
+that block. Following each *Actual OID* and *Actual XID* is a checkbox `( )`,
+which will be checked `(X)` if that value does not match the value in the *OID*
+or *XID* column, respectively, indicating that the mapping is bad. A well-formed
+object map will not result in any checkboxes being checked.
 
 ## Example usage
 
@@ -189,105 +187,107 @@ Node has 91 entries, as follows:
 |    90 | 0x1856f7 | 0x174fe3 |           0xda035 |
 +-------+----------+----------+-------------------+
 Current path: (1, _, _)
-Choose an entry [0-90]: 40
+Choose an entry [.., 0-90]: 40
 
 Child node is block 0xe6ea3.
 Reading block 0xe6ea3 ... validating ... OK.
 Node has 88 entries, as follows:
-+-------+---------+----------+--------------+---------------------+---------------------+
-| Index |     OID |      XID | Target block | Target's actual OID | Target's actual XID |
-+-------+---------+----------+--------------+---------------------+---------------------+
-|     0 | 0xc0726 |  0x4b5fc |      0xd73e8 |         0xc0726 ( ) |         0x4b5fc ( ) |
-|     1 | 0xc0727 | 0x3185ab |      0xde42e |         0xc0727 ( ) |        0x3185ab ( ) |
-|     2 | 0xc0728 |  0x4b5fc |      0xd73d7 |         0xc0728 ( ) |         0x4b5fc ( ) |
-|     3 | 0xc0729 | 0x31a219 |      0xec455 |         0xc0729 ( ) |        0x31a219 ( ) |
-|     4 | 0xc072a |  0x4b5fc |      0xd73d9 |         0xc072a ( ) |         0x4b5fc ( ) |
-|     5 | 0xc072b |  0x4b5fc |      0xd73d3 |         0xc072b ( ) |         0x4b5fc ( ) |
-|     6 | 0xc072c |  0x4b5fc |      0xd73d2 |         0xc072c ( ) |         0x4b5fc ( ) |
-|     7 | 0xc072d |  0x4b5fc |      0xd73d4 |         0xc072d ( ) |         0x4b5fc ( ) |
-|     8 | 0xc072e | 0x31a219 |      0xe6f1a |         0xc072e ( ) |        0x31a219 ( ) |
-|     9 | 0xc072f |  0x4942b |      0xd41eb |         0xc072f ( ) |         0x4942b ( ) |
-|    10 | 0xc0730 |  0x4b5fc |      0xd73ce |         0xc0730 ( ) |         0x4b5fc ( ) |
-|    11 | 0xc0731 |  0x4b5fc |      0xd73cd |         0xc0731 ( ) |         0x4b5fc ( ) |
-|    12 | 0xc0732 |  0x4942b |      0xd41fe |         0xc0732 ( ) |         0x4942b ( ) |
-|    13 | 0xc0733 | 0x31a219 |      0xe6f13 |         0xc0733 ( ) |        0x31a219 ( ) |
-|    14 | 0xc0734 |  0x4b5fc |      0xd73ca |         0xc0734 ( ) |         0x4b5fc ( ) |
-|    15 | 0xc0735 |  0x4b5fc |      0xd73cb |         0xc0735 ( ) |         0x4b5fc ( ) |
-|    16 | 0xc0736 |  0x4b5fc |      0xd73c9 |         0xc0736 ( ) |         0x4b5fc ( ) |
-|    17 | 0xc0737 | 0x31a219 |      0xe6f10 |         0xc0737 ( ) |        0x31a219 ( ) |
-|    18 | 0xc0738 |  0x4b5fc |      0xd73c6 |         0xc0738 ( ) |         0x4b5fc ( ) |
-|    19 | 0xc0739 |  0x4b5fc |      0xd73c5 |         0xc0739 ( ) |         0x4b5fc ( ) |
-|    20 | 0xc073a |  0x4b1fd |      0xd4d0b |         0xc073a ( ) |         0x4b1fd ( ) |
-|    21 | 0xc073b | 0x31a219 |      0xe6f04 |         0xc073b ( ) |        0x31a219 ( ) |
-|    22 | 0xc073c |  0x4b5fc |      0xd73c1 |         0xc073c ( ) |         0x4b5fc ( ) |
-|    23 | 0xc073d |  0x4b5fc |      0xd73c0 |         0xc073d ( ) |         0x4b5fc ( ) |
-|    24 | 0xc073f | 0x31a219 |      0xe6f02 |         0xc073f ( ) |        0x31a219 ( ) |
-|    25 | 0xc0741 |  0x4b5fc |      0xd73bd |         0xc0741 ( ) |         0x4b5fc ( ) |
-|    26 | 0xc0742 |  0x4b5fc |      0xd73bc |         0xc0742 ( ) |         0x4b5fc ( ) |
-|    27 | 0xc0743 |  0x4b5fc |      0xd73be |         0xc0743 ( ) |         0x4b5fc ( ) |
-|    28 | 0xc0744 | 0x31a219 |      0xe6f00 |         0xc0744 ( ) |        0x31a219 ( ) |
-|    29 | 0xc0745 |  0x4b5fc |      0xd73ba |         0xc0745 ( ) |         0x4b5fc ( ) |
-|    30 | 0xc0746 |  0x4b5fc |      0xd73b9 |         0xc0746 ( ) |         0x4b5fc ( ) |
-|    31 | 0xc0747 |  0x4942b |      0xd4296 |         0xc0747 ( ) |         0x4942b ( ) |
-|    32 | 0xc0748 | 0x31a219 |      0xe6ef9 |         0xc0748 ( ) |        0x31a219 ( ) |
-|    33 | 0xc0749 |  0x4b5fc |      0xd73b7 |         0xc0749 ( ) |         0x4b5fc ( ) |
-|    34 | 0xc074a |  0xa4f9d |      0xdb89b |         0xc074a ( ) |         0xa4f9d ( ) |
-|    35 | 0xc074b |  0x4942b |      0xd429c |         0xc074b ( ) |         0x4942b ( ) |
-|    36 | 0xc074c | 0x31a219 |      0xec59c |         0xc074c ( ) |        0x31a219 ( ) |
-|    37 | 0xc074d |  0x4b5fc |      0xd73b4 |         0xc074d ( ) |         0x4b5fc ( ) |
-|    38 | 0xc074e |  0x4b5fc |      0xd73b3 |         0xc074e ( ) |         0x4b5fc ( ) |
-|    39 | 0xc074f |  0x4942b |      0xd42b4 |         0xc074f ( ) |         0x4942b ( ) |
-|    40 | 0xc0750 |  0x8f0aa |      0xd9c21 |         0xc0750 ( ) |         0x8f0aa ( ) |
-|    41 | 0xc0751 | 0x31a219 |      0xe6ef3 |         0xc0751 ( ) |        0x31a219 ( ) |
-|    42 | 0xc0752 |  0x4b5fc |      0xd73b1 |         0xc0752 ( ) |         0x4b5fc ( ) |
-|    43 | 0xc0753 |  0x7f795 |      0xd8648 |         0xc0753 ( ) |         0x7f795 ( ) |
-|    44 | 0xc0754 |  0x4942b |      0xd42bf |         0xc0754 ( ) |         0x4942b ( ) |
-|    45 | 0xc0755 | 0x31a219 |      0xec598 |         0xc0755 ( ) |        0x31a219 ( ) |
-|    46 | 0xc0758 |  0x4b5fc |      0xd73ad |         0xc0758 ( ) |         0x4b5fc ( ) |
-|    47 | 0xc0759 |  0x4b5fc |      0xd73ac |         0xc0759 ( ) |         0x4b5fc ( ) |
-|    48 | 0xc075a |  0x4942c |      0xd438a |         0xc075a ( ) |         0x4942c ( ) |
-|    49 | 0xc075c | 0x31a219 |      0xe6eda |         0xc075c ( ) |        0x31a219 ( ) |
-|    50 | 0xc075d | 0x178060 |      0xe6955 |         0xc075d ( ) |        0x178060 ( ) |
-|    51 | 0xc075e |  0x7f795 |      0xd8699 |         0xc075e ( ) |         0x7f795 ( ) |
-|    52 | 0xc075f |  0x4942d |      0xd4512 |         0xc075f ( ) |         0x4942d ( ) |
-|    53 | 0xc0760 | 0x31a219 |      0xe6ed4 |         0xc0760 ( ) |        0x31a219 ( ) |
-|    54 | 0xc0761 |  0x4b5fc |      0xd73a5 |         0xc0761 ( ) |         0x4b5fc ( ) |
-|    55 | 0xc0762 |  0x7f795 |      0xd86d2 |         0xc0762 ( ) |         0x7f795 ( ) |
-|    56 | 0xc0763 |  0x4942d |      0xd455c |         0xc0763 ( ) |         0x4942d ( ) |
-|    57 | 0xc0764 | 0x31a219 |      0xe6ec0 |         0xc0764 ( ) |        0x31a219 ( ) |
-|    58 | 0xc0765 |  0x4b5fc |      0xd7389 |         0xc0765 ( ) |         0x4b5fc ( ) |
-|    59 | 0xc0766 |  0x84819 |      0xdbee0 |         0xc0766 ( ) |         0x84819 ( ) |
-|    60 | 0xc0768 | 0x31a219 |      0xe6eb9 |         0xc0768 ( ) |        0x31a219 ( ) |
-|    61 | 0xc0769 |  0x4b5fc |      0xd7385 |         0xc0769 ( ) |         0x4b5fc ( ) |
-|    62 | 0xc076a |  0x4b5fc |      0xd7386 |         0xc076a ( ) |         0x4b5fc ( ) |
-|    63 | 0xc076b |  0x4b5fc |      0xd7384 |         0xc076b ( ) |         0x4b5fc ( ) |
-|    64 | 0xc076c | 0x31a219 |      0xe6eab |         0xc076c ( ) |        0x31a219 ( ) |
-|    65 | 0xc076d |  0xf1ab8 |      0xd319b |         0xc076d ( ) |         0xf1ab8 ( ) |
-|    66 | 0xc076e |  0x4b5fc |      0xd7378 |         0xc076e ( ) |         0x4b5fc ( ) |
-|    67 | 0xc076f |  0x4b5fc |      0xd7370 |         0xc076f ( ) |         0x4b5fc ( ) |
-|    68 | 0xc0770 |  0x4b5fc |      0xd7379 |         0xc0770 ( ) |         0x4b5fc ( ) |
-|    69 | 0xc0771 | 0x31a219 |      0xe6ea9 |         0xc0771 ( ) |        0x31a219 ( ) |
-|    70 | 0xc0772 |  0x4b5fc |      0xd736e |         0xc0772 ( ) |         0x4b5fc ( ) |
-|    71 | 0xc0773 |  0x4b5fc |      0xd736d |         0xc0773 ( ) |         0x4b5fc ( ) |
-|    72 | 0xc0774 |  0x4942e |      0xd4662 |         0xc0774 ( ) |         0x4942e ( ) |
-|    73 | 0xc0775 | 0x2fb2c5 |      0xec704 |         0xc0775 ( ) |        0x2fb2c5 ( ) |
-|    74 | 0xc0776 | 0x31a219 |      0xe6ea6 |         0xc0776 ( ) |        0x31a219 ( ) |
-|    75 | 0xc0777 |  0x4b5fc |      0xd736b |         0xc0777 ( ) |         0x4b5fc ( ) |
-|    76 | 0xc0778 |  0x7f795 |      0xd875f |         0xc0778 ( ) |         0x7f795 ( ) |
-|    77 | 0xc0779 |  0x4942e |      0xd466e |         0xc0779 ( ) |         0x4942e ( ) |
-|    78 | 0xc077a | 0x31a219 |      0xe6ea5 |         0xc077a ( ) |        0x31a219 ( ) |
-|    79 | 0xc077b |  0x4b5fc |      0xd7367 |         0xc077b ( ) |         0x4b5fc ( ) |
-|    80 | 0xc077c |  0x84819 |      0xdb73f |         0xc077c ( ) |         0x84819 ( ) |
-|    81 | 0xc077d |  0x4942e |      0xd467a |         0xc077d ( ) |         0x4942e ( ) |
-|    82 | 0xc077e | 0x31a219 |      0xe6ea4 |         0xc077e ( ) |        0x31a219 ( ) |
-|    83 | 0xc077f |  0x4b5fc |      0xd735c |         0xc077f ( ) |         0x4b5fc ( ) |
-|    84 | 0xc0780 | 0x31a219 |      0xe6e8e |         0xc0780 ( ) |        0x31a219 ( ) |
-|    85 | 0xc0781 |  0x4942e |      0xd4681 |         0xc0781 ( ) |         0x4942e ( ) |
-|    86 | 0xc0782 |  0x4b5fc |      0xd7356 |         0xc0782 ( ) |         0x4b5fc ( ) |
-|    87 | 0xc0783 |  0x4b5fc |      0xd7352 |         0xc0783 ( ) |         0x4b5fc ( ) |
-+-------+---------+----------+--------------+---------------------+---------------------+
++-------+---------+----------+--------------------------------------+
+|       |         |          | Target block                         |
+| Index |     OID |      XID +---------+-------------+--------------+
+|       |         |          | Address |  Actual OID |   Actual XID |
++-------+---------+----------+---------+-------------+--------------+
+|     0 | 0xc0726 |  0x4b5fc | 0xd73e8 | 0xc0726 ( ) |  0x4b5fc ( ) |
+|     1 | 0xc0727 | 0x3185ab | 0xde42e | 0xc0727 ( ) | 0x3185ab ( ) |
+|     2 | 0xc0728 |  0x4b5fc | 0xd73d7 | 0xc0728 ( ) |  0x4b5fc ( ) |
+|     3 | 0xc0729 | 0x31a219 | 0xec455 | 0xc0729 ( ) | 0x31a219 ( ) |
+|     4 | 0xc072a |  0x4b5fc | 0xd73d9 | 0xc072a ( ) |  0x4b5fc ( ) |
+|     5 | 0xc072b |  0x4b5fc | 0xd73d3 | 0xc072b ( ) |  0x4b5fc ( ) |
+|     6 | 0xc072c |  0x4b5fc | 0xd73d2 | 0xc072c ( ) |  0x4b5fc ( ) |
+|     7 | 0xc072d |  0x4b5fc | 0xd73d4 | 0xc072d ( ) |  0x4b5fc ( ) |
+|     8 | 0xc072e | 0x31a219 | 0xe6f1a | 0xc072e ( ) | 0x31a219 ( ) |
+|     9 | 0xc072f |  0x4942b | 0xd41eb | 0xc072f ( ) |  0x4942b ( ) |
+|    10 | 0xc0730 |  0x4b5fc | 0xd73ce | 0xc0730 ( ) |  0x4b5fc ( ) |
+|    11 | 0xc0731 |  0x4b5fc | 0xd73cd | 0xc0731 ( ) |  0x4b5fc ( ) |
+|    12 | 0xc0732 |  0x4942b | 0xd41fe | 0xc0732 ( ) |  0x4942b ( ) |
+|    13 | 0xc0733 | 0x31a219 | 0xe6f13 | 0xc0733 ( ) | 0x31a219 ( ) |
+|    14 | 0xc0734 |  0x4b5fc | 0xd73ca | 0xc0734 ( ) |  0x4b5fc ( ) |
+|    15 | 0xc0735 |  0x4b5fc | 0xd73cb | 0xc0735 ( ) |  0x4b5fc ( ) |
+|    16 | 0xc0736 |  0x4b5fc | 0xd73c9 | 0xc0736 ( ) |  0x4b5fc ( ) |
+|    17 | 0xc0737 | 0x31a219 | 0xe6f10 | 0xc0737 ( ) | 0x31a219 ( ) |
+|    18 | 0xc0738 |  0x4b5fc | 0xd73c6 | 0xc0738 ( ) |  0x4b5fc ( ) |
+|    19 | 0xc0739 |  0x4b5fc | 0xd73c5 | 0xc0739 ( ) |  0x4b5fc ( ) |
+|    20 | 0xc073a |  0x4b1fd | 0xd4d0b | 0xc073a ( ) |  0x4b1fd ( ) |
+|    21 | 0xc073b | 0x31a219 | 0xe6f04 | 0xc073b ( ) | 0x31a219 ( ) |
+|    22 | 0xc073c |  0x4b5fc | 0xd73c1 | 0xc073c ( ) |  0x4b5fc ( ) |
+|    23 | 0xc073d |  0x4b5fc | 0xd73c0 | 0xc073d ( ) |  0x4b5fc ( ) |
+|    24 | 0xc073f | 0x31a219 | 0xe6f02 | 0xc073f ( ) | 0x31a219 ( ) |
+|    25 | 0xc0741 |  0x4b5fc | 0xd73bd | 0xc0741 ( ) |  0x4b5fc ( ) |
+|    26 | 0xc0742 |  0x4b5fc | 0xd73bc | 0xc0742 ( ) |  0x4b5fc ( ) |
+|    27 | 0xc0743 |  0x4b5fc | 0xd73be | 0xc0743 ( ) |  0x4b5fc ( ) |
+|    28 | 0xc0744 | 0x31a219 | 0xe6f00 | 0xc0744 ( ) | 0x31a219 ( ) |
+|    29 | 0xc0745 |  0x4b5fc | 0xd73ba | 0xc0745 ( ) |  0x4b5fc ( ) |
+|    30 | 0xc0746 |  0x4b5fc | 0xd73b9 | 0xc0746 ( ) |  0x4b5fc ( ) |
+|    31 | 0xc0747 |  0x4942b | 0xd4296 | 0xc0747 ( ) |  0x4942b ( ) |
+|    32 | 0xc0748 | 0x31a219 | 0xe6ef9 | 0xc0748 ( ) | 0x31a219 ( ) |
+|    33 | 0xc0749 |  0x4b5fc | 0xd73b7 | 0xc0749 ( ) |  0x4b5fc ( ) |
+|    34 | 0xc074a |  0xa4f9d | 0xdb89b | 0xc074a ( ) |  0xa4f9d ( ) |
+|    35 | 0xc074b |  0x4942b | 0xd429c | 0xc074b ( ) |  0x4942b ( ) |
+|    36 | 0xc074c | 0x31a219 | 0xec59c | 0xc074c ( ) | 0x31a219 ( ) |
+|    37 | 0xc074d |  0x4b5fc | 0xd73b4 | 0xc074d ( ) |  0x4b5fc ( ) |
+|    38 | 0xc074e |  0x4b5fc | 0xd73b3 | 0xc074e ( ) |  0x4b5fc ( ) |
+|    39 | 0xc074f |  0x4942b | 0xd42b4 | 0xc074f ( ) |  0x4942b ( ) |
+|    40 | 0xc0750 |  0x8f0aa | 0xd9c21 | 0xc0750 ( ) |  0x8f0aa ( ) |
+|    41 | 0xc0751 | 0x31a219 | 0xe6ef3 | 0xc0751 ( ) | 0x31a219 ( ) |
+|    42 | 0xc0752 |  0x4b5fc | 0xd73b1 | 0xc0752 ( ) |  0x4b5fc ( ) |
+|    43 | 0xc0753 |  0x7f795 | 0xd8648 | 0xc0753 ( ) |  0x7f795 ( ) |
+|    44 | 0xc0754 |  0x4942b | 0xd42bf | 0xc0754 ( ) |  0x4942b ( ) |
+|    45 | 0xc0755 | 0x31a219 | 0xec598 | 0xc0755 ( ) | 0x31a219 ( ) |
+|    46 | 0xc0758 |  0x4b5fc | 0xd73ad | 0xc0758 ( ) |  0x4b5fc ( ) |
+|    47 | 0xc0759 |  0x4b5fc | 0xd73ac | 0xc0759 ( ) |  0x4b5fc ( ) |
+|    48 | 0xc075a |  0x4942c | 0xd438a | 0xc075a ( ) |  0x4942c ( ) |
+|    49 | 0xc075c | 0x31a219 | 0xe6eda | 0xc075c ( ) | 0x31a219 ( ) |
+|    50 | 0xc075d | 0x178060 | 0xe6955 | 0xc075d ( ) | 0x178060 ( ) |
+|    51 | 0xc075e |  0x7f795 | 0xd8699 | 0xc075e ( ) |  0x7f795 ( ) |
+|    52 | 0xc075f |  0x4942d | 0xd4512 | 0xc075f ( ) |  0x4942d ( ) |
+|    53 | 0xc0760 | 0x31a219 | 0xe6ed4 | 0xc0760 ( ) | 0x31a219 ( ) |
+|    54 | 0xc0761 |  0x4b5fc | 0xd73a5 | 0xc0761 ( ) |  0x4b5fc ( ) |
+|    55 | 0xc0762 |  0x7f795 | 0xd86d2 | 0xc0762 ( ) |  0x7f795 ( ) |
+|    56 | 0xc0763 |  0x4942d | 0xd455c | 0xc0763 ( ) |  0x4942d ( ) |
+|    57 | 0xc0764 | 0x31a219 | 0xe6ec0 | 0xc0764 ( ) | 0x31a219 ( ) |
+|    58 | 0xc0765 |  0x4b5fc | 0xd7389 | 0xc0765 ( ) |  0x4b5fc ( ) |
+|    59 | 0xc0766 |  0x84819 | 0xdbee0 | 0xc0766 ( ) |  0x84819 ( ) |
+|    60 | 0xc0768 | 0x31a219 | 0xe6eb9 | 0xc0768 ( ) | 0x31a219 ( ) |
+|    61 | 0xc0769 |  0x4b5fc | 0xd7385 | 0xc0769 ( ) |  0x4b5fc ( ) |
+|    62 | 0xc076a |  0x4b5fc | 0xd7386 | 0xc076a ( ) |  0x4b5fc ( ) |
+|    63 | 0xc076b |  0x4b5fc | 0xd7384 | 0xc076b ( ) |  0x4b5fc ( ) |
+|    64 | 0xc076c | 0x31a219 | 0xe6eab | 0xc076c ( ) | 0x31a219 ( ) |
+|    65 | 0xc076d |  0xf1ab8 | 0xd319b | 0xc076d ( ) |  0xf1ab8 ( ) |
+|    66 | 0xc076e |  0x4b5fc | 0xd7378 | 0xc076e ( ) |  0x4b5fc ( ) |
+|    67 | 0xc076f |  0x4b5fc | 0xd7370 | 0xc076f ( ) |  0x4b5fc ( ) |
+|    68 | 0xc0770 |  0x4b5fc | 0xd7379 | 0xc0770 ( ) |  0x4b5fc ( ) |
+|    69 | 0xc0771 | 0x31a219 | 0xe6ea9 | 0xc0771 ( ) | 0x31a219 ( ) |
+|    70 | 0xc0772 |  0x4b5fc | 0xd736e | 0xc0772 ( ) |  0x4b5fc ( ) |
+|    71 | 0xc0773 |  0x4b5fc | 0xd736d | 0xc0773 ( ) |  0x4b5fc ( ) |
+|    72 | 0xc0774 |  0x4942e | 0xd4662 | 0xc0774 ( ) |  0x4942e ( ) |
+|    73 | 0xc0775 | 0x2fb2c5 | 0xec704 | 0xc0775 ( ) | 0x2fb2c5 ( ) |
+|    74 | 0xc0776 | 0x31a219 | 0xe6ea6 | 0xc0776 ( ) | 0x31a219 ( ) |
+|    75 | 0xc0777 |  0x4b5fc | 0xd736b | 0xc0777 ( ) |  0x4b5fc ( ) |
+|    76 | 0xc0778 |  0x7f795 | 0xd875f | 0xc0778 ( ) |  0x7f795 ( ) |
+|    77 | 0xc0779 |  0x4942e | 0xd466e | 0xc0779 ( ) |  0x4942e ( ) |
+|    78 | 0xc077a | 0x31a219 | 0xe6ea5 | 0xc077a ( ) | 0x31a219 ( ) |
+|    79 | 0xc077b |  0x4b5fc | 0xd7367 | 0xc077b ( ) |  0x4b5fc ( ) |
+|    80 | 0xc077c |  0x84819 | 0xdb73f | 0xc077c ( ) |  0x84819 ( ) |
+|    81 | 0xc077d |  0x4942e | 0xd467a | 0xc077d ( ) |  0x4942e ( ) |
+|    82 | 0xc077e | 0x31a219 | 0xe6ea4 | 0xc077e ( ) | 0x31a219 ( ) |
+|    83 | 0xc077f |  0x4b5fc | 0xd735c | 0xc077f ( ) |  0x4b5fc ( ) |
+|    84 | 0xc0780 | 0x31a219 | 0xe6e8e | 0xc0780 ( ) | 0x31a219 ( ) |
+|    85 | 0xc0781 |  0x4942e | 0xd4681 | 0xc0781 ( ) |  0x4942e ( ) |
+|    86 | 0xc0782 |  0x4b5fc | 0xd7356 | 0xc0782 ( ) |  0x4b5fc ( ) |
+|    87 | 0xc0783 |  0x4b5fc | 0xd7352 | 0xc0783 ( ) |  0x4b5fc ( ) |
++-------+---------+----------+---------+-------------+--------------+
 Current path: (1, 40, _)
-Choose an entry [0-87, ..]: 31
+Choose an entry [.., 0-87]: 31
 
 Record data for entry 31:
   KEY:
@@ -297,5 +297,5 @@ Record data for entry 31:
     - Object size:      4096 bytes
     - Object address:   0xd4296
 Current path: (1, 40, 31)
-Choose an entry [ENTER, ..]: 
+Choose an entry [..]: 
 ```
