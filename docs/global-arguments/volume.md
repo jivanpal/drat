@@ -6,9 +6,9 @@
 
 The {argument}`volume` argument allows you to specify the volume you want to
 work with by its index within the container specified by {argument}`container`.
-Indexes are zero-based, so `0` is the first volume, `1` is the second volume,
-etc.. An index of `-1` refers to the container itself, as opposed to any actual
-volume.
+Volume indexing starts at 1, so `1` is the first volume, `2` is the second
+volume, etc., and an index of `0` refers to the container itself, as opposed to
+an actual volume.
 
 Alternatively, you can specify a volume name via the {argument}`volume-name`
 argument. The specified volume name must match the name of precisely one of the
@@ -19,7 +19,8 @@ is used to compare strings for equality.
 
 ## Example usage
 
-- `--volume -1`
 - `--volume 0`
+- `--volume 1`
+- `--volume 5`
 - `--volume-name Preboot`
 - `--volume-name 'macOS - Data'`

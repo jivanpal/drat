@@ -20,7 +20,7 @@ you run {drat-command}`explore-fs`, you must specify:
 
   - a filesystem object ID via {argument}`fsoid`, like `0x7563`.
 
-If no filesystem tree is specified, the default is `--volume 0`.
+If no filesystem tree is specified, the default is `--volume 1`.
 If no entrypoint is specified, the default is `--path /`.
 
 When the command is run, Drat will display the filesystem records of the entry
@@ -38,7 +38,7 @@ At any time, you can enter nothing to exit Drat.
 ## Example usage and output
 
 ```
-$ drat explore-fs --container /dev/disk0s2 --volume 0 --path /Users/john
+$ drat explore-fs --container /dev/disk0s2 --volume 1 --path /Users/john
 
 Opening file at `/dev/disk0s2` in read-only mode ... OK.
 

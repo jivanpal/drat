@@ -32,7 +32,7 @@ superblock can be overriden via {argument}`fs`, and the implied choice of object
 map can be overridden via {argument}`omap`.
 
 If both the filesystem tree and object map are unspecified, the default is
-`--volume 0`; that is, the most recent filesystem tree of the first volume
+`--volume 1`; that is, the most recent filesystem tree of the first volume
 will be explored using the corresponding object map. If one or the other is
 specified, but not both, that's an error.
 

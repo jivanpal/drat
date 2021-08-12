@@ -17,7 +17,7 @@ of parameters required by {drat-command}`explore-fs`, namely:
 
   - a filesystem object ID via {argument}`fsoid`, like `0x7563`.
 
-If no filesystem tree or object map is specified, the default is `--volume 0`.
+If no filesystem tree or object map is specified, the default is `--volume 1`.
 The simplest usage thus involves only specifying {argument}`path`, in which case
 the item at that path within the first volume will be recovred. You can
 additionally specify {argument}`volume` or {argument}`volume-name` if the item

@@ -22,7 +22,7 @@ can explore an object map B-tree (or subtree). You specify the B-tree either:
     {argument}`max-xid` (the most recent object map with a transaction ID that
     doesn't exceed the one specified will be explored).
 
-If no such arguments are specified, the default is `--volume -1 --max-xid -1`.
+If no such arguments are specified, the default is `--volume 0 --max-xid -1`.
 That is, Drat will explore the most recent container object map B-tree.
 
 When the command is run, Drat will display the entries within the specified
@@ -52,7 +52,7 @@ object map will not result in any checkboxes being checked.
 ```
 $ drat --container /dev/disk2s2 explore-omap-tree
 
-$ drat --container partition-dump.bin explore-omap-tree --volume 2
+$ drat --container partition-dump.bin explore-omap-tree --volume 3
 
 $ drat --container /dev/disk2s2 explore-omap-tree --volume-name Preboot --max-xid 0x56f2e00
 
