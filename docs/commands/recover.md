@@ -10,7 +10,7 @@ of parameters required by {drat-command}`explore-fs`, namely:
 
 - an object map in the same manner as {drat-command}`explore-fs-tree`; and
 
-- an entry point, which is either:
+- an entry point, which is the item you wish to recover, and is either:
 
   - an absolute filesystem path via {argument}`path`, like `/`,
     `/Users/john`, `/Users/john/Documents/my document.txt`, or `/..`; or
@@ -19,17 +19,19 @@ of parameters required by {drat-command}`explore-fs`, namely:
 
 If no filesystem tree or object map is specified, the default is `--volume 1`.
 The simplest usage thus involves only specifying {argument}`path`, in which case
-the item at that path within the first volume will be recovred. You can
+the item at that path within the first volume will be recovered. You can
 additionally specify {argument}`volume` or {argument}`volume-name` if the item
 you wish to recover is not within the first volume.
 
-The entry point serves as the file or directory you want to recover. If you
-specify the entry point via {argument}`path`, then the target (output
-file/directory) will have the same name. If you specify it via {argument}`fsoid`
-or wish to override the target name, specify it with {argument}`output`.
-Specifying `--output -` when the entry point is a file will result in the file
-data being sent to {file}`stdout`, and all normal informational output will be
-sent to {file}`stderr` rather than {file}`stdout`.
+Specify the output path (the path to write the recovered data to) with
+{argument}`output`. If the output path is a directory and ends with `/`, the
+item you wish to recover will be stored within that directory, and the item name
+as determined by {argument}`path` or {argument}`fsoid` will be used as the
+recovered item's name. The default is `--output ./`, so the recovered item will
+be written to the current working directory. Specifying `--output -` when the
+entry point is a file will result in the file data being sent to {file}`stdout`,
+and all normal informational output will be sent to {file}`stderr` rather than
+{file}`stdout`.
 
 Whilst files are being recovered, they are temporarily named
 `_com.dratapp.recover_<target name>`, and then renamed to `<target name>` once
