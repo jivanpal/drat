@@ -286,37 +286,40 @@ Node has 30 entries, as follows:
 | Index |    FSOID | FSRT             |
 +-------+----------+------------------+
 |     0 | 0x18e7cb | 0x4, xattr       |
++-------+----------+------------------+
 |     1 | 0x18e7cc | 0x3, inode       |
 |     2 | 0x18e7cc | 0x4, xattr       |
 |     3 | 0x18e7cc | 0x6, dstream     |
 |     4 | 0x18e7cc | 0x8, file extent |
++-------+----------+------------------+
 |     5 | 0x18e7cd | 0x3, inode       |
 |     6 | 0x18e7cd | 0x4, xattr       |
 |     7 | 0x18e7cd | 0x6, dstream     |
 |     8 | 0x18e7cd | 0x8, file extent |
++-------+----------+------------------+
 |     9 | 0x18e825 | 0x3, inode       |
 |    10 | 0x18e825 | 0x4, xattr       |
-|       |          |                  |+-------------+----------------+--------------------+
-|       |          |                  || Inode FSOID | Inode type     | Inode name         |
-|       |          |                  |+-------------+----------------+--------------------+
-|    11 | 0x18e825 | 0x9, dentry      ||   0x169da65 | 0x4, directory | 83bc0baa3881f265_0 |
-|    12 | 0x18e825 | 0x9, dentry      ||   0x169da72 | 0x4, directory | d3c975fa1a9b20f6_0 |
-|    13 | 0x18e825 | 0x9, dentry      ||   0x169da6b | 0x4, directory | df7b00085ba675ef_0 |
-|    14 | 0x18e825 | 0x9, dentry      ||    0x18e828 | 0x4, directory | index-dir          |
-|    15 | 0x18e825 | 0x9, dentry      ||   0x169da6f | 0x4, directory | f3faf2ae921d9bf5_0 |
-|    16 | 0x18e825 | 0x9, dentry      ||   0x169da71 | 0x4, directory | 41a6c187467c47e1_0 |
-|    17 | 0x18e825 | 0x9, dentry      ||   0x169da6c | 0x4, directory | 9b7fc9e7916c2c7c_0 |
-|    18 | 0x18e825 | 0x9, dentry      ||   0x169da73 | 0x4, directory | a20bc29b43958149_0 |
-|    19 | 0x18e825 | 0x9, dentry      ||   0x169da70 | 0x4, directory | 9bffce5feb2725f3_0 |
-|    20 | 0x18e825 | 0x9, dentry      ||   0x169da67 | 0x4, directory | fd78b4182656630a_0 |
-|    21 | 0x18e825 | 0x9, dentry      ||   0x169da66 | 0x4, directory | fc39fc87aa0a667a_0 |
-|    22 | 0x18e825 | 0x9, dentry      ||   0x169da6a | 0x4, directory | 083f607b0ffe8511_0 |
-|    23 | 0x18e825 | 0x9, dentry      ||   0x169da64 | 0x4, directory | d4e4cca6484c1eb2_0 |
-|    24 | 0x18e825 | 0x9, dentry      ||   0x169da68 | 0x4, directory | c15c8b176db7917c_0 |
-|    25 | 0x18e825 | 0x9, dentry      ||    0x18e827 | 0x4, directory | index              |
-|    26 | 0x18e825 | 0x9, dentry      ||   0x169da69 | 0x4, directory | 1b12bbc9cb4a5267_0 |
-|    27 | 0x18e825 | 0x9, dentry      ||   0x169da74 | 0x4, directory | a28d674c00625ded_0 |
-|       |          |                  |+-------------+----------------+--------------------+
+|       |          |                  +-------------+----------------+--------------------+
+|       |          |                  | Inode FSOID | Inode type     | Inode name         |
+|       |          |                  +-------------+----------------+--------------------+
+|    11 | 0x18e825 | 0x9, dentry      |   0x169da65 | 0x4, directory | 83bc0baa3881f265_0 |
+|    12 | 0x18e825 | 0x9, dentry      |   0x169da72 | 0x4, directory | d3c975fa1a9b20f6_0 |
+|    13 | 0x18e825 | 0x9, dentry      |   0x169da6b | 0x4, directory | df7b00085ba675ef_0 |
+|    14 | 0x18e825 | 0x9, dentry      |    0x18e828 | 0x4, directory | index-dir          |
+|    15 | 0x18e825 | 0x9, dentry      |   0x169da6f | 0x4, directory | f3faf2ae921d9bf5_0 |
+|    16 | 0x18e825 | 0x9, dentry      |   0x169da71 | 0x4, directory | 41a6c187467c47e1_0 |
+|    17 | 0x18e825 | 0x9, dentry      |   0x169da6c | 0x4, directory | 9b7fc9e7916c2c7c_0 |
+|    18 | 0x18e825 | 0x9, dentry      |   0x169da73 | 0x4, directory | a20bc29b43958149_0 |
+|    19 | 0x18e825 | 0x9, dentry      |   0x169da70 | 0x4, directory | 9bffce5feb2725f3_0 |
+|    20 | 0x18e825 | 0x9, dentry      |   0x169da67 | 0x4, directory | fd78b4182656630a_0 |
+|    21 | 0x18e825 | 0x9, dentry      |   0x169da66 | 0x4, directory | fc39fc87aa0a667a_0 |
+|    22 | 0x18e825 | 0x9, dentry      |   0x169da6a | 0x4, directory | 083f607b0ffe8511_0 |
+|    23 | 0x18e825 | 0x9, dentry      |   0x169da64 | 0x4, directory | d4e4cca6484c1eb2_0 |
+|    24 | 0x18e825 | 0x9, dentry      |   0x169da68 | 0x4, directory | c15c8b176db7917c_0 |
+|    25 | 0x18e825 | 0x9, dentry      |    0x18e827 | 0x4, directory | index              |
+|    26 | 0x18e825 | 0x9, dentry      |   0x169da69 | 0x4, directory | 1b12bbc9cb4a5267_0 |
+|    27 | 0x18e825 | 0x9, dentry      |   0x169da74 | 0x4, directory | a28d674c00625ded_0 |
++-------+----------+------------------+-------------+----------------+--------------------+
 |    28 | 0x18e827 | 0x3, inode       |
 |    29 | 0x18e827 | 0x4, xattr       |
 +-------+----------+------------------+
