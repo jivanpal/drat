@@ -7,8 +7,8 @@
 The {drat-command}`explore-fs-tree` command provides an interface via which you
 can explore a filesystem B-tree (or subtree). You specify the B-tree either:
 
-- directly, by specifying the block address of a B-tree (root) node via
-  {argument}`fs`; or
+- directly, by specifying the block address of a filesystem B-tree (root) node
+  via {argument}`fs`; or
 
 - indirectly, by specifying sufficient info for the block address of a B-tree
   root node to be determined. That is, specify either:
