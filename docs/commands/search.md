@@ -8,20 +8,20 @@ blocks containing specific data, such as object maps nodes containing particular
 mappings, or filesystem records for particular FSOIDs or item names.
 
 Performing a search involves specifying one or more search criteria/parameters,
-ecah of which has its own flag — these are listed below. Some flags are only
-defined/make sense in certain contexts, so if that context is not explicitly
-specified, it is implied; or if a conflicting contxt is specified, an error
-occurs. For example, searching for particular object mappings only makes sense
-if we're looking at blocks whose type is a B-tree (`btree` or `btree-node`) and
-whose subtype is an object map (`omap`). Thus, specifying `--omap-key-oid 0x123`
-implies `--type btree --subtype omap`. Specifying conflicting
-contexts, as in `drat search --type fs --omap-key-oid 0x123`, results in an
-error.
+ecah of which has its own flag — these are detailed in the rest of this page.
+Some flags are only defined/make sense in certain contexts, so if that context
+is not explicitly specified, it is implied; or if a conflicting contxt is
+specified, an error occurs. For example, searching for particular object
+mappings only makes sense if we're looking at blocks that are nodes of an object
+map B-tree (`omap-tree`). Thus, specifying `--omap-key-oid 0x123` implies
+`--type omap-tree`. Specifying conflicting contexts, as in
+`drat search --type fs --omap-key-oid 0x123`, results in an error.
 
 The list of values passed to a parameter can be comma-delimited
-(e.g. `--type omap,fs`), which indicates that any of the values should match
-(logical OR); or plus-delimited (e.g. `--type btree-leaf+omap-tree`), which
-indicates that all of the values should match (logical AND).
+(e.g. `--type omap,fs`), which indicates that any of the values must match
+(logical OR). When multiple parameters are specified
+(e.g. `--omap-key-oid 0x123 --omap-key-xid 0x456`), all of the values must match
+(logical AND).
 
 Drat can create an index of the filesystem in advance in order to make searching
 quicker (see {drat-command}`create-index`). This index is stored in a file, and
@@ -121,23 +121,24 @@ The following sections list search parameters that are only valid in certain con
 ```{todo} Describe this
 ```
 
-#### Omap trees (`--type omap-tree[-leaf]`)
+#### Omap tree nodes (`--type omap-tree`)
 
-The following `--omap-key-*` parameters can be used with `--type omap-tree` in
-general, but it's usually only useful to use them with `--type omap-tree-leaf`,
-since you're probably intersted in finding particular object mappings (pointers
-to objects), not pointers to other omap tree nodes:
+The following parameters can be used with `--type omap-tree` in general, but
+it's usually only useful to use them with `--type omap-tree-leaf`, since you're
+probably intersted in finding particular object mappings (pointers to objects),
+not pointers to other omap tree nodes:
 
 - `--omap-key-oid` — A Virtual OID that makes up an (OID, XID) key-pair.
 
 - `--omap-key-xid` — An XID that makes up an (OID, XID) key-pair.
 
-The following `--omap-val-*` parameters can only be used with
-`--type omap-tree-leaf`:
+##### Omap tree leaves (`--type omap-tree-leaf`)
+
+The following parameters can only be used with `--type omap-tree-leaf`:
 
 - `--omap-val-paddr` — The block address that some (OID, XID) key-pair maps to.
 
-#### Filesystem trees (`--type fs-tree[-leaf]`)
+#### Filesystem trees (`--type fs-tree`)
 
 The following parameters can be used with `--type fs-tree` in general, but it's
 usually only useful to use them with `--type fs-tree-leaf`, since you're
@@ -155,23 +156,23 @@ Virtual OIDs of other filesystem tree nodes:
 
 | Keyword           | Equivalent value  | Description   |
 | :--               | :--               | :--           |
-| `any`             | `0x0`             | Any type |
-| `snap-meta`       | `1`               | Snapshot metadata |
-| `extent`          | `2`               | Physical extent record |
-| `inode`           | `3`               | Inode |
-| `xattr`           | `4`               | Extended attribute |
-| `sibling-link`    | `5`               | Sibling link; a mapping from target inode to source hard links which point to that target |
-| `dstream`         | `6`               | Data stream |
-| `crypto`          | `7`               | Per-file encryption state |
-| `file-extent`     | `8`               | File extent record |
-| `dentry`          | `9`               | Dentry (directory entry) |
+| `any`             | `0`, `0x0`        | Any type |
+| `snap-meta`       | `1`, `0x1`        | Snapshot metadata |
+| `extent`          | `2`, `0x2`        | Physical extent record |
+| `inode`           | `3`, `0x3`        | Inode |
+| `xattr`           | `4`, `0x4`        | Extended attribute |
+| `sibling-link`    | `5`, `0x5`        | Sibling link; a mapping from target inode to source hard links which point to that target |
+| `dstream`         | `6`, `0x6`        | Data stream |
+| `crypto`          | `7`, `0x7`        | Per-file encryption state |
+| `file-extent`     | `8`, `0x8`        | File extent record |
+| `dentry`          | `9`, `0x9`        | Dentry (directory entry) |
 | `dir-stats`       | `10`, `0xa`       | Directory information/statistics |
 | `snap-name`       | `11`, `0xb`       | Snapshot name |
 | `sibling-map`     | `12`, `0xc`       | Sibling map; a mapping from hard link to target inode |
 | `file-info`       | `13`, `0xd`       | Additional info about file data |
 | `invalid`         | `15`, `0xf`       | The "invalid" record type |
 
-##### Record-specific parameters
+##### Filesystem tree leaves (`--type fs-tree-leaf`)
 
 This section describes parameters specific to each record type. They can only be
 used in conjunction with `--type fs-tree-leaf`.
@@ -186,7 +187,7 @@ The following search parameters can only be used in conjunction with
   operators. For example, compare `--dentry-name 'Martian, The'` and
   `--dentry-name 'Martian\, The'`: the latter will search for items named
   `Martian, The`, whereas the former will search for items named `Martian` or
-  ` The` (note also the leading space since leading and trailing whitespace is
-  not ignored).
+  ` The` (note also the leading space in ` The`, since leading and trailing
+  whitespace is not ignored).
 
 - `--dentry-fsoid` — The FSOID (a.k.a. inode number, file ID) of the item.
