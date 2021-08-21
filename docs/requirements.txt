@@ -1,0 +1,3 @@
+sphinx==3.5.1
+sphinx_rtd_theme==0.5.1
+myst-parser==0.13.5

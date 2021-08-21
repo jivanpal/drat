@@ -71,10 +71,14 @@ $(GCHS): $(OUTDIR)/%.gch: $(SRCDIR)/%.h
 	$(CC) $(CFLAGS) -c "$<" -o "$@"
 	@echo
 
+.PHONY: docs
+docs:
+	@(cd docs && make html)
+
 .PHONY: all
-all: binaries headers
-	@echo "All done. The binaries are in the top-level directory (the same directory as the Makefile)."
+all: binaries headers docs
 
 .PHONY: clean
 clean:
 	rm -rf $(BINARIES) $(OUTDIR)
+	(cd docs && make clean)

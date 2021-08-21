@@ -48,7 +48,11 @@ void print_fs_records(j_rec_t** fs_records) {
             case APFS_TYPE_XATTR: {
                 j_xattr_key_t* key = fs_rec->data;
                 j_xattr_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "XATTR");
+                fprintf(stderr, "XATTR"
+                    " || name = %s",
+                    
+                    key->name
+                );
             } break;
             case APFS_TYPE_SIBLING_LINK: {
                 j_sibling_key_t* key = fs_rec->data;
