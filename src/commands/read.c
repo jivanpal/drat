@@ -5,17 +5,18 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../apfs/io.h"
-#include "../apfs/struct/general.h"
+#include <apfs/general.h>
 
-#include "../apfs/func/boolean.h"
-#include "../apfs/func/cksum.h"
+#include <drat/io.h>
 
-#include "../apfs/string/object.h"
-#include "../apfs/string/nx.h"
-#include "../apfs/string/btree.h"
-#include "../apfs/string/omap.h"
-#include "../apfs/string/fs.h"
+#include <drat/func/boolean.h>
+#include <drat/func/cksum.h>
+
+#include <drat/string/object.h>
+#include <drat/string/nx.h>
+#include <drat/string/btree.h>
+#include <drat/string/omap.h>
+#include <drat/string/fs.h>
 
 static void print_usage(int argc, char** argv) {
     fprintf(
@@ -110,3 +111,4 @@ cleanup:
     fclose(nx);
     return 0;
 }
+#include <apfs/general.h>

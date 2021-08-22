@@ -5,27 +5,27 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../apfs/io.h"
-#include "../apfs/func/boolean.h"
-#include "../apfs/func/cksum.h"
-#include "../apfs/func/btree.h"
+#include <apfs/object.h>
+#include <apfs/nx.h>
+#include <apfs/omap.h>
+#include <apfs/fs.h>
+#include <apfs/j.h>
+#include <apfs/dstream.h>
+#include <apfs/sibling.h>
+#include <apfs/snap.h>
 
-#include "../apfs/struct/object.h"
-#include "../apfs/struct/nx.h"
-#include "../apfs/struct/omap.h"
-#include "../apfs/struct/fs.h"
+#include <drat/io.h>
 
-#include "../apfs/struct/j.h"
-#include "../apfs/struct/dstream.h"
-#include "../apfs/struct/sibling.h"
-#include "../apfs/struct/snap.h"
+#include <drat/func/boolean.h>
+#include <drat/func/cksum.h>
+#include <drat/func/btree.h>
 
-#include "../apfs/string/object.h"
-#include "../apfs/string/nx.h"
-#include "../apfs/string/omap.h"
-#include "../apfs/string/btree.h"
-#include "../apfs/string/fs.h"
-#include "../apfs/string/j.h"
+#include <drat/string/object.h>
+#include <drat/string/nx.h>
+#include <drat/string/omap.h>
+#include <drat/string/btree.h>
+#include <drat/string/fs.h>
+#include <drat/string/j.h>
 
 /**
  * Print usage info for this program.
