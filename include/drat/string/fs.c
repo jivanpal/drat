@@ -12,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 
+#include <drat/string/common.h>
 #include <drat/string/object.h>
 
 /**
@@ -335,85 +336,47 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_role_string(apfs_superblock_t* apsb) {
-    // String to use if no flags are set
-    char* default_string = "(unknown role) (role field value %#" PRIx64 ")";
+    struct u64_string_mapping roles[] = {
+        { APFS_VOL_ROLE_NONE,           "(no role)" },
+        { APFS_VOL_ROLE_SYSTEM,         "System (contains a root directory for the system)" },
+        { APFS_VOL_ROLE_USER,           "User (contains users' home directories)" },
+        { APFS_VOL_ROLE_RECOVERY,       "Recovery (contains a recovery system)" },
+        { APFS_VOL_ROLE_VM,             "Virtual memory (used as swap space for virtual memory)" },
+        { APFS_VOL_ROLE_PREBOOT,        "Preboot (contains files needed to boot from an encrypted volumes)" },
+        { APFS_VOL_ROLE_INSTALLER,      "Installer (used by the OS installer)" },
+        { APFS_VOL_ROLE_DATA,           "Data (contains mutable data)" },
+        { APFS_VOL_ROLE_BASEBAND,       "Baseband (used by the radio firmware)" },
+        { APFS_VOL_ROLE_UPDATE,         "Update (used by the software update mechanism)" },
+        { APFS_VOL_ROLE_XART,           "xART (used to manage OS access to secure user data" },
+        { APFS_VOL_ROLE_HARDWARE,       "Hardware (used for firmware data)" },
+        { APFS_VOL_ROLE_BACKUP,         "Backup (used by Time Machine to store backups)" },
+        { APFS_VOL_ROLE_RESERVED_7,     "Reserved role 7 (Sidecar?) (role field value 0x1c0)" },
+        { APFS_VOL_ROLE_RESERVED_8,     "Reserved role 8 (role field value 0x200)" },
+        { APFS_VOL_ROLE_ENTERPRISE,     "Enterprise (used to store enterprise-managed data)" },
+        { APFS_VOL_ROLE_RESERVED_10,    "Reserved role 10 (role field value 0x280)" },
+        { APFS_VOL_ROLE_PRELOGIN,       "Pre-login (used to store system data used before login)" },
+    };
+
+    char* result_string = NULL;
+
+    for (size_t i = 0; i < ARRAY_SIZE(roles); i++) {
+        if (apsb->apfs_role == roles[i].value) {
+            if (asprintf(&result_string, "%s", roles[i].string) == -1) {
+                fprintf(stderr, "\nERROR: %s: Couldn't allocate sufficient memory for `result_string`.\n", __func__);
+                return NULL;
+            }
+        }
+        break;
+    }
     
-    const int NUM_ROLES = 18;
-    uint64_t role_constants[] = {
-        APFS_VOL_ROLE_NONE,
-        APFS_VOL_ROLE_SYSTEM,
-        APFS_VOL_ROLE_USER,
-        APFS_VOL_ROLE_RECOVERY,
-        APFS_VOL_ROLE_VM,
-        APFS_VOL_ROLE_PREBOOT,
-        APFS_VOL_ROLE_INSTALLER,
-        APFS_VOL_ROLE_DATA,
-        APFS_VOL_ROLE_BASEBAND,
-        APFS_VOL_ROLE_UPDATE,
-        APFS_VOL_ROLE_XART,
-        APFS_VOL_ROLE_HARDWARE,
-        APFS_VOL_ROLE_BACKUP,
-        APFS_VOL_ROLE_RESERVED_7,
-        APFS_VOL_ROLE_RESERVED_8,
-        APFS_VOL_ROLE_ENTERPRISE,
-        APFS_VOL_ROLE_RESERVED_10,
-        APFS_VOL_ROLE_PRELOGIN,
-    };
-    char* role_strings[] = {
-        "(no role)",
-        "System (contains a root directory for the system)",
-        "User (contains users' home directories)",
-        "Recovery (contains a recovery system)",
-        "Virtual memory (used as swap space for virtual memory)",
-        "Preboot (contains files needed to boot from an encrypted volumes)",
-        "Installer (used by the OS installer)",
-        "Data (contains mutable data)",
-        "Baseband (used by the radio firmware)",
-        "Update (used by the software update mechanism)",
-        "xART (used to manage OS access to secure user data",
-        "Hardware (used for firmware data)",
-        "Backup (used by Time Machine to store backups)",
-        "Reserved role 7 (Sidecar?) (role field value 0x1c0)",
-        "Reserved role 8 (role field value 0x200)",
-        "Enterprise (used to store enterprise-managed data)",
-        "Reserved role 10 (role field value 0x280)",
-        "Pre-login (used to store system data used before login)",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = strlen(default_string) + 1;   // `+1` accounts for format specifier "%#" PRIx64 "" becoming up to 6 characters
-    for (int i = 0; i < NUM_ROLES; i++) {
-        size_t role_string_length = strlen(role_strings[i]);
-        if (max_mem_required < role_string_length) {
-            max_mem_required = role_string_length;
-        }
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
     if (!result_string) {
-        fprintf(stderr, "\nABORT: get_apfs_role_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    // Make `result_string` an empty string so that we can easily test the
-    // case that no role matches.
-    *result_string = '\0';
-
-    for (int i = 0; i < NUM_ROLES; i++) {
-        if (apsb->apfs_role == role_constants[i]) {
-            memcpy(result_string, role_strings[i], strlen(role_strings[i]) + 1);
-            break;
+        // No role matched; use default string.
+        if (asprintf(&result_string, "(unknown role) (role field value %#"PRIx16")", apsb->apfs_role) == -1) {
+            fprintf(stderr, "%s: Couldn't allocate sufficient memory for `result_string` when returning default string.\n", __func__);
+            return NULL;
         }
     }
 
-    // If no role matches, use the default string.
-    if (strlen(result_string) == 0) {
-        snprintf(result_string, max_mem_required, default_string, apsb->apfs_role);
-    }
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
     return result_string;
 }
 

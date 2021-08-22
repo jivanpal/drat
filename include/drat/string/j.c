@@ -212,7 +212,7 @@ char* get_j_inode_internal_flags_string(uint64_t internal_flags) {
 }
 
 char* get_j_inode_bsd_flags_string(uint32_t bsd_flags) {
-    // String to use if no flags are set    
+    // String to use if no flags are set
     char* no_flags_string = "- No internal flags are set.\n";
     size_t no_flags_string_len = strlen(no_flags_string);
     
@@ -395,6 +395,7 @@ char* drec_val_to_type_string(j_drec_val_t* val) {
     }
 }
 
+// TODO: Maybe delete function, might be unused as of v0.2
 char* drec_val_to_short_type_string(j_drec_val_t* val) {
     switch (val->flags & DREC_TYPE_MASK) {
         case DT_UNKNOWN:
