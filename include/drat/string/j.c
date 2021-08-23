@@ -148,82 +148,58 @@ char* get_j_inode_internal_flags_string(uint64_t internal_flags) {
 
     // Truncate buffer
     result_string = realloc(result_string, strlen(result_string) + 1);
-    
+
     return result_string;
 }
 
 char* get_j_inode_bsd_flags_string(uint32_t bsd_flags) {
-    // String to use if no flags are set
-    char* no_flags_string = "- No internal flags are set.\n";
-    size_t no_flags_string_len = strlen(no_flags_string);
-    
-    const int NUM_FLAGS = 9;
-    
-    uint64_t flag_constants[] = {
-        UF_NODUMP,
-        UF_IMMUTABLE,
-        UF_APPEND,
-        UF_OPAQUE,
-        UF_HIDDEN,
-        SF_ARCHIVED,
-        SF_IMMUTABLE,
-        SF_APPEND,
-        SF_DATALESS,
+    struct u64_string_mapping flags[] = {
+        { UF_NODUMP,        "Do not dump the file" },
+        { UF_IMMUTABLE,     "File may not be changed" },
+        { UF_APPEND,        "File may only be appended to" },
+        { UF_OPAQUE,        "Directory is opaque when viewd through a union stack" },
+        { UF_HIDDEN,        "File/directory is not intended to be displayed to the user" },
+        { SF_ARCHIVED,      "File has been archived" },
+        { SF_IMMUTABLE,     "File may not be changed" },
+        { SF_APPEND,        "File may only be appended to" },
+        { SF_DATALESS,      "SF_DATALESSFAULT: Dataless placeholder --- see chflags(2) and getiopolicy_np(3)" },
     };
 
-    char* flag_strings[] = {
-        "Do not dump the file",
-        "File may not be changed",
-        "File may only be appended to",
-        "Directory is opaque when viewd through a union stack",
-        "File/directory is not intended to be displayed to the user",
-        "File has been archived",
-        "File may not be changed",
-        "File may only be appended to",
-        "SF_DATALESSFAULT: Dataless placeholder --- see chflags(2) and getiopolicy_np(3)"
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < no_flags_string_len) {
-        max_mem_required = no_flags_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
+    // Initialise result buffer as empty string
+    const size_t bufsize = 2048;
+    char* result_string = malloc(bufsize);
     if (!result_string) {
-        fprintf(stderr, "\nABORT: get_j_inode_bsd_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
+        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
+        return NULL;
     }
+    *result_string = '\0';
 
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (bsd_flags & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
+    size_t bytes_written = 0;
+    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
+        if (bsd_flags & flags[i].value) {
+            bytes_written += snprintf(
+                result_string + bytes_written,
+                bufsize - bytes_written,
+                "- %s\n",
+                flags[i].string
+            );
+            
+            if (bytes_written > bufsize - 1) {
+                // Exhausted buffer; return early.
+                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
+                return result_string;
+            }
         }
     }
 
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, no_flags_string, no_flags_string_len);
-        cursor += no_flags_string_len;
+    if (bytes_written == 0) {
+        // No flags set; use default string.
+        snprintf(result_string, bufsize, "- No internal flags are set.\n");
     }
 
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
+    // Truncate buffer
     result_string = realloc(result_string, strlen(result_string) + 1);
+
     return result_string;
 }
 
