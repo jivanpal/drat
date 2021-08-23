@@ -13,10 +13,11 @@
 
 #include <drat/io.h>    // nx_block_size
 #include <drat/func/boolean.h>
+#include <drat/string/common.h>
 #include <drat/string/object.h>
 
 /**
- * Get a human-readable, comma-delimited list of the flags that are set on a
+ * Get a human-readable list of the flags that are set on a
  * given B-tree node.
  * 
  * btn:     A pointer to the B-tree node in question.
@@ -26,71 +27,55 @@
  *      this pointer when it is no longer needed.
  */
 char* get_btn_flags_string(btree_node_phys_t* btn) {
-    char* default_string = "(none)";
-    size_t default_string_len = strlen(default_string);
-    
-    uint8_t NUM_FLAGS = 6;
-    uint16_t flag_constants[] = {
-        BTNODE_ROOT,
-        BTNODE_LEAF,
-        BTNODE_FIXED_KV_SIZE,
-        BTNODE_HASHED,
-        BTNODE_NOHEADER,
-        BTNODE_CHECK_KOFF_INVAL,
-    };
-    char* flag_strings[] = {
-        "Root node",
-        "Leaf node",
-        "Fixed size for keys and values",
-        "Contains child node hashes",
-        "Doesn't have an object header",
-        "In transient state (key offsets are invalid) --- should never appear on disk"
+    struct u64_string_mapping flags[] = {
+        { BTNODE_ROOT,              "Root node" },
+        { BTNODE_LEAF,              "Leaf node" },
+        { BTNODE_FIXED_KV_SIZE,     "Fixed size for keys and values" },
+        { BTNODE_HASHED,            "Contains child node hashes" },
+        { BTNODE_NOHEADER,          "Doesn't have an object header" },
+        { BTNODE_CHECK_KOFF_INVAL,  "In transient state (key offsets are invalid) --- should never appear on disk" },
     };
 
-    size_t max_mem_required = 0;
-    for (uint8_t i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 2;
-        // `+ 2` accounts for appending ", " to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Account for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
+    // Initialise result buffer as empty string
+    const size_t bufsize = 2048;
+    char* result_string = malloc(bufsize);
     if (!result_string) {
-        fprintf(stderr, "\nABORT: get_btn_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
+        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
+        return NULL;
     }
+    *result_string = '\0';
 
-    char* cursor = result_string;
-    for (uint8_t i = 0; i < NUM_FLAGS; i++) {
-        if (btn->btn_flags & flag_constants[i]) {
-            if (cursor != result_string) {
-                *cursor++ = ',';
-                *cursor++ = ' ';
+    size_t bytes_written = 0;
+    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
+        if (btn->btn_flags & flags[i].value) {
+            bytes_written += snprintf(
+                result_string + bytes_written,
+                bufsize - bytes_written,
+                "- %s\n",
+                flags[i].string
+            );
+            
+            if (bytes_written > bufsize - 1) {
+                // Exhausted buffer; return early.
+                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
+                return result_string;
             }
-            size_t flag_string_len = strlen(flag_strings[i]);
-            memcpy(cursor, flag_strings[i], flag_string_len);
-            cursor += flag_string_len;
         }
     }
 
-    // If no flags set, nothing is added to string, so use deafult string
-    if (cursor == result_string) {
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
+    if (bytes_written == 0) {
+        // No flags set; use default string.
+        snprintf(result_string, bufsize, "- No flags are set.\n");
     }
 
-    *cursor = '\0';
-
-    // De-allocate excess memory
+    // Truncate buffer
     result_string = realloc(result_string, strlen(result_string) + 1);
+
     return result_string;
 }
 
 /**
- * Get a human-readable, bulleted list of the flags that are set on a
+ * Get a human-readable list of the flags that are set on a
  * given B-tree info object (an instance of `btree_info_t`; or equivalently for
  * this purpose, an instance of `btree_info_fixed_t`). The list is indented by
  * two spaces.
@@ -206,7 +191,7 @@ void print_btree_node_phys(btree_node_phys_t* btn) {
     print_obj_phys(btn);    // `btn` equals `&(btn->btn_o)`.
 
     char* flags_string = get_btn_flags_string(btn);
-    printf("Flags:                          %s\n",  flags_string);
+    printf("Flags:\n%s", flags_string);
     free(flags_string);
 
     printf("Number of child levels:         %u\n",  btn->btn_level);
