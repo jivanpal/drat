@@ -43,34 +43,20 @@
 
 char* j_key_type_to_string(uint8_t j_key_type) {
     switch (j_key_type) {
-        case APFS_TYPE_SNAP_METADATA:
-            return "Snapshot metadata";
-        case APFS_TYPE_EXTENT:
-            return "Physical extent record";
-        case APFS_TYPE_INODE:
-            return "Inode";
-        case APFS_TYPE_XATTR:
-            return "Extended attribute";
-        case APFS_TYPE_SIBLING_LINK:
-            return "Sibling link (mapping from an inode to hard links that target it)";
-        case APFS_TYPE_DSTREAM_ID:
-            return "Data stream";
-        case APFS_TYPE_CRYPTO_STATE:
-            return "Per-file encryption state";
-        case APFS_TYPE_FILE_EXTENT:
-            return "Physical extent record for a file";
-        case APFS_TYPE_DIR_REC:
-            return "Directory entry";
-        case APFS_TYPE_DIR_STATS:
-            return "Directory information/statistics";
-        case APFS_TYPE_SNAP_NAME:
-            return "Snapshot name";
-        case APFS_TYPE_SIBLING_MAP:
-            return "Sibling map (mapping from hard link to inode)";
-        case APFS_TYPE_INVALID:
-            return "Invalid type";
-        default:
-            return "Unknown type";
+        case APFS_TYPE_SNAP_METADATA:   return "Snapshot metadata";
+        case APFS_TYPE_EXTENT:          return "Physical extent record";
+        case APFS_TYPE_INODE:           return "Inode";
+        case APFS_TYPE_XATTR:           return "Extended attribute";
+        case APFS_TYPE_SIBLING_LINK:    return "Sibling link (mapping from an inode to hard links that target it)";
+        case APFS_TYPE_DSTREAM_ID:      return "Data stream";
+        case APFS_TYPE_CRYPTO_STATE:    return "Per-file encryption state";
+        case APFS_TYPE_FILE_EXTENT:     return "Physical extent record for a file";
+        case APFS_TYPE_DIR_REC:         return "Directory entry";
+        case APFS_TYPE_DIR_STATS:       return "Directory information/statistics";
+        case APFS_TYPE_SNAP_NAME:       return "Snapshot name";
+        case APFS_TYPE_SIBLING_MAP:     return "Sibling map (mapping from hard link to inode)";
+        case APFS_TYPE_INVALID:         return "Invalid type";
+        default:                        return "Unknown type";
     }
 }
 
@@ -87,24 +73,15 @@ void print_j_inode_key(j_inode_key_t* key) {
 
 char* j_inode_mode_to_string(apfs_mode_t mode) {
     switch (mode & S_IFMT) {
-        case S_IFIFO:
-            return "Named pipe (FIFO / queue)";
-        case S_IFCHR:
-            return "Character-special file";
-        case S_IFDIR:
-            return "Directory";
-        case S_IFBLK:
-            return "Block-special file";
-        case S_IFREG:
-            return "Regular file";
-        case S_IFLNK:
-            return "Symbolic link";
-        case S_IFSOCK:
-            return "Socket";
-        case S_IFWHT:
-            return "Whiteout";
-        default:
-            return "(unrecognised mode)";
+        case S_IFIFO:   return "Named pipe (FIFO / queue)";
+        case S_IFCHR:   return "Character-special file";
+        case S_IFDIR:   return "Directory";
+        case S_IFBLK:   return "Block-special file";
+        case S_IFREG:   return "Regular file";
+        case S_IFLNK:   return "Symbolic link";
+        case S_IFSOCK:  return "Socket";
+        case S_IFWHT:   return "Whiteout";
+        default:        return "(unrecognised mode)";
     }
 }
 
@@ -372,52 +349,32 @@ void print_j_drec_hashed_key(j_drec_hashed_key_t* key) {
 
 char* drec_val_to_type_string(j_drec_val_t* val) {
     switch (val->flags & DREC_TYPE_MASK) {
-        case DT_UNKNOWN:
-            return "Unknown";
-        case DT_FIFO:
-            return "Named pipe (FIFO / queue)";
-        case DT_CHR:
-            return "Character-special file";
-        case DT_DIR:
-            return "Directory";
-        case DT_BLK:
-            return "Block-special file";
-        case DT_REG:
-            return "Regular file";
-        case DT_LNK:
-            return "Symbolic link";
-        case DT_SOCK:
-            return "Socket";
-        case DT_WHT:
-            return "Whiteout";
-        default:
-            return "Unrecognised type";
+        case DT_UNKNOWN:    return "Unknown";
+        case DT_FIFO:       return "Named pipe (FIFO / queue)";
+        case DT_CHR:        return "Character-special file";
+        case DT_DIR:        return "Directory";
+        case DT_BLK:        return "Block-special file";
+        case DT_REG:        return "Regular file";
+        case DT_LNK:        return "Symbolic link";
+        case DT_SOCK:       return "Socket";
+        case DT_WHT:        return "Whiteout";
+        default:            return "Unrecognised type";
     }
 }
 
 // TODO: Maybe delete function, might be unused as of v0.2
 char* drec_val_to_short_type_string(j_drec_val_t* val) {
     switch (val->flags & DREC_TYPE_MASK) {
-        case DT_UNKNOWN:
-            return "Unknown";
-        case DT_FIFO:
-            return "FIFO---";
-        case DT_CHR:
-            return "ChrSpcl";
-        case DT_DIR:
-            return "Dirctry";
-        case DT_BLK:
-            return "BlkSpcl";
-        case DT_REG:
-            return "RegFile";
-        case DT_LNK:
-            return "Symlink";
-        case DT_SOCK:
-            return "Socket-";
-        case DT_WHT:
-            return "Whteout";
-        default:
-            return "Unrecog";
+        case DT_UNKNOWN:    return "Unknown";
+        case DT_FIFO:       return "FIFO---";
+        case DT_CHR:        return "ChrSpcl";
+        case DT_DIR:        return "Dirctry";
+        case DT_BLK:        return "BlkSpcl";
+        case DT_REG:        return "RegFile";
+        case DT_LNK:        return "Symlink";
+        case DT_SOCK:       return "Socket-";
+        case DT_WHT:        return "Whteout";
+        default:            return "Unrecog";
     }
 }
 

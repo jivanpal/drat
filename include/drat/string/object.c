@@ -25,14 +25,10 @@
  */
 char* o_storage_type_to_string(uint32_t o_type) {
     switch (o_type & OBJ_STORAGETYPE_MASK) {
-        case OBJ_VIRTUAL:
-            return "Virtual";
-        case OBJ_EPHEMERAL:
-            return "Ephemeral";
-        case OBJ_PHYSICAL:
-            return "Physical";
-        default:
-            return "(invalid type)";
+        case OBJ_VIRTUAL:   return "Virtual";
+        case OBJ_EPHEMERAL: return "Ephemeral";
+        case OBJ_PHYSICAL:  return "Physical";
+        default:            return "(invalid type)";
     }
 }
 
