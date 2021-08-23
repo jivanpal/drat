@@ -41,6 +41,8 @@
 
 #include <apfs/xf.h>
 
+#include <drat/string/common.h>
+
 char* j_key_type_to_string(uint8_t j_key_type) {
     switch (j_key_type) {
         case APFS_TYPE_SNAP_METADATA:   return "Snapshot metadata";
@@ -86,105 +88,67 @@ char* j_inode_mode_to_string(apfs_mode_t mode) {
 }
 
 char* get_j_inode_internal_flags_string(uint64_t internal_flags) {
-    // String to use if no flags are set    
-    char* default_string = "- No internal flags are set.\n";
-    size_t default_string_len = strlen(default_string);
-    
-    const int NUM_FLAGS = 23;
-    
-    uint64_t flag_constants[] = {
-        INODE_IS_APFS_PRIVATE,
-        INODE_MAINTAIN_DIR_STATS,
-        INODE_DIR_STATS_ORIGIN,
-        INODE_PROT_CLASS_EXPLICIT,
-        INODE_WAS_CLONED,
-        INODE_FLAG_UNUSED,
-        INODE_HAS_SECURITY_EA,
-        INODE_BEING_TRUNCATED,
-        INODE_HAS_FINDER_INFO,
-        INODE_IS_SPARSE,
-        INODE_WAS_EVER_CLONED,
-        INODE_ACTIVE_FILE_TRIMMED,
-        INODE_PINNED_TO_MAIN,
-        INODE_PINNED_TO_TIER2,
-        INODE_HAS_RSRC_FORK,
-        INODE_NO_RSRC_FORK,
-        INODE_ALLOCATION_SPILLEDOVER,
-        INODE_FAST_PROMOTE,
-        INODE_HAS_UNCOMPRESSED_SIZE,
-        INODE_IS_PURGEABLE,
-        INODE_WANTS_TO_BE_PURGEABLE,
-        INODE_IS_SYNC_ROOT,
-        INODE_SNAPSHOT_COW_EXEMPTION,
+    struct u64_string_mapping flags[] = {
+        { INODE_IS_APFS_PRIVATE,            "Private flag (0x1) used by an APFS implementation --- this inode is not considered part of the file-system" },
+        { INODE_MAINTAIN_DIR_STATS,         "MAINTAIN_DIR_STATS: Tracks the size of all its children" },
+        { INODE_DIR_STATS_ORIGIN,           "The MAINTAIN_DIR_STATS flag is set explicitly (not due to inheritance)" },
+        { INODE_PROT_CLASS_EXPLICIT,        "Protection class was explicitly set on creation" },
+        { INODE_WAS_CLONED,                 "Created by cloning another inode" },
+        { INODE_FLAG_UNUSED,                "Reserved/unused (0x20)" },
+        { INODE_HAS_SECURITY_EA,            "Has an ACL (access control list, i.e. a security-based extended attribute)" },
+        { INODE_BEING_TRUNCATED,            "Truncation was in progress, but a crash occurred" },
+        { INODE_HAS_FINDER_INFO,            "Has a 'Finder info' extended field/attribute" },
+        { INODE_IS_SPARSE,                  "Is sparse (i.e. has a sparse byte count extended field/attribute)" },
+        { INODE_WAS_EVER_CLONED,            "Cloned at least once" },
+        { INODE_ACTIVE_FILE_TRIMMED,        "Is a trimmed overprovisioning file" },
+        { INODE_PINNED_TO_MAIN,             "Fusion drive: file content is pinned to main storage device" },
+        { INODE_PINNED_TO_TIER2,            "Fusion drive: file content is pinned to secondary storage device" },
+        { INODE_HAS_RSRC_FORK,              "Has a resource fork" },
+        { INODE_NO_RSRC_FORK,               "Has no resource fork" },
+        { INODE_ALLOCATION_SPILLEDOVER,     "Fusion drive: file content spilled over from preferred storage tier/device" },
+        { INODE_FAST_PROMOTE,               "Scheduled for promotion from slow storage to fast storage" },
+        { INODE_HAS_UNCOMPRESSED_SIZE,      "Uncompressed size is stored in the inode" },
+        { INODE_IS_PURGEABLE,               "Will be deleted at the next purge" },
+        { INODE_WANTS_TO_BE_PURGEABLE,      "Should become purgeable when its link count drops to 1" },
+        { INODE_IS_SYNC_ROOT,               "Is the root of a sync hierarchy for `fileproviderd`" },
+        { INODE_SNAPSHOT_COW_EXEMPTION,     "Exempt from copy-on-write behavior if the data is part of a snapshot" },
     };
 
-    char* flag_strings[] = {
-        "Private flag (0x1) used by an APFS implementation --- this inode is not considered part of the file-system",
-        "MAINTAIN_DIR_STATS: Tracks the size of all its children",
-        "The MAINTAIN_DIR_STATS flag is set explicitly (not due to inheritance)",
-        "Protection class was explicitly set on creation",
-        "Created by cloning another inode",
-        "Reserved/unused (0x20)",
-        "Has an ACL (access control list, i.e. a security-based extended attribute)",
-        "Truncation was in progress, but a crash occurred",
-        "Has a 'Finder info' extended field/attribute",
-        "Is sparse (i.e. has a sparse byte count extended field/attribute)",
-        "Cloned at least once",
-        "Is a trimmed overprovisioning file",
-        "Fusion drive: file content is pinned to main storage device",
-        "Fusion drive: file content is pinned to secondary storage device",
-        "Has a resource fork",
-        "Has no resource fork",
-        "Fusion drive: file content spilled over from preferred storage tier/device",
-        "Scheduled for promotion from slow storage to fast storage",
-        "Uncompressed size is stored in the inode",
-        "Will be deleted at the next purge",
-        "Should become purgeable when its link count drops to 1",
-        "Is the root of a sync hierarchy for `fileproviderd`",
-        "Exempt from copy-on-write behavior if the data is part of a snapshot",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Account for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
+    // Initialise result buffer as empty string
+    const size_t bufsize = 2048;
+    char* result_string = malloc(bufsize);
     if (!result_string) {
-        fprintf(stderr, "\nABORT: get_j_inode_internal_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
+        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
+        return NULL;
     }
+    *result_string = '\0';
 
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (internal_flags & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
+    size_t bytes_written = 0;
+    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
+        if (internal_flags & flags[i].value) {
+            bytes_written += snprintf(
+                result_string + bytes_written,
+                bufsize - bytes_written,
+                "- %s\n",
+                flags[i].string
+            );
+            
+            if (bytes_written > bufsize - 1) {
+                // Exhausted buffer; return early.
+                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
+                return result_string;
+            }
         }
     }
 
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
+    if (bytes_written == 0) {
+        // No flags set; use default string.
+        snprintf(result_string, bufsize, "- No internal flags are set.\n");
     }
 
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
+    // Truncate buffer
     result_string = realloc(result_string, strlen(result_string) + 1);
+    
     return result_string;
 }
 
