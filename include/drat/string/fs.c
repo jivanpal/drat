@@ -26,69 +26,49 @@
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_features_string(apfs_superblock_t* apsb) {
-    // String to use if no flags are set
-    char* default_string = "- No volume feature flags are set.\n";
-    size_t default_string_len = strlen(default_string);
-    
-    const int NUM_FLAGS = 5;
-    
-    uint64_t flag_constants[] = {
-        APFS_FEATURE_DEFRAG_PRERELEASE,
-        APFS_FEATURE_HARDLINK_MAP_RECORDS,
-        APFS_FEATURE_DEFRAG,
-        APFS_FEATURE_STRICTATIME,
-        APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE,
+    struct u64_string_mapping flags[] = {
+        { APFS_FEATURE_DEFRAG_PRERELEASE,           "Reserved --- To avoid data corruption, this flag must not be set; this flag enabled a prerelease version of the defragmentation system in macOS 10.13 versions. Itʼs ignored by macOS 10.13.6 and later." },
+        { APFS_FEATURE_HARDLINK_MAP_RECORDS,        "This volume has hardlink map records." },
+        { APFS_FEATURE_DEFRAG,                      "Defragmentation is supported." },
+        { APFS_FEATURE_STRICTATIME,                 "File access times are updated every time a file is read." },
+        { APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE,     "This volume supports mounting a system and data volume as a single user-visible volume." },
     };
-
-    char* flag_strings[] = {
-        "Reserved --- To avoid data corruption, this flag must not be set; this flag enabled a prerelease version of the defragmentation system in macOS 10.13 versions. Itʼs ignored by macOS 10.13.6 and later.",
-        "This volume has hardlink map records.",
-        "Defragmentation is supported.",
-        "File access times are updated every time a file is read.",
-        "This volume supports mounting a system and data volume as a single user-visible volume.",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
+    
+    // Initialise buffer as empty string
+    const size_t bufsize = 2048;
+    char* result_string = malloc(bufsize);
     if (!result_string) {
-        fprintf(stderr, "\nABORT: get_apfs_features_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
+        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
+        return NULL;
     }
+    *result_string = '\0';
 
-    char* cursor = result_string;
+    size_t bytes_written = 0;
+    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
+        if (apsb->apfs_features & flags[i].value) {
+            bytes_written += snprintf(
+                result_string + bytes_written,
+                bufsize - bytes_written,
+                "- %s\n",
+                flags[i].string
+            );
 
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (apsb->apfs_features & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
+            if (bytes_written > bufsize - 1) {
+                // Exhausted buffer; return early.
+                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
+                return result_string;
+            }
         }
     }
 
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
+    if (bytes_written == 0) {
+        // No flags set; use default string.
+        snprintf(result_string, bufsize, "- No volume feature flags are set.\n");
     }
 
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
+    // Truncate buffer
     result_string = realloc(result_string, strlen(result_string) + 1);
+
     return result_string;
 }
 
