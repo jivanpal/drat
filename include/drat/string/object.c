@@ -189,9 +189,6 @@ char* get_o_type_string(uint32_t o_type) {
  *      will evaluate to `true`.
  */
 char* get_o_subtype_string(uint32_t o_subtype) {
-    // This function is implemented this way so that the caller receives a
-    // pointer that is allocated using `malloc()` rather than a stack pointer.
-
     // Check if `o_subtype` is a value representing a regular type.
     // That is, return the result of `get_o_type_string()` unless that result
     // begins with "Unknown type".
@@ -199,69 +196,46 @@ char* get_o_subtype_string(uint32_t o_subtype) {
     if (strstr(result_string, "Unknown type") != result_string) {
         return result_string;
     }
+    free(result_string);
+    result_string = NULL;
 
-    // Set `result_string` to an empty string,
-    // so that `strlen(result_string) == 0`.
-    *result_string = '\0';
-
-    // This string is a legal `sprintf()` format string.
-    char* default_string = "Unknown subtype (0x%08x) --- perhaps this subtype was introduced in a later version of APFS than that published on 2019-02-27.";
-
-    size_t NUM_FLAGS = 9;
-    uint32_t flag_constants[] = {
-        OBJECT_TYPE_SPACEMAN_FREE_QUEUE,
-        OBJECT_TYPE_EXTENT_LIST_TREE,
-        OBJECT_TYPE_FSTREE,
-        OBJECT_TYPE_BLOCKREFTREE,
-        OBJECT_TYPE_SNAPMETATREE,
-        OBJECT_TYPE_OMAP_SNAPSHOT,
-        OBJECT_TYPE_FUSION_MIDDLE_TREE,
-        OBJECT_TYPE_GBITMAP_TREE,
-        OBJECT_TYPE_FEXT_TREE,
-    };
-    char* flag_strings[] = {
-        "Space manager free-space queue",
-        "Extents-list tree",
-        "File-system records tree",
-        "Extent references tree",
-        "Volume snapshot metadata tree",
-        "Object map snapshots tree",
-        "Fusion inter-drive block-mapping tree",
-        "B-tree of general-purpose bitmaps",
-        "B-tree of file extents",
+    struct u64_string_mapping subtypes[] = {
+        { OBJECT_TYPE_SPACEMAN_FREE_QUEUE,  "Space manager free-space queue" },
+        { OBJECT_TYPE_EXTENT_LIST_TREE,     "Extents-list tree" },
+        { OBJECT_TYPE_FSTREE,               "File-system records tree" },
+        { OBJECT_TYPE_BLOCKREFTREE,         "Extent references tree" },
+        { OBJECT_TYPE_SNAPMETATREE,         "Volume snapshot metadata tree" },
+        { OBJECT_TYPE_OMAP_SNAPSHOT,        "Object map snapshots tree" },
+        { OBJECT_TYPE_FUSION_MIDDLE_TREE,   "Fusion middle tree" },
+        { OBJECT_TYPE_GBITMAP_TREE,         "B-tree of general-purpose bitmaps" },
+        { OBJECT_TYPE_FEXT_TREE,            "B-tree of file extents" },
     };
 
-    // Allocate sufficient memory to store the longest flag string.
-    size_t max_mem_required = strlen(default_string) + 8;   // Add 8 to account for `%x` being replaced with up to 8 characters.
-    for (uint32_t i = 0; i < NUM_FLAGS; i++) {
-        size_t flag_string_length = strlen(flag_strings[i]);
-        if (max_mem_required < flag_string_length) {
-            max_mem_required = flag_string_length;
-        }
-    }
-    max_mem_required++; // Account for terminating NULL byte
-    result_string = realloc(result_string, max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_o_subtype_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    // Set the right string
     uint32_t masked_o_subtype = o_subtype & OBJECT_TYPE_MASK;
-    for (size_t i = 0; i < NUM_FLAGS; i++) {
-        if (masked_o_subtype == flag_constants[i]) {
-            memcpy(result_string, flag_strings[i], strlen(flag_strings[i]) + 1);
-            break;
+    for (size_t i = 0; i < ARRAY_SIZE(subtypes); i++) {
+        if (masked_o_subtype == subtypes[i].value) {
+            if (asprintf(&result_string, "%s", subtypes[i].string) == -1) {
+                fprintf(stderr, "\nERROR: %s: Couldn't allocate sufficient memory for `result_string`.\n", __func__);
+                return NULL;
+            }
+        }
+        break;
+    }
+
+    if (!result_string) {
+        // No role matched; use default string.
+        if (
+            asprintf(
+                &result_string,
+                "Unknown subtype (%#08"PRIx32") --- perhaps this subtype was introduced in"
+                " a later version of APFS than that published on 2019-02-27.",
+                masked_o_subtype
+            ) == -1
+        ) {
+            fprintf(stderr, "%s: Couldn't allocate sufficient memory for `result_string` when returning default string.\n", __func__);
+            return NULL;
         }
     }
-
-    // If no string set (due to no flags present), then report "Unknown type".
-    if (strlen(result_string) == 0) {
-        sprintf(result_string, default_string, masked_o_subtype);
-    }
-
-    // De-allocate excess memory
-    result_string = realloc(result_string, strlen(result_string) + 1);
 
     return result_string;
 }
