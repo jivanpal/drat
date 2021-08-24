@@ -160,7 +160,7 @@ char* get_o_type_string(uint32_t o_type) {
             asprintf(
                 &result_string,
                 "Unknown type (%#08"PRIx32") --- perhaps this type was introduced in"
-                " a later version of APFS than that published on 2019-02-27.",
+                " a later version of APFS than that published on 2020-06-22.",
                 masked_o_type
             ) == -1
         ) {
@@ -228,7 +228,7 @@ char* get_o_subtype_string(uint32_t o_subtype) {
             asprintf(
                 &result_string,
                 "Unknown subtype (%#08"PRIx32") --- perhaps this subtype was introduced in"
-                " a later version of APFS than that published on 2019-02-27.",
+                " a later version of APFS than that published on 2020-06-22.",
                 masked_o_subtype
             ) == -1
         ) {
