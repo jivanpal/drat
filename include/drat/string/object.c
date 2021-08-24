@@ -112,98 +112,62 @@ char* get_o_type_flags_string(uint32_t o_type) {
  *      evaluate to `true`.
  */
 char* get_o_type_string(uint32_t o_type) {
-    // This function is implemented this way so that the caller receives a
-    // pointer that is allocated using `malloc()` rather than a stack pointer.
-
-    // This string is a legal `sprintf()` format string.
-    char* default_string = "Unknown type (0x%08x) --- perhaps this type was introduced in a later version of APFS than that published on 2019-02-27.";
-
-    size_t NUM_FLAGS = 26;
-    uint32_t flag_constants[] = {
-        OBJECT_TYPE_NX_SUPERBLOCK,
-        OBJECT_TYPE_BTREE,
-        OBJECT_TYPE_BTREE_NODE,
-        OBJECT_TYPE_SPACEMAN,
-        OBJECT_TYPE_SPACEMAN_CAB,
-        OBJECT_TYPE_SPACEMAN_CIB,
-        OBJECT_TYPE_SPACEMAN_BITMAP,
-        OBJECT_TYPE_OMAP,
-        OBJECT_TYPE_CHECKPOINT_MAP,
-        OBJECT_TYPE_FS,
-        OBJECT_TYPE_NX_REAPER,
-        OBJECT_TYPE_NX_REAP_LIST,
-        OBJECT_TYPE_EFI_JUMPSTART,
-        OBJECT_TYPE_NX_FUSION_WBC,
-        OBJECT_TYPE_NX_FUSION_WBC_LIST,
-        OBJECT_TYPE_ER_STATE,
-        OBJECT_TYPE_GBITMAP,
-        OBJECT_TYPE_GBITMAP_BLOCK,
-        OBJECT_TYPE_ER_RECOVERY_BLOCK,
-        OBJECT_TYPE_SNAP_META_EXT,
-        OBJECT_TYPE_INTEGRITY_META,
-        OBJECT_TYPE_RESERVED_20,
-        OBJECT_TYPE_INVALID,
-        OBJECT_TYPE_TEST,
-        OBJECT_TYPE_CONTAINER_KEYBAG,
-        OBJECT_TYPE_VOLUME_KEYBAG,
-    };
-    char* flag_strings[] = {
-        "Container superblock",
-        "B-tree (root node)",
-        "B-tree (non-root) node",
-        "Space manager",
-        "Space manager chunk-info address block",
-        "Space manager chunk-info block",
-        "Space manager free-space bitmap",
-        "Object map",
-        "Checkpoint map",
-        "APFS volume",
-        "Container reaper",
-        "Container reaper list",
-        "EFI jumpstart boot info",
-        "Fusion device write-back cache state",
-        "Fusion device write-back cache list",
-        "Encryption-rolling state",
-        "General-purpose bitmap",
-        "General purpose bitmap block",
-        "Encryption-rolling recovery block",
-        "Additional snapshot metadata",
-        "Integrity metadata",
-        "Reserved type/subtype (0x20)",
-        "(invalid type / no subtype)",
-        "A type reserved for testing (should never appear on disk --- if it does, file a bug against the APFS implementation that created this object)",
-        "Container keybag",
-        "Volume keybag",
+    struct u64_string_mapping types[] = {
+        { OBJECT_TYPE_NX_SUPERBLOCK,        "Container superblock" },
+        { OBJECT_TYPE_BTREE,                "B-tree (root node)" },
+        { OBJECT_TYPE_BTREE_NODE,           "B-tree (non-root) node" },
+        { OBJECT_TYPE_SPACEMAN,             "Space manager" },
+        { OBJECT_TYPE_SPACEMAN_CAB,         "Space manager chunk-info address block" },
+        { OBJECT_TYPE_SPACEMAN_CIB,         "Space manager chunk-info block" },
+        { OBJECT_TYPE_SPACEMAN_BITMAP,      "Space manager free-space bitmap" },
+        { OBJECT_TYPE_OMAP,                 "Object map" },
+        { OBJECT_TYPE_CHECKPOINT_MAP,       "Checkpoint map" },
+        { OBJECT_TYPE_FS,                   "APFS volume" },
+        { OBJECT_TYPE_NX_REAPER,            "Container reaper" },
+        { OBJECT_TYPE_NX_REAP_LIST,         "Container reaper list" },
+        { OBJECT_TYPE_EFI_JUMPSTART,        "EFI jumpstart boot info" },
+        { OBJECT_TYPE_NX_FUSION_WBC,        "Fusion device write-back cache state" },
+        { OBJECT_TYPE_NX_FUSION_WBC_LIST,   "Fusion device write-back cache list" },
+        { OBJECT_TYPE_ER_STATE,             "Encryption-rolling state" },
+        { OBJECT_TYPE_GBITMAP,              "General-purpose bitmap" },
+        { OBJECT_TYPE_GBITMAP_BLOCK,        "General purpose bitmap block" },
+        { OBJECT_TYPE_ER_RECOVERY_BLOCK,    "Encryption-rolling recovery block" },
+        { OBJECT_TYPE_SNAP_META_EXT,        "Additional snapshot metadata" },
+        { OBJECT_TYPE_INTEGRITY_META,       "Integrity metadata" },
+        { OBJECT_TYPE_RESERVED_20,          "Reserved type/subtype (0x20)" },
+        { OBJECT_TYPE_INVALID,              "(invalid type / no subtype)" },
+        { OBJECT_TYPE_TEST,                 "A type reserved for testing (should never appear on disk --- if it does, file a bug against the APFS implementation that created this object)" },
+        { OBJECT_TYPE_CONTAINER_KEYBAG,     "Container keybag" },
+        { OBJECT_TYPE_VOLUME_KEYBAG,        "Volume keybag" },
     };
 
-    // Allocate sufficient memory to store the longest flag string.
-    size_t max_mem_required = strlen(default_string) + 8;   // Add 8 to account for `%x` being replaced with up to 8 characters.
-    for (uint32_t i = 0; i < NUM_FLAGS; i++) {
-        size_t flag_string_length = strlen(flag_strings[i]);
-        if (max_mem_required < flag_string_length) {
-            max_mem_required = flag_string_length;
-        }
-    }
-    max_mem_required++; // Account for terminating NULL byte
+    char* result_string = NULL;
 
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_o_type_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-    
-    // Set the right string
     uint32_t masked_o_type = o_type & OBJECT_TYPE_MASK;
-    snprintf(result_string, max_mem_required, default_string, masked_o_type);
-    for (size_t i = 0; i < NUM_FLAGS; i++) {
-        if (masked_o_type == flag_constants[i]) {
-            memcpy(result_string, flag_strings[i], strlen(flag_strings[i]) + 1);
-            break;
+    for (size_t i = 0; i < ARRAY_SIZE(types); i++) {
+        if (masked_o_type == types[i].value) {
+            if (asprintf(&result_string, "%s", types[i].string) == -1) {
+                fprintf(stderr, "\nERROR: %s: Couldn't allocate sufficient memory for `result_string`.\n", __func__);
+                return NULL;
+            }
         }
+        break;
     }
 
-    // De-allocate excess memory
-    result_string = realloc(result_string, strlen(result_string) + 1);
+    if (!result_string) {
+        // No role matched; use default string.
+        if (
+            asprintf(
+                &result_string,
+                "Unknown type (%#08"PRIx32") --- perhaps this type was introduced in"
+                " a later version of APFS than that published on 2019-02-27.",
+                masked_o_type
+            ) == -1
+        ) {
+            fprintf(stderr, "%s: Couldn't allocate sufficient memory for `result_string` when returning default string.\n", __func__);
+            return NULL;
+        }
+    }
 
     return result_string;
 }
