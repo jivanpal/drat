@@ -12,6 +12,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <drat/asize.h>
+
 #include <drat/string/common.h>
 #include <drat/string/object.h>
 
@@ -26,50 +28,15 @@
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_features_string(apfs_superblock_t* apsb) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { APFS_FEATURE_DEFRAG_PRERELEASE,           "Reserved --- To avoid data corruption, this flag must not be set; this flag enabled a prerelease version of the defragmentation system in macOS 10.13 versions. Itʼs ignored by macOS 10.13.6 and later." },
         { APFS_FEATURE_HARDLINK_MAP_RECORDS,        "This volume has hardlink map records." },
         { APFS_FEATURE_DEFRAG,                      "Defragmentation is supported." },
         { APFS_FEATURE_STRICTATIME,                 "File access times are updated every time a file is read." },
         { APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE,     "This volume supports mounting a system and data volume as a single user-visible volume." },
     };
-    
-    // Initialise buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
 
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (apsb->apfs_features & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No volume feature flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), apsb->apfs_features, false);
 }
 
 /**
@@ -83,46 +50,11 @@ char* get_apfs_features_string(apfs_superblock_t* apsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_readonly_compatible_features_string(apfs_superblock_t* apsb) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         // empty
     };
 
-    // Initialise buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (apsb->apfs_readonly_compatible_features & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No read-only compatible volume feature flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), apsb->apfs_readonly_compatible_features, false);
 }
 
 /**
@@ -136,7 +68,7 @@ char* get_apfs_readonly_compatible_features_string(apfs_superblock_t* apsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_incompatible_features_string(apfs_superblock_t* apsb) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { APFS_INCOMPAT_CASE_INSENSITIVE,           "Filenames on this volume are case-insensitive." },
         { APFS_INCOMPAT_DATALESS_SNAPS,             "At least one snapshot with no data exists for this volume." },
         { APFS_INCOMPAT_ENC_ROLLED,                 "This volume's encryption has changed keys at least once." },
@@ -146,42 +78,7 @@ char* get_apfs_incompatible_features_string(apfs_superblock_t* apsb) {
         { APFS_INCOMPAT_RESERVED_40,                "Reserved flag (0x40)." },
     };
 
-    // Initialise buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (apsb->apfs_incompatible_features & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No backward-incompatible volume feature flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), apsb->apfs_incompatible_features, false);
 }
 
 /**
@@ -195,7 +92,7 @@ char* get_apfs_incompatible_features_string(apfs_superblock_t* apsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { APFS_FS_UNENCRYPTED,              "Volume is unencrypted." },
         { APFS_FS_RESERVED_2,               "Reserved flag (0x2)." },
         { APFS_FS_RESERVED_4,               "Reserved flag (0x4)." },
@@ -207,42 +104,7 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
         { APFS_FS_RESERVED_100,             "Reserved flag (0x100)." },
     };
 
-    // Initialise buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (apsb->apfs_fs_flags & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No flags are set.\n");
-    }
-    
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), apsb->apfs_fs_flags, false);
 }
 
 /**
@@ -256,7 +118,7 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_role_string(apfs_superblock_t* apsb) {
-    struct u64_string_mapping roles[] = {
+    enum_string_mapping_t roles[] = {
         { APFS_VOL_ROLE_NONE,           "(no role)" },
         { APFS_VOL_ROLE_SYSTEM,         "System (contains a root directory for the system)" },
         { APFS_VOL_ROLE_USER,           "User (contains users' home directories)" },
@@ -277,27 +139,7 @@ char* get_apfs_role_string(apfs_superblock_t* apsb) {
         { APFS_VOL_ROLE_PRELOGIN,       "Pre-login (used to store system data used before login)" },
     };
 
-    char* result_string = NULL;
-
-    for (size_t i = 0; i < ARRAY_SIZE(roles); i++) {
-        if (apsb->apfs_role == roles[i].value) {
-            if (asprintf(&result_string, "%s", roles[i].string) == -1) {
-                fprintf(stderr, "\nERROR: %s: Couldn't allocate sufficient memory for `result_string`.\n", __func__);
-                return NULL;
-            }
-        }
-        break;
-    }
-    
-    if (!result_string) {
-        // No role matched; use default string.
-        if (asprintf(&result_string, "(unknown role) (role field value %#"PRIx16")", apsb->apfs_role) == -1) {
-            fprintf(stderr, "%s: Couldn't allocate sufficient memory for `result_string` when returning default string.\n", __func__);
-            return NULL;
-        }
-    }
-
-    return result_string;
+    return get_single_enum_string(roles, ARRAY_SIZE(roles), apsb->apfs_role);
 }
 
 void print_apfs_modified_by(apfs_modified_by_t* data) {

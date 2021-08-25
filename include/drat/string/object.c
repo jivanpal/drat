@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <drat/asize.h>
+
 #include <drat/string/common.h>
 
 /**
@@ -48,51 +50,13 @@ char* o_storage_type_to_string(uint32_t o_type) {
  *      this pointer when it is no longer needed.
  */
 char* get_o_type_flags_string(uint32_t o_type) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { OBJ_NOHEADER,         "No-header" },
         { OBJ_ENCRYPTED,        "Encrypted" },
         { OBJ_NONPERSISTENT,    "Non-persistent (should never appear on disk --- if it does, file a bug against the APFS implementation that created this object)" },
     };
 
-    // Initialise result buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (o_type & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "%s, ",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "(none)");
-    } else {
-        // Trim trailing comma and space
-        result_string[strlen(result_string) - 2] = '\0';
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), o_type & OBJECT_TYPE_FLAGS_MASK, true);
 }
 
 /**
@@ -107,12 +71,12 @@ char* get_o_type_flags_string(uint32_t o_type) {
  *      freed when it is no longer needed.
  * 
  *      If the specified type is not recognised, the string returned will begin
- *      with "Unknown type", i.e. given the return value `return_value`, the
- *      expression `strstr(return_value, "Unknown type") == return_value` will
+ *      with "Unknown value", i.e. given the return value `return_value`, the
+ *      expression `strstr(return_value, "Unknown value") == return_value` will
  *      evaluate to `true`.
  */
 char* get_o_type_string(uint32_t o_type) {
-    struct u64_string_mapping types[] = {
+    enum_string_mapping_t types[] = {
         { OBJECT_TYPE_NX_SUPERBLOCK,        "Container superblock" },
         { OBJECT_TYPE_BTREE,                "B-tree (root node)" },
         { OBJECT_TYPE_BTREE_NODE,           "B-tree (non-root) node" },
@@ -137,39 +101,16 @@ char* get_o_type_string(uint32_t o_type) {
         { OBJECT_TYPE_RESERVED_20,          "Reserved type/subtype (0x20)" },
         { OBJECT_TYPE_INVALID,              "(invalid type / no subtype)" },
         { OBJECT_TYPE_TEST,                 "A type reserved for testing (should never appear on disk --- if it does, file a bug against the APFS implementation that created this object)" },
-        { OBJECT_TYPE_CONTAINER_KEYBAG,     "Container keybag" },
-        { OBJECT_TYPE_VOLUME_KEYBAG,        "Volume keybag" },
+        
+        // The following object type values extend out of the object type mask
+        // area, so a quick workaround which allows us to identify these with a
+        // single call to `get_single_enum_string()` is to mask the real values.
+        { OBJECT_TYPE_CONTAINER_KEYBAG  & OBJECT_TYPE_MASK,     "Container keybag" },
+        { OBJECT_TYPE_VOLUME_KEYBAG     & OBJECT_TYPE_MASK,     "Volume keybag" },
+        { OBJECT_TYPE_MEDIA_KEYBAG      & OBJECT_TYPE_MASK,     "Media keybag" },
     };
 
-    char* result_string = NULL;
-
-    uint32_t masked_o_type = o_type & OBJECT_TYPE_MASK;
-    for (size_t i = 0; i < ARRAY_SIZE(types); i++) {
-        if (masked_o_type == types[i].value) {
-            if (asprintf(&result_string, "%s", types[i].string) == -1) {
-                fprintf(stderr, "\nERROR: %s: Couldn't allocate sufficient memory for `result_string`.\n", __func__);
-                return NULL;
-            }
-        }
-        break;
-    }
-
-    if (!result_string) {
-        // No role matched; use default string.
-        if (
-            asprintf(
-                &result_string,
-                "Unknown type (%#08"PRIx32") --- perhaps this type was introduced in"
-                " a later version of APFS than that published on 2020-06-22.",
-                masked_o_type
-            ) == -1
-        ) {
-            fprintf(stderr, "%s: Couldn't allocate sufficient memory for `result_string` when returning default string.\n", __func__);
-            return NULL;
-        }
-    }
-
-    return result_string;
+    return get_single_enum_string(types, ARRAY_SIZE(types), o_type & OBJECT_TYPE_MASK);
 }
 
 /**
@@ -191,15 +132,14 @@ char* get_o_type_string(uint32_t o_type) {
 char* get_o_subtype_string(uint32_t o_subtype) {
     // Check if `o_subtype` is a value representing a regular type.
     // That is, return the result of `get_o_type_string()` unless that result
-    // begins with "Unknown type".
+    // begins with "Unknown value".
     char* result_string = get_o_type_string(o_subtype);
-    if (strstr(result_string, "Unknown type") != result_string) {
+    if (strstr(result_string, "Unknown value") != result_string) {
         return result_string;
     }
     free(result_string);
-    result_string = NULL;
 
-    struct u64_string_mapping subtypes[] = {
+    enum_string_mapping_t subtypes[] = {
         { OBJECT_TYPE_SPACEMAN_FREE_QUEUE,  "Space manager free-space queue" },
         { OBJECT_TYPE_EXTENT_LIST_TREE,     "Extents-list tree" },
         { OBJECT_TYPE_FSTREE,               "File-system records tree" },
@@ -211,33 +151,7 @@ char* get_o_subtype_string(uint32_t o_subtype) {
         { OBJECT_TYPE_FEXT_TREE,            "B-tree of file extents" },
     };
 
-    uint32_t masked_o_subtype = o_subtype & OBJECT_TYPE_MASK;
-    for (size_t i = 0; i < ARRAY_SIZE(subtypes); i++) {
-        if (masked_o_subtype == subtypes[i].value) {
-            if (asprintf(&result_string, "%s", subtypes[i].string) == -1) {
-                fprintf(stderr, "\nERROR: %s: Couldn't allocate sufficient memory for `result_string`.\n", __func__);
-                return NULL;
-            }
-        }
-        break;
-    }
-
-    if (!result_string) {
-        // No role matched; use default string.
-        if (
-            asprintf(
-                &result_string,
-                "Unknown subtype (%#08"PRIx32") --- perhaps this subtype was introduced in"
-                " a later version of APFS than that published on 2020-06-22.",
-                masked_o_subtype
-            ) == -1
-        ) {
-            fprintf(stderr, "%s: Couldn't allocate sufficient memory for `result_string` when returning default string.\n", __func__);
-            return NULL;
-        }
-    }
-
-    return result_string;
+    return get_single_enum_string(subtypes, ARRAY_SIZE(subtypes), o_subtype & OBJECT_TYPE_MASK);
 }
 
 /**

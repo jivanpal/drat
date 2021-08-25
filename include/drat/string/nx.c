@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <drat/asize.h>
+
 #include <drat/string/common.h>
 #include <drat/string/object.h>
 
@@ -26,47 +28,12 @@
  *      this pointer when it is no longer needed.
  */
 char* get_nx_features_string(nx_superblock_t* nxsb) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { NX_FEATURE_DEFRAG,    "The volumes in this container support defragmentation." },
         { NX_FEATURE_LCFD,      "This container is using low-capacity Fusion Drive mode." },
     };
 
-    // Initialise result buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (nxsb->nx_features & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No feature flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), nxsb->nx_features, false);
 }
 
 /**
@@ -80,46 +47,11 @@ char* get_nx_features_string(nx_superblock_t* nxsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_nx_readonly_compatible_features_string(nx_superblock_t* nxsb) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         // empty        
     };
 
-    // Initialise result buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (nxsb->nx_readonly_compatible_features & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No read-only compatible feature flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), nxsb->nx_readonly_compatible_features, false);
 }
 
 /**
@@ -133,48 +65,13 @@ char* get_nx_readonly_compatible_features_string(nx_superblock_t* nxsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_nx_incompatible_features_string(nx_superblock_t* nxsb) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { NX_INCOMPAT_VERSION1,     "This container uses APFS version 1, as implemented in macOS 10.12." },
         { NX_INCOMPAT_VERSION2,     "This container uses APFS version 2, as implemented in macOS 10.13 and iOS 10.3." },
         { NX_INCOMPAT_FUSION,       "This container supports Fusion Drives." },
     };
 
-    // Initialise result buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (nxsb->nx_features & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No backward-incompatible feature flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), nxsb->nx_incompatible_features, false);
 }
 
 /**
@@ -188,48 +85,13 @@ char* get_nx_incompatible_features_string(nx_superblock_t* nxsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_nx_flags_string(nx_superblock_t* nxsb) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { NX_RESERVED_1,    "Reserved flag 1" },
         { NX_RESERVED_2,    "Reserved flag 2" },
         { NX_CRYPTO_SW,     "This container uses software cryptography." },
     };
 
-    // Initialise result buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (nxsb->nx_features & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No other flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), nxsb->nx_flags, false);
 }
 
 /**
@@ -360,46 +222,11 @@ void print_checkpoint_mapping(checkpoint_mapping_t* cpm) {
  *      this pointer when it is no longer needed.
  */
 char* get_cpm_flags_string(checkpoint_map_phys_t* cpm) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { CHECKPOINT_MAP_LAST,  "Last checkpoint-mapping block in the corresponding checkpoint." },
     };
 
-    // Initialise result buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (cpm->cpm_flags & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), cpm->cpm_flags, false);
 }
 
 /**
@@ -419,7 +246,6 @@ void print_checkpoint_map_phys(checkpoint_map_phys_t* cpm) {
     free(flags_string);
 
     printf("Number of mappings: %u\n",  cpm->cpm_count);
-    
 }
 
 /**

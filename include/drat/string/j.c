@@ -41,6 +41,8 @@
 
 #include <apfs/xf.h>
 
+#include <drat/asize.h>
+
 #include <drat/string/common.h>
 
 char* j_key_type_to_string(uint8_t j_key_type) {
@@ -88,7 +90,7 @@ char* j_inode_mode_to_string(apfs_mode_t mode) {
 }
 
 char* get_j_inode_internal_flags_string(uint64_t internal_flags) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { INODE_IS_APFS_PRIVATE,            "Private flag (0x1) used by an APFS implementation --- this inode is not considered part of the file-system" },
         { INODE_MAINTAIN_DIR_STATS,         "MAINTAIN_DIR_STATS: Tracks the size of all its children" },
         { INODE_DIR_STATS_ORIGIN,           "The MAINTAIN_DIR_STATS flag is set explicitly (not due to inheritance)" },
@@ -114,46 +116,11 @@ char* get_j_inode_internal_flags_string(uint64_t internal_flags) {
         { INODE_SNAPSHOT_COW_EXEMPTION,     "Exempt from copy-on-write behavior if the data is part of a snapshot" },
     };
 
-    // Initialise result buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (internal_flags & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No internal flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), internal_flags, false);
 }
 
 char* get_j_inode_bsd_flags_string(uint32_t bsd_flags) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { UF_NODUMP,        "Do not dump the file" },
         { UF_IMMUTABLE,     "File may not be changed" },
         { UF_APPEND,        "File may only be appended to" },
@@ -165,42 +132,7 @@ char* get_j_inode_bsd_flags_string(uint32_t bsd_flags) {
         { SF_DATALESS,      "SF_DATALESSFAULT: Dataless placeholder --- see chflags(2) and getiopolicy_np(3)" },
     };
 
-    // Initialise result buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (bsd_flags & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No internal flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), bsd_flags, false);
 }
 
 void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {

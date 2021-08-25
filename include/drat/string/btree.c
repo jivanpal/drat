@@ -11,7 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <drat/asize.h>
 #include <drat/io.h>    // nx_block_size
+
 #include <drat/func/boolean.h>
 #include <drat/string/common.h>
 #include <drat/string/object.h>
@@ -27,7 +29,7 @@
  *      this pointer when it is no longer needed.
  */
 char* get_btn_flags_string(btree_node_phys_t* btn) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { BTNODE_ROOT,              "Root node" },
         { BTNODE_LEAF,              "Leaf node" },
         { BTNODE_FIXED_KV_SIZE,     "Fixed size for keys and values" },
@@ -36,42 +38,7 @@ char* get_btn_flags_string(btree_node_phys_t* btn) {
         { BTNODE_CHECK_KOFF_INVAL,  "In transient state (key offsets are invalid) --- should never appear on disk" },
     };
 
-    // Initialise result buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (btn->btn_flags & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "- %s\n",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "- No flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), btn->btn_flags, false);
 }
 
 /**
@@ -87,7 +54,7 @@ char* get_btn_flags_string(btree_node_phys_t* btn) {
  *      this pointer when it is no longer needed.
  */
 char* get_bt_info_flags_string(btree_info_t* bt_info) {
-    struct u64_string_mapping flags[] = {
+    enum_string_mapping_t flags[] = {
         { BTREE_UINT64_KEYS,        "Keys are 64-bit values --- optimisations operations if possible" },
         { BTREE_SEQUENTIAL_INSERT,  "This B-tree is currently undergoing a series of sequential inserts --- optimise operations if possible" },
         { BTREE_ALLOW_GHOSTS,       "Ghosts (keys without values) are allowed" },
@@ -99,42 +66,7 @@ char* get_bt_info_flags_string(btree_info_t* bt_info) {
         { BTREE_NOHEADER,           "Nodes don't have object headers" },
     };
 
-    // Initialise buffer as empty string
-    const size_t bufsize = 2048;
-    char* result_string = malloc(bufsize);
-    if (!result_string) {
-        fprintf(stderr, "\nERROR: %s: Couldn't create buffer `result_string`.\n", __func__);
-        return NULL;
-    }
-    *result_string = '\0';
-
-    size_t bytes_written = 0;
-    for (size_t i = 0; i < ARRAY_SIZE(flags); i++) {
-        if (bt_info->bt_fixed.bt_flags & flags[i].value) {
-            bytes_written += snprintf(
-                result_string + bytes_written,
-                bufsize - bytes_written,
-                "  - %s\n",
-                flags[i].string
-            );
-            
-            if (bytes_written > bufsize - 1) {
-                // Exhausted buffer; return early.
-                fprintf(stderr, "\nERROR: %s: Buffer `result_string` too small for entire result.\n", __func__);
-                return result_string;
-            }
-        }
-    }
-
-    if (bytes_written == 0) {
-        // No flags set; use default string.
-        snprintf(result_string, bufsize, "  - No flags are set.\n");
-    }
-
-    // Truncate buffer
-    result_string = realloc(result_string, strlen(result_string) + 1);
-
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), bt_info->bt_fixed.bt_flags, false);
 }
 
 /**
@@ -144,6 +76,7 @@ char* get_bt_info_flags_string(btree_info_t* bt_info) {
 void print_btree_info(btree_info_t* bt_info) {
     printf("Info relating to the entire B-tree:\n");
     
+    // TODO: Need margin of 2 spaces in generated list
     char* flags_string = get_bt_info_flags_string(bt_info);
     printf("- Flags:\n%s", flags_string);
     free(flags_string);
