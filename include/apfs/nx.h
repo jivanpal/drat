@@ -105,7 +105,16 @@ typedef struct {
 #define NX_INCOMPAT_VERSION1        0x0000000000000001ULL
 #define NX_INCOMPAT_VERSION2        0x0000000000000002ULL
 #define NX_INCOMPAT_FUSION          0x0000000000000100ULL
-#define NX_SUPPORTED_INCOMPAT_MASK  (NX_INCOMPAT_VERSION2 | NX_INCOMPAT_FUSION)
+
+/*
+ * NOTE: Apple's spec doesn't include `NX_INCOMPAT_VERSION1` in this mask,
+ * perhaps in error, so we include it here.
+ */
+#define NX_SUPPORTED_INCOMPAT_MASK    ( \
+      NX_INCOMPAT_VERSION1              \
+    | NX_INCOMPAT_VERSION2              \
+    | NX_INCOMPAT_FUSION                \
+)
 
 /** Block and Container Size **/
 

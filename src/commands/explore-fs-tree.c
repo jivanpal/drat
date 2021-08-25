@@ -295,7 +295,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
                     print_j_file_extent_val(val);
                 } break;
                 case APFS_TYPE_DIR_REC: {
-                    // Spec inorrectly says to use `j_drec_key_t`; see NOTE in `apfs/struct/j.h`
+                    // Apple's spec inorrectly says to use `j_drec_key_t`; see NOTE in <apfs/j.h>
                     j_drec_hashed_key_t*    key = fs_rec->data;
                     j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
                     print_j_drec_hashed_key(key);
@@ -303,7 +303,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
                 } break;
                 case APFS_TYPE_DIR_STATS: {
                     j_dir_stats_key_t* key = fs_rec->data;
-                    // Spec incorrectly says to use `j_drec_val_t`; we use `j_dir_stats_val_t`
+                    // Apple's spec incorrectly says to use `j_drec_val_t`; see note in <apfs/jconst.h>
                     j_dir_stats_val_t* val = fs_rec->data + fs_rec->key_len;
                 } break;
                 case APFS_TYPE_SNAP_NAME: {

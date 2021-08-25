@@ -22,7 +22,7 @@ typedef enum {
     APFS_TYPE_CRYPTO_STATE  = 7,
     APFS_TYPE_FILE_EXTENT   = 8,
     APFS_TYPE_DIR_REC       = 9,
-    APFS_TYPE_DIR_STATS     = 10,
+    APFS_TYPE_DIR_STATS     = 10,   // NOTE: The value is an instance of type `j_dir_stats_val_t`, not `j_drec_val_t` as Apple's spec incorrectly says.
     APFS_TYPE_SNAP_NAME     = 11,
     APFS_TYPE_SIBLING_MAP   = 12,
     APFS_TYPE_FILE_INFO     = 13,

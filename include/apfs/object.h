@@ -34,11 +34,11 @@ typedef struct {
 
 /** Object Type Masks **/
 
-#define OBJECT_TYPE_MASK                0X0000ffff
+#define OBJECT_TYPE_MASK                0x0000ffff
 #define OBJECT_TYPE_FLAGS_MASK          0xffff0000
 
 #define OBJ_STORAGETYPE_MASK            0xc0000000
-#define OBJECT_TYPE_FLAGS_DEFINED_MASK  0Xf8000000
+#define OBJECT_TYPE_FLAGS_DEFINED_MASK  0xf8000000
 
 /** Object Types **/
 
@@ -84,6 +84,14 @@ typedef struct {
 #define OBJECT_TYPE_INVALID             0x00000000
 #define OBJECT_TYPE_TEST                0x000000ff
 
+/*
+ * Media keybag types (object types that correspond to an instance of
+ * `media_keybag_t`). The type values don't use only the low 16 bits of the
+ * `o_type` field. Instead, they use all 32 bits of that field, meaning these
+ * objects don't have type flags, and that comparing `o_type & OBJECT_TYPE_MASK`
+ * with these values doesn't work; you must compare `o_type` directly with these
+ * values instead.
+ */
 #define OBJECT_TYPE_CONTAINER_KEYBAG    'keys'
 #define OBJECT_TYPE_VOLUME_KEYBAG       'recs'
 #define OBJECT_TYPE_MEDIA_KEYBAG        'mkey'

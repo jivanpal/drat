@@ -156,7 +156,7 @@ typedef struct {
 #define APFS_VOL_ROLE_XART          ( 4 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0100
 #define APFS_VOL_ROLE_HARDWARE      ( 5 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0140
 #define APFS_VOL_ROLE_BACKUP        ( 6 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0180
-#define APFS_VOL_ROLE_RESERVED_7    ( 7 << APFS_VOLUME_ENUM_SHIFT)  // = 0x01c0 --- spec also uses the name `APFS_VOL_ROLE_SIDECAR`, but that could be an error
+#define APFS_VOL_ROLE_RESERVED_7    ( 7 << APFS_VOLUME_ENUM_SHIFT)  // = 0x01c0 --- Apple's spec also uses the name `APFS_VOL_ROLE_SIDECAR`, but that could be an error
 #define APFS_VOL_ROLE_RESERVED_8    ( 8 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0200 --- formerly named `APFS_VOL_ROLE_RESERVED_200`
 #define APFS_VOL_ROLE_ENTERPRISE    ( 9 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0240
 #define APFS_VOL_ROLE_RESERVED_10   (10 << APFS_VOLUME_ENUM_SHIFT)  // = 0x0280

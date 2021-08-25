@@ -64,17 +64,17 @@ typedef struct {
 
 typedef struct {
     j_key_t     hdr;
-    uint16_t    name_len;   // NOTE: Not `name_len_and_hash` as the spec erroneously says.
+    uint16_t    name_len;   // NOTE: Not `name_len_and_hash` as Apple's spec erroneously says.
     uint8_t     name[0];
 } __attribute__((packed))   j_drec_key_t;
 
 /**
- * NOTE: The spec says that if a file-system record is of type
+ * NOTE: Apple's spec says that if a file-system record is of type
  * `APFS_TYPE_DIR_REC`, then the record's key is an instance of `j_drec_key_t`.
- * However, the type `j_drec_hashed_key_t` (seen below) is defined in the spec
- * but not used anywhere in the spec; and upon closer inspection, the keys I
- * have encountered in practice exclusively appear to be instances of
- * `j_drec_hashed_key_t`.
+ * However, the type `j_drec_hashed_key_t` (seen below) is defined in Apple's
+ * spec but not used anywhere in the spec; and upon closer inspection, the keys
+ * that I (Jivan Pal) have encountered in practice exclusively appear to be
+ * instances of `j_drec_hashed_key_t`.
  * 
  * As such, either:
  * (a) `j_drec_key_t` has been silently deprecated as of 2019-10-31 and replaced
@@ -95,7 +95,7 @@ typedef struct {
 } __attribute__((packed))   j_drec_hashed_key_t;
 
 #define J_DREC_LEN_MASK     0x000003ff
-#define J_DREC_HASH_MASK    0xfffffc00  // Spec incorrectly says `0xfffff400`
+#define J_DREC_HASH_MASK    0xfffffc00  // Apple's spec incorrectly says `0xfffff400`
 #define J_DREC_HASH_SHIFT   10
 
 /** `j_drec_val_t` **/

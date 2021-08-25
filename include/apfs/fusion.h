@@ -10,7 +10,7 @@
 #include <apfs/general.h>   // paddr_t, prange_t
 #include <apfs/object.h>    // obj_phys_t, oid_t, xid_t
 
-// NOTE: The APFS spec uses camel case for variable names, but in order to
+// NOTE: Apple's spec uses camel case for variable names, but in order to
 // maintain consistency with the rest of the APFS structures defined in this
 // repo, as well as abiding by de facto C conventions, we opt to continue using
 // snake case (underscores separating words).
