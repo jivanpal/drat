@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <drat/asize.h>
+
+#include <drat/string/common.h>
 #include <drat/string/object.h>
 
 /**
@@ -25,75 +28,20 @@
  *      this pointer when it is no longer needed.
  */
 char* get_om_flags_string(omap_phys_t* omap) {
-    // String to use if no flags are set    
-    char* no_flags_string = "- No flags are set.\n";
-    size_t no_flags_string_len = strlen(no_flags_string);
-    
-    const int NUM_FLAGS = 4;
-    
-    uint64_t flag_constants[] = {
-        OMAP_MANUALLY_MANAGED,
-        OMAP_ENCRYPTING,
-        OMAP_DECRYPTING,
-        OMAP_KEYROLLING,
+    enum_string_mapping_t flags[] = {
+        { OMAP_MANUALLY_MANAGED,    "No snapshot support" },
+        { OMAP_ENCRYPTING,          "Transitioning to encrypted state" },
+        { OMAP_DECRYPTING,          "Transitioning to decrypted state" },
+        { OMAP_KEYROLLING,          "Transitioning from on old encryption key to a new encryption key" },
+
         /* 
-         * The following constant does not convey any useful info about the
-         * object map itself, but the objects contained within an object map
-         * refer to this field to convey info about their encryption state.
-         * This constant is listed here for completeness.
+         * The presence of the following flag does not convey any info about
+         * the object map itself, but is listed here for completeness.
          */
-        // OMAP_CRYPTO_GENERATION,
+        // OMAP_CRYPTO_GENERATION
     };
 
-    char* flag_strings[] = {
-        "No snapshot support",
-        "Transitioning to encrypted state",
-        "Transitioning to decrypted state",
-        "Transitioning from on old encryption key to a new encryption key"
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < no_flags_string_len) {
-        max_mem_required = no_flags_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_om_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (omap->om_flags & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, no_flags_string, no_flags_string_len);
-        cursor += no_flags_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), omap->om_flags, false);
 }
 
 /**

@@ -11,12 +11,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <drat/asize.h>
 #include <drat/io.h>    // nx_block_size
+
 #include <drat/func/boolean.h>
+#include <drat/string/common.h>
 #include <drat/string/object.h>
 
 /**
- * Get a human-readable, comma-delimited list of the flags that are set on a
+ * Get a human-readable list of the flags that are set on a
  * given B-tree node.
  * 
  * btn:     A pointer to the B-tree node in question.
@@ -26,71 +29,20 @@
  *      this pointer when it is no longer needed.
  */
 char* get_btn_flags_string(btree_node_phys_t* btn) {
-    char* default_string = "(none)";
-    size_t default_string_len = strlen(default_string);
-    
-    uint8_t NUM_FLAGS = 6;
-    uint16_t flag_constants[] = {
-        BTNODE_ROOT,
-        BTNODE_LEAF,
-        BTNODE_FIXED_KV_SIZE,
-        BTNODE_HASHED,
-        BTNODE_NOHEADER,
-        BTNODE_CHECK_KOFF_INVAL,
-    };
-    char* flag_strings[] = {
-        "Root node",
-        "Leaf node",
-        "Fixed size for keys and values",
-        "Contains child node hashes",
-        "Doesn't have an object header",
-        "In transient state (key offsets are invalid) --- should never appear on disk"
+    enum_string_mapping_t flags[] = {
+        { BTNODE_ROOT,              "Root node" },
+        { BTNODE_LEAF,              "Leaf node" },
+        { BTNODE_FIXED_KV_SIZE,     "Fixed size for keys and values" },
+        { BTNODE_HASHED,            "Contains child node hashes" },
+        { BTNODE_NOHEADER,          "Doesn't have an object header" },
+        { BTNODE_CHECK_KOFF_INVAL,  "In transient state (key offsets are invalid) --- should never appear on disk" },
     };
 
-    size_t max_mem_required = 0;
-    for (uint8_t i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 2;
-        // `+ 2` accounts for appending ", " to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Account for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_btn_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-    for (uint8_t i = 0; i < NUM_FLAGS; i++) {
-        if (btn->btn_flags & flag_constants[i]) {
-            if (cursor != result_string) {
-                *cursor++ = ',';
-                *cursor++ = ' ';
-            }
-            size_t flag_string_len = strlen(flag_strings[i]);
-            memcpy(cursor, flag_strings[i], flag_string_len);
-            cursor += flag_string_len;
-        }
-    }
-
-    // If no flags set, nothing is added to string, so use deafult string
-    if (cursor == result_string) {
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
-    }
-
-    *cursor = '\0';
-
-    // De-allocate excess memory
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), btn->btn_flags, false);
 }
 
 /**
- * Get a human-readable, bulleted list of the flags that are set on a
+ * Get a human-readable list of the flags that are set on a
  * given B-tree info object (an instance of `btree_info_t`; or equivalently for
  * this purpose, an instance of `btree_info_fixed_t`). The list is indented by
  * two spaces.
@@ -102,76 +54,19 @@ char* get_btn_flags_string(btree_node_phys_t* btn) {
  *      this pointer when it is no longer needed.
  */
 char* get_bt_info_flags_string(btree_info_t* bt_info) {
-    char* default_string = "  - No flags are set\n";
-    size_t default_string_len = strlen(default_string);
-    
-    uint8_t NUM_FLAGS = 9;
-    
-    uint16_t flag_constants[] = {
-        BTREE_UINT64_KEYS,
-        BTREE_SEQUENTIAL_INSERT,
-        BTREE_ALLOW_GHOSTS,
-        BTREE_EPHEMERAL,
-        BTREE_PHYSICAL,
-        BTREE_NONPERSISTENT,
-        BTREE_KV_NONALIGNED,
-        BTREE_HASHED,
-        BTREE_NOHEADER,
+    enum_string_mapping_t flags[] = {
+        { BTREE_UINT64_KEYS,        "Keys are 64-bit values --- optimisations operations if possible" },
+        { BTREE_SEQUENTIAL_INSERT,  "This B-tree is currently undergoing a series of sequential inserts --- optimise operations if possible" },
+        { BTREE_ALLOW_GHOSTS,       "Ghosts (keys without values) are allowed" },
+        { BTREE_EPHEMERAL,          "Child nodes are referred to using Ephemeral OIDs" },
+        { BTREE_PHYSICAL,           "Child nodes are referred to using Physical OIDs" },
+        { BTREE_NONPERSISTENT,      "This B-tree does not persist across unmounts" },
+        { BTREE_KV_NONALIGNED,      "8-byte alignment of keys and values is not required" },
+        { BTREE_HASHED,             "Non-leaf nodes store a hash of their child nodes" },
+        { BTREE_NOHEADER,           "Nodes don't have object headers" },
     };
 
-    char* flag_strings[] = {
-        "Keys are 64-bit values --- optimisations operations if possible",
-        "This B-tree is currently undergoing a series of sequential inserts --- optimise operations if possible",
-        "Ghosts (keys without values) are allowed",
-        "Child nodes are referred to using Ephemeral OIDs",
-        "Child nodes are referred to using Physical OIDs",
-        "This B-tree does not persist across unmounts",
-        "8-byte alignment of keys and values is not required",
-        "Non-leaf nodes store a hash of their child nodes",
-        "Nodes don't have object headers",
-    };
-
-    size_t max_mem_required = 0;
-    for (uint8_t i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 5;
-        // `+ 5` accounts for prepending "  - " and appending "\n" to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Account for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_bt_info_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-    for (uint8_t i = 0; i < NUM_FLAGS; i++) {
-        if (bt_info->bt_fixed.bt_flags & flag_constants[i]) {
-            memcpy(cursor, "  - ", 4);
-            cursor += 4;
-
-            size_t flag_string_len = strlen(flag_strings[i]);
-            memcpy(cursor, flag_strings[i], flag_string_len);
-            cursor += flag_string_len;
-            
-            *cursor++  = '\n';
-        }
-    }
-
-    // If no flags set, nothing is added to string, so use deafult string
-    if (cursor == result_string) {
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
-    }
-
-    *cursor = '\0';
-
-    // De-allocate excess memory
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), bt_info->bt_fixed.bt_flags, false);
 }
 
 /**
@@ -181,6 +76,7 @@ char* get_bt_info_flags_string(btree_info_t* bt_info) {
 void print_btree_info(btree_info_t* bt_info) {
     printf("Info relating to the entire B-tree:\n");
     
+    // TODO: Need margin of 2 spaces in generated list
     char* flags_string = get_bt_info_flags_string(bt_info);
     printf("- Flags:\n%s", flags_string);
     free(flags_string);
@@ -206,7 +102,7 @@ void print_btree_node_phys(btree_node_phys_t* btn) {
     print_obj_phys(btn);    // `btn` equals `&(btn->btn_o)`.
 
     char* flags_string = get_btn_flags_string(btn);
-    printf("Flags:                          %s\n",  flags_string);
+    printf("Flags:\n%s", flags_string);
     free(flags_string);
 
     printf("Number of child levels:         %u\n",  btn->btn_level);

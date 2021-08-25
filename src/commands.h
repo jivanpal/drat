@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#define ARRAY_SIZE(a)   (sizeof(a) / sizeof(*(a)))
+#include <drat/asize.h>
 
 typedef int command_function(int argc, char** argv);
 

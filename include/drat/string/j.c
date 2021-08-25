@@ -41,36 +41,26 @@
 
 #include <apfs/xf.h>
 
+#include <drat/asize.h>
+
+#include <drat/string/common.h>
+
 char* j_key_type_to_string(uint8_t j_key_type) {
     switch (j_key_type) {
-        case APFS_TYPE_SNAP_METADATA:
-            return "Snapshot metadata";
-        case APFS_TYPE_EXTENT:
-            return "Physical extent record";
-        case APFS_TYPE_INODE:
-            return "Inode";
-        case APFS_TYPE_XATTR:
-            return "Extended attribute";
-        case APFS_TYPE_SIBLING_LINK:
-            return "Sibling link (mapping from an inode to hard links that target it)";
-        case APFS_TYPE_DSTREAM_ID:
-            return "Data stream";
-        case APFS_TYPE_CRYPTO_STATE:
-            return "Per-file encryption state";
-        case APFS_TYPE_FILE_EXTENT:
-            return "Physical extent record for a file";
-        case APFS_TYPE_DIR_REC:
-            return "Directory entry";
-        case APFS_TYPE_DIR_STATS:
-            return "Directory information/statistics";
-        case APFS_TYPE_SNAP_NAME:
-            return "Snapshot name";
-        case APFS_TYPE_SIBLING_MAP:
-            return "Sibling map (mapping from hard link to inode)";
-        case APFS_TYPE_INVALID:
-            return "Invalid type";
-        default:
-            return "Unknown type";
+        case APFS_TYPE_SNAP_METADATA:   return "Snapshot metadata";
+        case APFS_TYPE_EXTENT:          return "Physical extent record";
+        case APFS_TYPE_INODE:           return "Inode";
+        case APFS_TYPE_XATTR:           return "Extended attribute";
+        case APFS_TYPE_SIBLING_LINK:    return "Sibling link (mapping from an inode to hard links that target it)";
+        case APFS_TYPE_DSTREAM_ID:      return "Data stream";
+        case APFS_TYPE_CRYPTO_STATE:    return "Per-file encryption state";
+        case APFS_TYPE_FILE_EXTENT:     return "Physical extent record for a file";
+        case APFS_TYPE_DIR_REC:         return "Directory entry";
+        case APFS_TYPE_DIR_STATS:       return "Directory information/statistics";
+        case APFS_TYPE_SNAP_NAME:       return "Snapshot name";
+        case APFS_TYPE_SIBLING_MAP:     return "Sibling map (mapping from hard link to inode)";
+        case APFS_TYPE_INVALID:         return "Invalid type";
+        default:                        return "Unknown type";
     }
 }
 
@@ -87,203 +77,62 @@ void print_j_inode_key(j_inode_key_t* key) {
 
 char* j_inode_mode_to_string(apfs_mode_t mode) {
     switch (mode & S_IFMT) {
-        case S_IFIFO:
-            return "Named pipe (FIFO / queue)";
-        case S_IFCHR:
-            return "Character-special file";
-        case S_IFDIR:
-            return "Directory";
-        case S_IFBLK:
-            return "Block-special file";
-        case S_IFREG:
-            return "Regular file";
-        case S_IFLNK:
-            return "Symbolic link";
-        case S_IFSOCK:
-            return "Socket";
-        case S_IFWHT:
-            return "Whiteout";
-        default:
-            return "(unrecognised mode)";
+        case S_IFIFO:   return "Named pipe (FIFO / queue)";
+        case S_IFCHR:   return "Character-special file";
+        case S_IFDIR:   return "Directory";
+        case S_IFBLK:   return "Block-special file";
+        case S_IFREG:   return "Regular file";
+        case S_IFLNK:   return "Symbolic link";
+        case S_IFSOCK:  return "Socket";
+        case S_IFWHT:   return "Whiteout";
+        default:        return "(unrecognised mode)";
     }
 }
 
 char* get_j_inode_internal_flags_string(uint64_t internal_flags) {
-    // String to use if no flags are set    
-    char* default_string = "- No internal flags are set.\n";
-    size_t default_string_len = strlen(default_string);
-    
-    const int NUM_FLAGS = 23;
-    
-    uint64_t flag_constants[] = {
-        INODE_IS_APFS_PRIVATE,
-        INODE_MAINTAIN_DIR_STATS,
-        INODE_DIR_STATS_ORIGIN,
-        INODE_PROT_CLASS_EXPLICIT,
-        INODE_WAS_CLONED,
-        INODE_FLAG_UNUSED,
-        INODE_HAS_SECURITY_EA,
-        INODE_BEING_TRUNCATED,
-        INODE_HAS_FINDER_INFO,
-        INODE_IS_SPARSE,
-        INODE_WAS_EVER_CLONED,
-        INODE_ACTIVE_FILE_TRIMMED,
-        INODE_PINNED_TO_MAIN,
-        INODE_PINNED_TO_TIER2,
-        INODE_HAS_RSRC_FORK,
-        INODE_NO_RSRC_FORK,
-        INODE_ALLOCATION_SPILLEDOVER,
-        INODE_FAST_PROMOTE,
-        INODE_HAS_UNCOMPRESSED_SIZE,
-        INODE_IS_PURGEABLE,
-        INODE_WANTS_TO_BE_PURGEABLE,
-        INODE_IS_SYNC_ROOT,
-        INODE_SNAPSHOT_COW_EXEMPTION,
+    enum_string_mapping_t flags[] = {
+        { INODE_IS_APFS_PRIVATE,            "Private flag (0x1) used by an APFS implementation --- this inode is not considered part of the file-system" },
+        { INODE_MAINTAIN_DIR_STATS,         "MAINTAIN_DIR_STATS: Tracks the size of all its children" },
+        { INODE_DIR_STATS_ORIGIN,           "The MAINTAIN_DIR_STATS flag is set explicitly (not due to inheritance)" },
+        { INODE_PROT_CLASS_EXPLICIT,        "Protection class was explicitly set on creation" },
+        { INODE_WAS_CLONED,                 "Created by cloning another inode" },
+        { INODE_FLAG_UNUSED,                "Reserved/unused (0x20)" },
+        { INODE_HAS_SECURITY_EA,            "Has an ACL (access control list, i.e. a security-based extended attribute)" },
+        { INODE_BEING_TRUNCATED,            "Truncation was in progress, but a crash occurred" },
+        { INODE_HAS_FINDER_INFO,            "Has a 'Finder info' extended field/attribute" },
+        { INODE_IS_SPARSE,                  "Is sparse (i.e. has a sparse byte count extended field/attribute)" },
+        { INODE_WAS_EVER_CLONED,            "Cloned at least once" },
+        { INODE_ACTIVE_FILE_TRIMMED,        "Is a trimmed overprovisioning file" },
+        { INODE_PINNED_TO_MAIN,             "Fusion drive: file content is pinned to main storage device" },
+        { INODE_PINNED_TO_TIER2,            "Fusion drive: file content is pinned to secondary storage device" },
+        { INODE_HAS_RSRC_FORK,              "Has a resource fork" },
+        { INODE_NO_RSRC_FORK,               "Has no resource fork" },
+        { INODE_ALLOCATION_SPILLEDOVER,     "Fusion drive: file content spilled over from preferred storage tier/device" },
+        { INODE_FAST_PROMOTE,               "Scheduled for promotion from slow storage to fast storage" },
+        { INODE_HAS_UNCOMPRESSED_SIZE,      "Uncompressed size is stored in the inode" },
+        { INODE_IS_PURGEABLE,               "Will be deleted at the next purge" },
+        { INODE_WANTS_TO_BE_PURGEABLE,      "Should become purgeable when its link count drops to 1" },
+        { INODE_IS_SYNC_ROOT,               "Is the root of a sync hierarchy for `fileproviderd`" },
+        { INODE_SNAPSHOT_COW_EXEMPTION,     "Exempt from copy-on-write behavior if the data is part of a snapshot" },
     };
 
-    char* flag_strings[] = {
-        "Private flag (0x1) used by an APFS implementation --- this inode is not considered part of the file-system",
-        "MAINTAIN_DIR_STATS: Tracks the size of all its children",
-        "The MAINTAIN_DIR_STATS flag is set explicitly (not due to inheritance)",
-        "Protection class was explicitly set on creation",
-        "Created by cloning another inode",
-        "Reserved/unused (0x20)",
-        "Has an ACL (access control list, i.e. a security-based extended attribute)",
-        "Truncation was in progress, but a crash occurred",
-        "Has a 'Finder info' extended field/attribute",
-        "Is sparse (i.e. has a sparse byte count extended field/attribute)",
-        "Cloned at least once",
-        "Is a trimmed overprovisioning file",
-        "Fusion drive: file content is pinned to main storage device",
-        "Fusion drive: file content is pinned to secondary storage device",
-        "Has a resource fork",
-        "Has no resource fork",
-        "Fusion drive: file content spilled over from preferred storage tier/device",
-        "Scheduled for promotion from slow storage to fast storage",
-        "Uncompressed size is stored in the inode",
-        "Will be deleted at the next purge",
-        "Should become purgeable when its link count drops to 1",
-        "Is the root of a sync hierarchy for `fileproviderd`",
-        "Exempt from copy-on-write behavior if the data is part of a snapshot",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Account for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_j_inode_internal_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (internal_flags & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), internal_flags, false);
 }
 
 char* get_j_inode_bsd_flags_string(uint32_t bsd_flags) {
-    // String to use if no flags are set    
-    char* no_flags_string = "- No internal flags are set.\n";
-    size_t no_flags_string_len = strlen(no_flags_string);
-    
-    const int NUM_FLAGS = 9;
-    
-    uint64_t flag_constants[] = {
-        UF_NODUMP,
-        UF_IMMUTABLE,
-        UF_APPEND,
-        UF_OPAQUE,
-        UF_HIDDEN,
-        SF_ARCHIVED,
-        SF_IMMUTABLE,
-        SF_APPEND,
-        SF_DATALESS,
+    enum_string_mapping_t flags[] = {
+        { UF_NODUMP,        "Do not dump the file" },
+        { UF_IMMUTABLE,     "File may not be changed" },
+        { UF_APPEND,        "File may only be appended to" },
+        { UF_OPAQUE,        "Directory is opaque when viewd through a union stack" },
+        { UF_HIDDEN,        "File/directory is not intended to be displayed to the user" },
+        { SF_ARCHIVED,      "File has been archived" },
+        { SF_IMMUTABLE,     "File may not be changed" },
+        { SF_APPEND,        "File may only be appended to" },
+        { SF_DATALESS,      "SF_DATALESSFAULT: Dataless placeholder --- see chflags(2) and getiopolicy_np(3)" },
     };
 
-    char* flag_strings[] = {
-        "Do not dump the file",
-        "File may not be changed",
-        "File may only be appended to",
-        "Directory is opaque when viewd through a union stack",
-        "File/directory is not intended to be displayed to the user",
-        "File has been archived",
-        "File may not be changed",
-        "File may only be appended to",
-        "SF_DATALESSFAULT: Dataless placeholder --- see chflags(2) and getiopolicy_np(3)"
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < no_flags_string_len) {
-        max_mem_required = no_flags_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_j_inode_bsd_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (bsd_flags & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, no_flags_string, no_flags_string_len);
-        cursor += no_flags_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), bsd_flags, false);
 }
 
 void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {
@@ -372,51 +221,32 @@ void print_j_drec_hashed_key(j_drec_hashed_key_t* key) {
 
 char* drec_val_to_type_string(j_drec_val_t* val) {
     switch (val->flags & DREC_TYPE_MASK) {
-        case DT_UNKNOWN:
-            return "Unknown";
-        case DT_FIFO:
-            return "Named pipe (FIFO / queue)";
-        case DT_CHR:
-            return "Character-special file";
-        case DT_DIR:
-            return "Directory";
-        case DT_BLK:
-            return "Block-special file";
-        case DT_REG:
-            return "Regular file";
-        case DT_LNK:
-            return "Symbolic link";
-        case DT_SOCK:
-            return "Socket";
-        case DT_WHT:
-            return "Whiteout";
-        default:
-            return "Unrecognised type";
+        case DT_UNKNOWN:    return "Unknown";
+        case DT_FIFO:       return "Named pipe (FIFO / queue)";
+        case DT_CHR:        return "Character-special file";
+        case DT_DIR:        return "Directory";
+        case DT_BLK:        return "Block-special file";
+        case DT_REG:        return "Regular file";
+        case DT_LNK:        return "Symbolic link";
+        case DT_SOCK:       return "Socket";
+        case DT_WHT:        return "Whiteout";
+        default:            return "Unrecognised type";
     }
 }
 
+// TODO: Maybe delete function, might be unused as of v0.2
 char* drec_val_to_short_type_string(j_drec_val_t* val) {
     switch (val->flags & DREC_TYPE_MASK) {
-        case DT_UNKNOWN:
-            return "Unknown";
-        case DT_FIFO:
-            return "FIFO---";
-        case DT_CHR:
-            return "ChrSpcl";
-        case DT_DIR:
-            return "Dirctry";
-        case DT_BLK:
-            return "BlkSpcl";
-        case DT_REG:
-            return "RegFile";
-        case DT_LNK:
-            return "Symlink";
-        case DT_SOCK:
-            return "Socket-";
-        case DT_WHT:
-            return "Whteout";
-        default:
-            return "Unrecog";
+        case DT_UNKNOWN:    return "Unknown";
+        case DT_FIFO:       return "FIFO---";
+        case DT_CHR:        return "ChrSpcl";
+        case DT_DIR:        return "Dirctry";
+        case DT_BLK:        return "BlkSpcl";
+        case DT_REG:        return "RegFile";
+        case DT_LNK:        return "Symlink";
+        case DT_SOCK:       return "Socket-";
+        case DT_WHT:        return "Whteout";
+        default:            return "Unrecog";
     }
 }
 

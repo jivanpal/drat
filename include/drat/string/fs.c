@@ -12,6 +12,9 @@
 #include <string.h>
 #include <time.h>
 
+#include <drat/asize.h>
+
+#include <drat/string/common.h>
 #include <drat/string/object.h>
 
 /**
@@ -25,70 +28,15 @@
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_features_string(apfs_superblock_t* apsb) {
-    // String to use if no flags are set
-    char* default_string = "- No volume feature flags are set.\n";
-    size_t default_string_len = strlen(default_string);
-    
-    const int NUM_FLAGS = 5;
-    
-    uint64_t flag_constants[] = {
-        APFS_FEATURE_DEFRAG_PRERELEASE,
-        APFS_FEATURE_HARDLINK_MAP_RECORDS,
-        APFS_FEATURE_DEFRAG,
-        APFS_FEATURE_STRICTATIME,
-        APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE,
+    enum_string_mapping_t flags[] = {
+        { APFS_FEATURE_DEFRAG_PRERELEASE,           "Reserved --- To avoid data corruption, this flag must not be set; this flag enabled a prerelease version of the defragmentation system in macOS 10.13 versions. Itʼs ignored by macOS 10.13.6 and later." },
+        { APFS_FEATURE_HARDLINK_MAP_RECORDS,        "This volume has hardlink map records." },
+        { APFS_FEATURE_DEFRAG,                      "Defragmentation is supported." },
+        { APFS_FEATURE_STRICTATIME,                 "File access times are updated every time a file is read." },
+        { APFS_FEATURE_VOLGRP_SYSTEM_INO_SPACE,     "This volume supports mounting a system and data volume as a single user-visible volume." },
     };
 
-    char* flag_strings[] = {
-        "Reserved --- To avoid data corruption, this flag must not be set; this flag enabled a prerelease version of the defragmentation system in macOS 10.13 versions. Itʼs ignored by macOS 10.13.6 and later.",
-        "This volume has hardlink map records.",
-        "Defragmentation is supported.",
-        "File access times are updated every time a file is read.",
-        "This volume supports mounting a system and data volume as a single user-visible volume.",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_apfs_features_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (apsb->apfs_features & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), apsb->apfs_features, false);
 }
 
 /**
@@ -102,60 +50,11 @@ char* get_apfs_features_string(apfs_superblock_t* apsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_readonly_compatible_features_string(apfs_superblock_t* apsb) {
-    // String to use if no flags are set
-    char* default_string = "- No read-only compatible volume feature flags are set.\n";
-    size_t default_string_len = strlen(default_string);
-    
-    const int NUM_FLAGS = 0;
-    uint64_t flag_constants[] = {
-        // empty
-    };
-    char* flag_strings[] = {
+    enum_string_mapping_t flags[] = {
         // empty
     };
 
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_apfs_readonly_compatible_features_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (apsb->apfs_readonly_compatible_features & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), apsb->apfs_readonly_compatible_features, false);
 }
 
 /**
@@ -169,74 +68,17 @@ char* get_apfs_readonly_compatible_features_string(apfs_superblock_t* apsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_incompatible_features_string(apfs_superblock_t* apsb) {
-    // String to use if no flags are set
-    char* default_string = "- No backward-incompatible volume feature flags are set.\n";
-    size_t default_string_len = strlen(default_string);
-    
-    const int NUM_FLAGS = 7;
-
-    uint64_t flag_constants[] = {
-        APFS_INCOMPAT_CASE_INSENSITIVE,
-        APFS_INCOMPAT_DATALESS_SNAPS,
-        APFS_INCOMPAT_ENC_ROLLED,
-        APFS_INCOMPAT_NORMALIZATION_INSENSITIVE,
-        APFS_INCOMPAT_INCOMPLETE_RESTORE,
-        APFS_INCOMPAT_SEALED_VOLUME,
-        APFS_INCOMPAT_RESERVED_40,
+    enum_string_mapping_t flags[] = {
+        { APFS_INCOMPAT_CASE_INSENSITIVE,           "Filenames on this volume are case-insensitive." },
+        { APFS_INCOMPAT_DATALESS_SNAPS,             "At least one snapshot with no data exists for this volume." },
+        { APFS_INCOMPAT_ENC_ROLLED,                 "This volume's encryption has changed keys at least once." },
+        { APFS_INCOMPAT_NORMALIZATION_INSENSITIVE,  "Filenames on this volume are normalization insensitive." },
+        { APFS_INCOMPAT_INCOMPLETE_RESTORE,         "This volume is being restored, or a restore operation to this volume was uncleanly aborted." },
+        { APFS_INCOMPAT_SEALED_VOLUME,              "This volume is sealed (cannot be modified)." },
+        { APFS_INCOMPAT_RESERVED_40,                "Reserved flag (0x40)." },
     };
 
-    char* flag_strings[] = {
-        "Filenames on this volume are case-insensitive.",
-        "At least one snapshot with no data exists for this volume.",
-        "This volume's encryption has changed keys at least once.",
-        "Filenames on this volume are normalization insensitive.",
-        "This volume is being restored, or a restore operation to this volume was uncleanly aborted.",
-        "This volume is sealed (cannot be modified).",
-        "Reserved flag (0x40).",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_apfs_incompatible_features_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (apsb->apfs_incompatible_features & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), apsb->apfs_incompatible_features, false);
 }
 
 /**
@@ -250,78 +92,19 @@ char* get_apfs_incompatible_features_string(apfs_superblock_t* apsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
-    // String to use if no flags are set
-    char* default_string = "- No flags are set.\n";
-    size_t default_string_len = strlen(default_string);
-    
-    const int NUM_FLAGS = 9;
-
-    uint64_t flag_constants[] = {
-        APFS_FS_UNENCRYPTED,
-        APFS_FS_RESERVED_2,
-        APFS_FS_RESERVED_4,
-        APFS_FS_ONEKEY,
-        APFS_FS_SPILLEDOVER,
-        APFS_FS_RUN_SPILLOVER_CLEANER,
-        APFS_FS_ALWAYS_CHECK_EXTENTREF,
-        APFS_FS_RESERVED_80,
-        APFS_FS_RESERVED_100,
-    };
-    
-    char* flag_strings[] = {
-        "Volume is unencrypted.",
-        "Reserved flag (0x2).",
-        "Reserved flag (0x4).",
-        "Single VEK (volume encryption key) for all files in this volume.",
-        "Volume has run out of allocated space on SSD, so has spilled over to other drives.",
-        "Volume has spilled over and spillover cleaner must be run.",
-        "When deciding whether to overwrite a file extent, always consult the extent reference tree.",
-        "Reserved flag (0x80).",
-        "Reserved flag (0x100).",
+    enum_string_mapping_t flags[] = {
+        { APFS_FS_UNENCRYPTED,              "Volume is unencrypted." },
+        { APFS_FS_RESERVED_2,               "Reserved flag (0x2)." },
+        { APFS_FS_RESERVED_4,               "Reserved flag (0x4)." },
+        { APFS_FS_ONEKEY,                   "Single VEK (volume encryption key) for all files in this volume." },
+        { APFS_FS_SPILLEDOVER,              "Volume has run out of allocated space on SSD, so has spilled over to other drives." },
+        { APFS_FS_RUN_SPILLOVER_CLEANER,    "Volume has spilled over and spillover cleaner must be run." },
+        { APFS_FS_ALWAYS_CHECK_EXTENTREF,   "When deciding whether to overwrite a file extent, always consult the extent reference tree." },
+        { APFS_FS_RESERVED_80,              "Reserved flag (0x80)." },
+        { APFS_FS_RESERVED_100,             "Reserved flag (0x100)." },
     };
 
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < default_string_len) {
-        max_mem_required = default_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_apfs_fs_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (apsb->apfs_fs_flags & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, default_string, default_string_len);
-        cursor += default_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), apsb->apfs_fs_flags, false);
 }
 
 /**
@@ -335,86 +118,28 @@ char* get_apfs_fs_flags_string(apfs_superblock_t* apsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_apfs_role_string(apfs_superblock_t* apsb) {
-    // String to use if no flags are set
-    char* default_string = "(unknown role) (role field value %#" PRIx64 ")";
-    
-    const int NUM_ROLES = 18;
-    uint64_t role_constants[] = {
-        APFS_VOL_ROLE_NONE,
-        APFS_VOL_ROLE_SYSTEM,
-        APFS_VOL_ROLE_USER,
-        APFS_VOL_ROLE_RECOVERY,
-        APFS_VOL_ROLE_VM,
-        APFS_VOL_ROLE_PREBOOT,
-        APFS_VOL_ROLE_INSTALLER,
-        APFS_VOL_ROLE_DATA,
-        APFS_VOL_ROLE_BASEBAND,
-        APFS_VOL_ROLE_UPDATE,
-        APFS_VOL_ROLE_XART,
-        APFS_VOL_ROLE_HARDWARE,
-        APFS_VOL_ROLE_BACKUP,
-        APFS_VOL_ROLE_RESERVED_7,
-        APFS_VOL_ROLE_RESERVED_8,
-        APFS_VOL_ROLE_ENTERPRISE,
-        APFS_VOL_ROLE_RESERVED_10,
-        APFS_VOL_ROLE_PRELOGIN,
-    };
-    char* role_strings[] = {
-        "(no role)",
-        "System (contains a root directory for the system)",
-        "User (contains users' home directories)",
-        "Recovery (contains a recovery system)",
-        "Virtual memory (used as swap space for virtual memory)",
-        "Preboot (contains files needed to boot from an encrypted volumes)",
-        "Installer (used by the OS installer)",
-        "Data (contains mutable data)",
-        "Baseband (used by the radio firmware)",
-        "Update (used by the software update mechanism)",
-        "xART (used to manage OS access to secure user data",
-        "Hardware (used for firmware data)",
-        "Backup (used by Time Machine to store backups)",
-        "Reserved role 7 (Sidecar?) (role field value 0x1c0)",
-        "Reserved role 8 (role field value 0x200)",
-        "Enterprise (used to store enterprise-managed data)",
-        "Reserved role 10 (role field value 0x280)",
-        "Pre-login (used to store system data used before login)",
+    enum_string_mapping_t roles[] = {
+        { APFS_VOL_ROLE_NONE,           "(no role)" },
+        { APFS_VOL_ROLE_SYSTEM,         "System (contains a root directory for the system)" },
+        { APFS_VOL_ROLE_USER,           "User (contains users' home directories)" },
+        { APFS_VOL_ROLE_RECOVERY,       "Recovery (contains a recovery system)" },
+        { APFS_VOL_ROLE_VM,             "Virtual memory (used as swap space for virtual memory)" },
+        { APFS_VOL_ROLE_PREBOOT,        "Preboot (contains files needed to boot from an encrypted volumes)" },
+        { APFS_VOL_ROLE_INSTALLER,      "Installer (used by the OS installer)" },
+        { APFS_VOL_ROLE_DATA,           "Data (contains mutable data)" },
+        { APFS_VOL_ROLE_BASEBAND,       "Baseband (used by the radio firmware)" },
+        { APFS_VOL_ROLE_UPDATE,         "Update (used by the software update mechanism)" },
+        { APFS_VOL_ROLE_XART,           "xART (used to manage OS access to secure user data" },
+        { APFS_VOL_ROLE_HARDWARE,       "Hardware (used for firmware data)" },
+        { APFS_VOL_ROLE_BACKUP,         "Backup (used by Time Machine to store backups)" },
+        { APFS_VOL_ROLE_RESERVED_7,     "Reserved role 7 (Sidecar?) (role field value 0x1c0)" },
+        { APFS_VOL_ROLE_RESERVED_8,     "Reserved role 8 (role field value 0x200)" },
+        { APFS_VOL_ROLE_ENTERPRISE,     "Enterprise (used to store enterprise-managed data)" },
+        { APFS_VOL_ROLE_RESERVED_10,    "Reserved role 10 (role field value 0x280)" },
+        { APFS_VOL_ROLE_PRELOGIN,       "Pre-login (used to store system data used before login)" },
     };
 
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = strlen(default_string) + 1;   // `+1` accounts for format specifier "%#" PRIx64 "" becoming up to 6 characters
-    for (int i = 0; i < NUM_ROLES; i++) {
-        size_t role_string_length = strlen(role_strings[i]);
-        if (max_mem_required < role_string_length) {
-            max_mem_required = role_string_length;
-        }
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_apfs_role_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    // Make `result_string` an empty string so that we can easily test the
-    // case that no role matches.
-    *result_string = '\0';
-
-    for (int i = 0; i < NUM_ROLES; i++) {
-        if (apsb->apfs_role == role_constants[i]) {
-            memcpy(result_string, role_strings[i], strlen(role_strings[i]) + 1);
-            break;
-        }
-    }
-
-    // If no role matches, use the default string.
-    if (strlen(result_string) == 0) {
-        snprintf(result_string, max_mem_required, default_string, apsb->apfs_role);
-    }
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_single_enum_string(roles, ARRAY_SIZE(roles), apsb->apfs_role);
 }
 
 void print_apfs_modified_by(apfs_modified_by_t* data) {

@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <drat/asize.h>
+
+#include <drat/string/common.h>
 #include <drat/string/object.h>
 
 /**
@@ -25,64 +28,12 @@
  *      this pointer when it is no longer needed.
  */
 char* get_nx_features_string(nx_superblock_t* nxsb) {
-    // String to use if no flags are set
-    char* no_flags_string = "- No feature flags are set.\n";
-    size_t no_flags_string_len = strlen(no_flags_string);
-    
-    const int NUM_FLAGS = 2;
-    
-    uint64_t flag_constants[] = {
-        NX_FEATURE_DEFRAG,
-        NX_FEATURE_LCFD,
+    enum_string_mapping_t flags[] = {
+        { NX_FEATURE_DEFRAG,    "The volumes in this container support defragmentation." },
+        { NX_FEATURE_LCFD,      "This container is using low-capacity Fusion Drive mode." },
     };
 
-    char* flag_strings[] = {
-        "The volumes in this container support defragmentation.",
-        "This container is using low-capacity Fusion Drive mode.",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < no_flags_string_len) {
-        max_mem_required = no_flags_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_nx_features_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (nxsb->nx_features & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, no_flags_string, no_flags_string_len);
-        cursor += no_flags_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), nxsb->nx_features, false);
 }
 
 /**
@@ -96,60 +47,11 @@ char* get_nx_features_string(nx_superblock_t* nxsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_nx_readonly_compatible_features_string(nx_superblock_t* nxsb) {
-    // String to use if no flags are set
-    char* no_flags_string = "- No read-only compatible feature flags are set.\n";
-    size_t no_flags_string_len = strlen(no_flags_string);
-    
-    const int NUM_FLAGS = 0;
-    uint64_t flag_constants[] = {
-        // empty
-    };
-    char* flag_strings[] = {
-        // empty
+    enum_string_mapping_t flags[] = {
+        // empty        
     };
 
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < no_flags_string_len) {
-        max_mem_required = no_flags_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_nx_readonly_compatible_features_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (nxsb->nx_readonly_compatible_features & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, no_flags_string, no_flags_string_len);
-        cursor += no_flags_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), nxsb->nx_readonly_compatible_features, false);
 }
 
 /**
@@ -163,66 +65,13 @@ char* get_nx_readonly_compatible_features_string(nx_superblock_t* nxsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_nx_incompatible_features_string(nx_superblock_t* nxsb) {
-    // String to use if no flags are set    
-    char* no_flags_string = "- No backward-incompatible feature flags are set.\n";
-    size_t no_flags_string_len = strlen(no_flags_string);
-    
-    const int NUM_FLAGS = 3;
-    
-    uint64_t flag_constants[] = {
-        NX_INCOMPAT_VERSION1,
-        NX_INCOMPAT_VERSION2,
-        NX_INCOMPAT_FUSION,
+    enum_string_mapping_t flags[] = {
+        { NX_INCOMPAT_VERSION1,     "This container uses APFS version 1, as implemented in macOS 10.12." },
+        { NX_INCOMPAT_VERSION2,     "This container uses APFS version 2, as implemented in macOS 10.13 and iOS 10.3." },
+        { NX_INCOMPAT_FUSION,       "This container supports Fusion Drives." },
     };
 
-    char* flag_strings[] = {
-        "This container uses APFS version 1, as implemented in macOS 10.12.",
-        "This container uses APFS version 2, as implemented in macOS 10.13 and iOS 10.3.",
-        "This container supports Fusion Drives.",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < no_flags_string_len) {
-        max_mem_required = no_flags_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_nx_incompatible_features_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (nxsb->nx_features & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, no_flags_string, no_flags_string_len);
-        cursor += no_flags_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), nxsb->nx_incompatible_features, false);
 }
 
 /**
@@ -236,66 +85,13 @@ char* get_nx_incompatible_features_string(nx_superblock_t* nxsb) {
  *      this pointer when it is no longer needed.
  */
 char* get_nx_flags_string(nx_superblock_t* nxsb) {
-    // String to use if no flags are set    
-    char* no_flags_string = "- No other flags are set.\n";
-    size_t no_flags_string_len = strlen(no_flags_string);
-    
-    const int NUM_FLAGS = 3;
-    
-    uint64_t flag_constants[] = {
-        NX_RESERVED_1,
-        NX_RESERVED_2,
-        NX_CRYPTO_SW,
+    enum_string_mapping_t flags[] = {
+        { NX_RESERVED_1,    "Reserved flag 1" },
+        { NX_RESERVED_2,    "Reserved flag 2" },
+        { NX_CRYPTO_SW,     "This container uses software cryptography." },
     };
 
-    char* flag_strings[] = {
-        "Reserved flag 1",
-        "Reserved flag 2",
-        "This container uses software cryptography.",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < no_flags_string_len) {
-        max_mem_required = no_flags_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_nx_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (nxsb->nx_features & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, no_flags_string, no_flags_string_len);
-        cursor += no_flags_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), nxsb->nx_flags, false);
 }
 
 /**
@@ -426,62 +222,11 @@ void print_checkpoint_mapping(checkpoint_mapping_t* cpm) {
  *      this pointer when it is no longer needed.
  */
 char* get_cpm_flags_string(checkpoint_map_phys_t* cpm) {
-    // String to use if no flags are set    
-    char* no_flags_string = "- No flags are set.\n";
-    size_t no_flags_string_len = strlen(no_flags_string);
-    
-    const int NUM_FLAGS = 1;
-    
-    uint64_t flag_constants[] = {
-        CHECKPOINT_MAP_LAST,
+    enum_string_mapping_t flags[] = {
+        { CHECKPOINT_MAP_LAST,  "Last checkpoint-mapping block in the corresponding checkpoint." },
     };
 
-    char* flag_strings[] = {
-        "Last checkpoint-mapping block in the corresponding checkpoint.",
-    };
-
-    // Allocate sufficient memory for the result string
-    size_t max_mem_required = 0;
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        max_mem_required += strlen(flag_strings[i]) + 3;
-        // `+ 3` accounts for prepending "- " and appending "\n" to each string
-    }
-    if (max_mem_required < no_flags_string_len) {
-        max_mem_required = no_flags_string_len;
-    }
-    max_mem_required++; // Make room for terminating NULL byte
-
-    char* result_string = malloc(max_mem_required);
-    if (!result_string) {
-        fprintf(stderr, "\nABORT: get_cpm_flags_string: Could not allocate sufficient memory for `result_string`.\n");
-        exit(-1);
-    }
-
-    char* cursor = result_string;
-
-    // Go through possible flags, adding corresponding string to result if
-    // that flag is set.
-    for (int i = 0; i < NUM_FLAGS; i++) {
-        if (cpm->cpm_flags & flag_constants[i]) {
-            *cursor++ = '-';
-            *cursor++ = ' ';
-            memcpy(cursor, flag_strings[i], strlen(flag_strings[i]));
-            cursor += strlen(flag_strings[i]);
-            *cursor++ = '\n';
-        }
-    }
-
-    if (cursor == result_string) {
-        // No strings were added, so it must be that no flags are set.
-        memcpy(cursor, no_flags_string, no_flags_string_len);
-        cursor += no_flags_string_len;
-    }
-
-    *cursor = '\0';
-
-    // Free up excess allocated memory.
-    result_string = realloc(result_string, strlen(result_string) + 1);
-    return result_string;
+    return get_flags_enum_string(flags, ARRAY_SIZE(flags), cpm->cpm_flags, false);
 }
 
 /**
@@ -501,7 +246,6 @@ void print_checkpoint_map_phys(checkpoint_map_phys_t* cpm) {
     free(flags_string);
 
     printf("Number of mappings: %u\n",  cpm->cpm_count);
-    
 }
 
 /**
