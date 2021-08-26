@@ -42,6 +42,7 @@
 #include <apfs/xf.h>
 
 #include <drat/asize.h>
+#include <drat/time.h>
 
 #include <drat/string/common.h>
 
@@ -252,13 +253,7 @@ char* drec_val_to_short_type_string(j_drec_val_t* val) {
 
 void print_j_drec_val(j_drec_val_t* val, bool has_xfields) {
     printf("Dentry Virtual OID:     0x%" PRIx64 "\n", val->file_id);
-
-    // timestamp converted from nanoseconds since
-    // Unix epoch to seconds since Unix epoch.
-    // Newline '\n' is added by result of `ctime()`.
-    time_t timestamp = val->date_added / 1000000000;
-    printf("Time added:             %s",    ctime(&timestamp));
-
+    printf("Time added:             %s",    apfs_timestamp_to_string(val->date_added));
     printf("Dentry type:            %s\n",  drec_val_to_type_string(val));
 
     printf("No. extended fields:    ");

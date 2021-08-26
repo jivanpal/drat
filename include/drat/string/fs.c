@@ -13,6 +13,7 @@
 #include <time.h>
 
 #include <drat/asize.h>
+#include <drat/time.h>
 
 #include <drat/string/common.h>
 #include <drat/string/object.h>
@@ -144,13 +145,7 @@ char* get_apfs_role_string(apfs_superblock_t* apsb) {
 
 void print_apfs_modified_by(apfs_modified_by_t* data) {
     printf("- ID: %s\n", data->id);
-
-    // Dividing timestamps by 10^9 to convert APFS timestamps (Unix timestamps
-    // in nanoseconds) to Unix timestamps in seconds.
-    // Trailing '\n' is provided by the result of `ctime()`.
-    time_t timestamp = data->timestamp  / 1000000000;
-    printf("- Timestamp: %s", ctime(&timestamp));
-
+    printf("- Timestamp: %s", apfs_timestamp_to_string(data->timestamp));
     printf("- Last XID: %"PRIx64"\n", data->last_xid);
 }
 
@@ -201,13 +196,8 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     
     printf("\n");
 
-    // Dividing timestamps by 10^9 to convert APFS timestamps (Unix timestamps
-    // in nanoseconds) to Unix timestamps in seconds.
-    // Trailing '\n' for each line is provided by the result of `ctime()`.
-    time_t timestamp = apsb->apfs_unmount_time  / 1000000000;
-    printf("Last unmount time:                  %s",    ctime(&timestamp));
-    timestamp = apsb->apfs_last_mod_time / 1000000000;
-    printf("Last modification time:             %s",    ctime(&timestamp));
+    printf("Last unmount time:                  %s",    apfs_timestamp_to_string(apsb->apfs_unmount_time));
+    printf("Last modification time:             %s",    apfs_timestamp_to_string(apsb->apfs_last_mod_time));
     printf("\n");
 
     printf("Reserved blocks:                    %" PRIu64 " blocks\n", apsb->apfs_fs_reserve_block_count);
