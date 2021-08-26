@@ -7,9 +7,11 @@
 
 #include <sys/types.h>
 
-char*   nx_path;
-FILE*   nx;
-size_t  nx_block_size = 4096;
+#include <apfs/nx.h>    // for NX_DEFAULT_BLOCK_SIZE
+
+char*       nx_path;
+FILE*       nx;
+uint32_t    nx_block_size = NX_DEFAULT_BLOCK_SIZE;
 
 void report_fopen_error() {
     switch (errno) {

@@ -66,22 +66,32 @@ int cmd_inspect(int argc, char** argv) {
     }
     printf("OK.\nSimulating a mount of the APFS container.\n");
     
-    // Using `nx_superblock_t*`, but allocating a whole block of memory.
-    // This way, we can read the entire block and validate its checksum,
-    // but still have direct access to the fields in `nx_superblock_t`
-    // without needing to epxlicitly cast to that datatype.
+    printf("Reading container superblock at address 0x0, assuming default block size of %d bytes ... ", NX_DEFAULT_BLOCK_SIZE);
     nx_superblock_t* nxsb = malloc(nx_block_size);
     if (!nxsb) {
-        fprintf(stderr, "ABORT: Could not allocate sufficient memory to create `nxsb`.\n");
+        fprintf(stderr, "ABORT: Could not allocate sufficient memory for `nxsb`.\n");
         return -1;
     }
-
     if (read_blocks(nxsb, 0x0, 1) != 1) {
         fprintf(stderr, "ABORT: Failed to successfully read block 0x0.\n");
         return -1;
     }
 
-    printf("Validating checksum of block 0x0 ... ");
+    if (nx_block_size != nxsb->nx_block_size) {
+        nx_block_size = nxsb->nx_block_size;
+        printf("Actual block size stated in container superblock is %d bytes; re-reading block 0x0 using new block size ... ", nx_block_size);
+        nxsb = realloc(nxsb, nx_block_size);
+        if (!nxsb) {
+            fprintf(stderr, "ABORT: Could not allocate sufficient memory for `nxsb`.\n");
+            return -1;
+        }
+        if (read_blocks(nxsb, 0x0, 1) != 1) {
+            fprintf(stderr, "ABORT: Failed to successfully read block 0x0.\n");
+            return -1;
+        }
+    }
+
+    printf("validating checksum ... ");
     if (is_cksum_valid(nxsb)) {
         printf("OK.\n");
     } else {

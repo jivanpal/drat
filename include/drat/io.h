@@ -8,7 +8,7 @@
 
 extern char*    nx_path;
 extern FILE*    nx;
-extern size_t   nx_block_size;
+extern uint32_t nx_block_size;
 
 void report_fopen_error(void);
 
