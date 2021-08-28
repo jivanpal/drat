@@ -44,7 +44,7 @@ BINARIES	:= $(BIN_SRCS:$(SRCDIR)/%.c=%)
 
 ### Targets ###
 
-.DEFAULT_GOAL := binaries
+.DEFAULT_GOAL := all
 
 $(GCHS): $(OUTDIR)/%.gch: %.h
 	@echo "GCHS +++ $< +++ $@"
@@ -95,7 +95,4 @@ clean-docs:
 ##
 
 .PHONY: all
-all: headers binaries docs
-
-.PHONY: clean-all
-clean-all: clean clean-docs
+all: headers commands binaries
