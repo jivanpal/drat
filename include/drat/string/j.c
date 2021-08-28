@@ -160,12 +160,12 @@ void print_j_inode_val(j_inode_val_t* val, uint16_t val_len) {
 
     char* tmp_string = NULL;
     if (val->internal_flags & INODE_HAS_UNCOMPRESSED_SIZE) {
-        if (asprintf(tmp_string, "%" PRIu64 " bytes", val->uncompressed_size) < 0) {
+        if (asprintf(&tmp_string, "%" PRIu64 " bytes", val->uncompressed_size) < 0) {
             fprintf(stderr, "ABORT: %s:%d: call to asprintf() couldn't allocate sufficient memory", __func__, __LINE__);
             exit(-1);
         }
     } else {
-        if (asprintf(tmp_string, "(unknown)") < 0) {
+        if (asprintf(&tmp_string, "(none)") < 0) {
             fprintf(stderr, "ABORT: %s:%d: call to asprintf() couldn't allocate sufficient memory", __func__, __LINE__);
             exit(-1);
         }
