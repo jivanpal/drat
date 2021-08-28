@@ -86,10 +86,10 @@ void print_x_field(x_field_t* xfield) {
 }
 
 void print_xf_pair(xf_pair_t* xf_pair) {
-    printf("KEY:\n");
+    printf("== KEY ==\n");
     print_x_field(xf_pair);
 
-    printf("VALUE:\n");
+    printf("== VALUE ==\n");
     
     // Avoid having to rewrite this expression a bazillion times
     void* value = &(xf_pair->value);
@@ -155,5 +155,18 @@ void print_xf_pair(xf_pair_t* xf_pair) {
             printf("Unknown value type.\n");
             // TODO: Print hexdump of value based on size of field
             break;
+    }
+}
+
+/**
+ * Given an array of xfields as returned by a call to `get_xf_pairs_array()`,
+ * print a human-readable description of the data contained within.
+ * 
+ * xf_pairs_array: The array to print a description of.
+ */
+void print_xf_pairs_array(xf_pair_t** xf_pairs_array) {
+    for (xf_pair_t** cursor = xf_pairs_array; *cursor; cursor++) {
+        print_xf_pair(*cursor);
+        printf("\n");
     }
 }

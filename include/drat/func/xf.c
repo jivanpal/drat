@@ -26,17 +26,21 @@
  *      that was returned by this function to `free_xf_pairs_array()`.
  */
 xf_pair_t** get_xf_pairs_array(xf_blob_t* xfields) {
-    x_field_t* xf_keys = xfields->xf_data;
-    
-    // The array to return
-    xf_pair_t** xf_pairs_array = malloc(xfields->xf_num_exts * sizeof(xf_pair_t*));
+    /*
+     * Create the array to return. We use `calloc()` here so that early return
+     * in case of error does not cause our call to `free_xf_pairs_array()` to
+     * `free()` arbitrary pointers. In other words, it makes sure that
+     * `xf_pairs_array` is always NULL-terminated regardless of how many
+     * entries it has been populated with so far.
+     */
+    xf_pair_t** xf_pairs_array = calloc(xfields->xf_num_exts + 1, sizeof(xf_pair_t*));
     if (!xf_pairs_array) {
         fprintf(stderr, "\nERROR: %s: Couldn't create `xf_pairs_array`.\n", __func__);
         return NULL;
     }
 
-    // The start of the xfield data/values array
-    uint8_t* xf_values = xfields->xf_data + xfields->xf_num_exts * sizeof(x_field_t);
+    x_field_t* xf_keys = xfields->xf_data;
+    uint8_t* xf_values = xf_keys + xfields->xf_num_exts;
     
     /*
      * Use this value to keep track of how many bytes into `xf_values` the
@@ -53,15 +57,15 @@ xf_pair_t** get_xf_pairs_array(xf_blob_t* xfields) {
             xf_value_cursor_index += 8 - remainder;
         }
 
-        xf_pairs_array[i] = malloc(sizeof(xf_pair_t) + xf_keys[i].x_size);
+        xf_pairs_array[i] = malloc(sizeof(x_field_t) + xf_keys[i].x_size);
         if (!xf_pairs_array[i]) {
             fprintf(stderr, "\nERROR: %s: Couldn't create `xf_pairs_array[%"PRIu16"].`\n", __func__, i);
             free_xf_pairs_array(xf_pairs_array);
             return NULL;
         }
 
-        memcpy(xf_pairs_array[i],           xf_keys + i,    sizeof(x_field_t));
-        memcpy(&(xf_pairs_array[i]->value), xf_values + i,  xf_keys[i].x_size);
+        memcpy(xf_pairs_array[i],           xf_keys + i,                        sizeof(x_field_t));
+        memcpy(&(xf_pairs_array[i]->value), xf_values + xf_value_cursor_index,  xf_keys[i].x_size);
 
         xf_value_cursor_index += xf_keys[i].x_size;
     }

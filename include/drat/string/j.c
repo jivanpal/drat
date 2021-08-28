@@ -267,5 +267,15 @@ void print_j_drec_val(j_drec_val_t* val, bool has_xfields) {
 }
 
 void print_j_dir_stats_val(j_dir_stats_val_t* val) {
-    // TODO: Implement this
+    printf(
+        "Number of children:                %"PRIu64" items\n"
+        "Total size:                        %"PRIu64" bytes\n"
+        "Chained key (parent dir's FSOID):  %#"PRIx64"\n"
+        "Generation count:                  %"PRIu64" (%#"PRIx64")\n",
+
+        val->num_children,
+        val->total_size,
+        val->chained_key,
+        val->gen_count, val->gen_count
+    );
 }

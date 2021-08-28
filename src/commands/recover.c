@@ -13,7 +13,6 @@
 #include <apfs/dstream.h>
 #include <apfs/sibling.h>
 #include <apfs/snap.h>
-#include <apfs/xf.h>
 
 #include <drat/io.h>
 #include <drat/print-fs-records.h>
@@ -21,7 +20,6 @@
 #include <drat/func/boolean.h>
 #include <drat/func/cksum.h>
 #include <drat/func/btree.h>
-#include <drat/func/xf.h>
 
 #include <drat/string/object.h>
 #include <drat/string/nx.h>
@@ -29,7 +27,6 @@
 #include <drat/string/btree.h>
 #include <drat/string/fs.h>
 #include <drat/string/j.h>
-#include <drat/string/xf.h>
 
 /**
  * Print usage info for this program.
@@ -494,28 +491,6 @@ int cmd_recover(int argc, char** argv) {
     fprintf(stderr, "\nRecords for file-system object %#" PRIx64 " -- `%s` --\n", fs_oid, path_stack);
     // `fs_records` now contains the records for the item at the specified path
     print_fs_records(fs_records);
-
-    // Print out xfields contained in item's inode
-    for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
-        j_rec_t* fs_rec = *fs_rec_cursor;
-        j_key_t* hdr = fs_rec->data;
-        if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_INODE ) {
-            j_inode_val_t* inode = fs_rec->data + fs_rec->key_len;
-            xf_pair_t** xf_pairs_array = get_xf_pairs_array(inode->xfields);
-            // fwrite(inode->xfields, fs_rec->val_len - sizeof(j_inode_val_t), 1, stdout);
-            // fwrite(inode, fs_rec->val_len, 1, stdout);
-            // exit(0);
-
-            for (xf_pair_t** cursor = xf_pairs_array; *cursor; cursor++) {
-                print_xf_pair(*cursor);
-                printf("\n");
-            }
-
-            break;
-        }
-    }
-
-    exit(0);
 
     // Output content from all matching file extents
     char* buffer = malloc(nx_block_size);
