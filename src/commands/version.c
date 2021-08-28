@@ -2,7 +2,7 @@
 
 #include "../legal.h"
 
-int cmd_about(int argc, char** argv) {
+int cmd_version(int argc, char** argv) {
     if (argc != 1) {
         fprintf(stderr, "The `about` command doesn't take any arguments.\n");
         return 1;

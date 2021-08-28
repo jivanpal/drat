@@ -12,20 +12,16 @@ static void print_usage(bool is_error) {
         "Usage: drat <command>\n"
         "\n"
         "List of commands:\n"
-        "   about                   Display Drat's \"about\" info (version, copyright, warranty, license)\n"
-        "   explore-fs-tree         Explore filesystem B-tree\n"
-        "   explore-omap-tree       Explore object map B-tree\n"
-        "   inspect                 Inspect APFS partition\n"
-        "   list-raw                List directory contents or file info based on its filesystem OID\n"
-        "   list                    List directory contents or file info based on its filepath\n"
-        // "   modify                  Modify structures on disk to resolve problems\n"
-        "   read                    Read a block and display information about it\n"
-        "   recover-raw             Recover a file based on its filesystem OID\n"
-        "   recover                 Recover a file based on its filepath\n"
-        "   resolver                Check if given Virtual OIDs resolve to given Physical OIDs\n"
-        "   search-last-btree-node  Search the partition for B-tree nodes, reporting the Physical OID of the last one discovered\n"
-        "   search                  Search the partition for blocks with certain features/properties\n"
     );
+
+    for (size_t i = 0; i < ARRAY_SIZE(drat_commands); i++) {
+        fprintf(
+            is_error ? stderr : stdout,
+            "   %-22s  %s\n",
+            drat_commands[i].name,
+            drat_commands[i].description
+        );
+    }
 }
 
 int main(int argc, char** argv) {

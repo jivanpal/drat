@@ -1,4 +1,4 @@
-# Drat (formerly "APFS Tools"/`apfs-tools`)
+# Drat (formerly apfs-tools)
 
 Drat is a tool for analysing and recovering data from [APFS (Apple File System)](https://en.wikipedia.org/wiki/Apple_File_System)
 partitions. Its creation was inspired by a [personal data loss incident](https://apple.stackexchange.com/questions/373718)
@@ -25,7 +25,7 @@ releases are available on the [releases page](https://github.com/jivanpal/drat/r
 Documentation for versioned releases and as generated from the `main` branch
 [can be viewed online](https://drat.readthedocs.io/).
 
-Compilation and execution has been tested on macOS Catalina 10.15.7 (19H114) on
+Compilation and execution has been tested on macOS Catalina 10.15.7 (19H524) on
 an Intel x86-64 machine (MacBookPro9,2).
 
 ### Compiling the software
@@ -33,7 +33,7 @@ an Intel x86-64 machine (MacBookPro9,2).
 #### Requirements
 
 - `gcc` — Required because we use `__attribute__((packed))`. Tested with
-  GCC 10.2.0, installed via [Homebrew](https://brew.sh) (Homebrew GCC 10.2.0).
+  GCC 11.2.0, installed via [Homebrew](https://brew.sh) (Homebrew GCC 11.2.0).
 
 - `make` — Tested with GNU Make 3.81, as included in Xcode Command Line Tools.
 
@@ -52,13 +52,8 @@ an Intel x86-64 machine (MacBookPro9,2).
   `out` directory will be created in which the object files will be stored. The
   final binary `drat` will be stored in the project root.
 
-- Header files can be compiled with `make headers`. This is only useful to check
-  the headers for compilation errors. Compiled headers will also be stored in
-  the `out` directory.
-
 - Run `make clean` to remove the compiled binary (`drat`) and other output files
-  (`out` directory). (NOTE: This will also remove any generated documentation;
-  see *Generating the documentation* below.)
+  (`out` directory).
 
 ### Generating the documentation
 
@@ -77,17 +72,18 @@ Read the Docs theme (`sphinx_rtd_theme`) and the MyST parser (`myst-parser`).
 If/when you have Python installed, you can install the required packages all at
 once with the following: `pip install sphinx sphinx_rtd_theme myst-parser`.
 
+<!-- TODO: Use pip requirements file instead -->
+
 #### Instructions
 
 - From the project root (the directory where this `README.md` file resides):
 
-    - Run `make docs` to generate a `docs/_build` directory. The documentation
-      itself is in `docs/_build/html`; open `docs/_build/html/index.html` in
-      your browser to read the generated documentation.
+  - Run `make docs` to generate HTML documentation in `docs/_build/html`.
+    Open `docs/_build/html/index.html` in your browser to view the generated
+    documentation.
 
-    - Run `make clean` to remove the generated documentation (`docs/_build`
-      directory). (NOTE: This will also remove any compiled software; see
-      *Compiling the software* above.)
+  - Run `make clean-docs` to remove the generated documentation (`docs/_build`
+    directory).
 
 - From the `docs` directory:
 
@@ -96,5 +92,4 @@ once with the following: `pip install sphinx sphinx_rtd_theme myst-parser`.
     `make help`. You may need to install other software to generate
     documentation in these other formats.
 
-  - Run `make clean` to remove *only* the generated documentation; this will not
-    also remove any compiled softare.
+  - Run `make clean` to remove the generated documentation.

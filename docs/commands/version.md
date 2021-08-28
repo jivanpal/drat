@@ -1,21 +1,16 @@
-(command_about)=
+(command_version)=
 
-# {drat-command}`about`
+# {drat-command}`version`
 
 ## Description
 
-The {drat-command}`about` command (and its alias {drat-command}`version`)
-displays Drat's "about" info. This includes the:
-
-- version number;
-- copyright notice;
-- warranty notice; and
-- license details.
+The {drat-command}`version` command displays Drat's version number along with
+legal info (copyright notice, warranty notice, and license details).
 
 ## Example usage and output
 
 ```
-$ drat about
+$ drat version
 
 Drat version 0.2.0
 Copyright (C) 2019-2021 Jivan Pal
