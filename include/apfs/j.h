@@ -113,7 +113,7 @@ typedef struct {
     j_key_t     hdr;
 } __attribute__((packed))   j_dir_stats_key_t;
 
-/** `j_dir_stats_val` **/
+/** `j_dir_stats_val_t` **/
 
 typedef struct {
     uint64_t    num_children;

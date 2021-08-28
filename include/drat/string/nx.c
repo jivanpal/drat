@@ -16,6 +16,7 @@
 
 #include <drat/string/common.h>
 #include <drat/string/object.h>
+#include <drat/string/general.h>
 
 /**
  * Get a human-readable string that lists the optional feature flags that are
@@ -166,10 +167,10 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
     printf("Backward-incompatible features:\n%s", incompatible_features_string);
     free(incompatible_features_string);
     
-    printf("UUID:       0x%016" PRIx64 "%016" PRIx64 "\n",
-        *((uint64_t*)(nxsb->nx_uuid) + 1),
-        * (uint64_t*)(nxsb->nx_uuid)
-    );
+    printf("UUID:       ");
+    print_uuid(nxsb->nx_uuid);
+    printf("\n");
+
     printf("Next OID:                       0x%" PRIx64 "\n",  nxsb->nx_next_oid);
     printf("Next XID:                       0x%" PRIx64 "\n",  nxsb->nx_next_xid);
 
