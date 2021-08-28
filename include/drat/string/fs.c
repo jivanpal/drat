@@ -17,6 +17,7 @@
 
 #include <drat/string/common.h>
 #include <drat/string/object.h>
+#include <drat/string/general.h>
 
 /**
  * Get a human-readable string that lists the optional feature flags that are
@@ -271,10 +272,9 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("- block liberations ever made:  %" PRIu64 "\n",    apsb->apfs_total_blocks_freed);
     printf("\n");
 
-    printf("UUID:   0x%016" PRIx64 "%016" PRIx64 "\n",
-        *((uint64_t*)(apsb->apfs_vol_uuid) + 1),
-        * (uint64_t*)(apsb->apfs_vol_uuid)
-    );
+    printf("UUID:   ");
+    print_uuid(apsb->apfs_vol_uuid);
+    printf("\n");
 
     printf("Formatted by:\n");
     print_apfs_modified_by(&(apsb->apfs_formatted_by));

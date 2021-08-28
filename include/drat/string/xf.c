@@ -18,6 +18,7 @@
 #include <drat/string/common.h>
 #include <drat/string/dstream.h>
 #include <drat/string/j.h>
+#include <drat/string/general.h>
 
 /**
  * Get a human-readable string describing the type of a given xfield.
@@ -128,9 +129,10 @@ void print_xf_pair(xf_pair_t* xf_pair) {
             print_j_dir_stats_val(dir_stats);
             break;
         case INO_EXT_TYPE_FS_UUID:
-            uuid_t* uuid = value;
-            // TODO: Factor out into `print_uuid()`, see if UUIDs are printed elsewhere; factor those, too
-            printf("Filesystem UUID:    %#016"PRIx64"%016"PRIx64"\n", *(uint64_t*)(uuid+8), *(uint64_t*)uuid);
+            unsigned char* uuid = value;
+            printf("Filesystem UUID:    ");
+            print_uuid(uuid);
+            printf("\n");
             break;
         case INO_EXT_TYPE_SPARSE_BYTES:
             uint64_t* bytes = value;
