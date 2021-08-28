@@ -154,8 +154,17 @@ void print_xf_pair(xf_pair_t* xf_pair) {
         case INO_EXT_TYPE_FINDER_INFO:
         case INO_EXT_TYPE_PURGEABLE_FLAGS:
         default:
-            printf("Unknown value type.\n");
-            // TODO: Print hexdump of value based on size of field
+            printf("Value has unknown type. Hexdump:\n");
+            // Print hexdump
+            for (uint16_t i = 0; i < xf_pair->key.x_size; i++) {
+                if (i % 16 == 0) {
+                    printf("\n");
+                } else if (i % 2 == 0) {
+                    printf(" ");
+                }
+                printf("%02x", xf_pair->value[i]);
+            }
+            printf("\n");
             break;
     }
 }
