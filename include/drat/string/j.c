@@ -201,7 +201,7 @@ void print_j_inode_val(j_inode_val_t* val, uint16_t val_len) {
     printf("\n");
     free(tmp_string);
 
-    print_xf_details(val_len == sizeof(j_inode_val_t), val->xfields);
+    print_xf_details(val_len != sizeof(j_inode_val_t), val->xfields);
 }
 
 void print_j_file_extent_key(j_file_extent_key_t* key) {
@@ -268,7 +268,7 @@ void print_j_drec_val(j_drec_val_t* val, uint16_t val_len) {
     printf("Dentry Virtual OID:     0x%" PRIx64 "\n", val->file_id);
     printf("Time added:             %s",    apfs_timestamp_to_string(val->date_added));
     printf("Dentry type:            %s\n",  drec_val_to_type_string(val));
-    print_xf_details(val_len == sizeof(j_drec_val_t), val->xfields);
+    print_xf_details(val_len != sizeof(j_drec_val_t), val->xfields);
 }
 
 void print_j_dir_stats_val(j_dir_stats_val_t* val) {
