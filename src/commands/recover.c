@@ -20,6 +20,7 @@
 #include <drat/func/boolean.h>
 #include <drat/func/cksum.h>
 #include <drat/func/btree.h>
+#include <drat/func/j.h>
 
 #include <drat/string/object.h>
 #include <drat/string/nx.h>
@@ -499,10 +500,32 @@ int cmd_recover(int argc, char** argv) {
         return -1;
     }
 
-    bool found_file_extent = false;
+    // Get file size
+    uint64_t file_size = 0;
     for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
         j_rec_t* fs_rec = *fs_rec_cursor;
         j_key_t* hdr = fs_rec->data;
+
+        if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_INODE ) {
+            j_inode_val_t* inode = fs_rec->data + fs_rec->key_len;
+            file_size = get_file_size(inode, fs_rec->val_len);
+        }
+    }
+    if (file_size == 0) {
+        // Not a file, or file size couldn't be found; abort.
+        exit(-1);
+    }
+
+    // Keep track of how many more bytes we need to output
+    uint64_t bytes_remaining = file_size;
+
+    bool found_file_extent = false;
+    // Go through all the fs records
+    for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
+        j_rec_t* fs_rec = *fs_rec_cursor;
+        j_key_t* hdr = fs_rec->data;
+
+        // Go through all the extent records
         if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_FILE_EXTENT ) {
             found_file_extent = true;
             j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
@@ -517,11 +540,24 @@ int cmd_recover(int argc, char** argv) {
                     return -1;
                 }
                 
-                if (fwrite(buffer, nx_block_size, 1, stdout) != 1) {
+                uint64_t bytes_to_write = nx_block_size;
+                if (bytes_remaining < nx_block_size) {
+                    bytes_to_write = bytes_remaining;
+                }
+                if (fwrite(buffer, bytes_to_write, 1, stdout) != 1) {
                     fprintf(stderr, "\n\nEncountered an error writing block %" PRIu64 " of %" PRIu64 " to `stdout`. Exiting.\n\n", i+1, extent_len_blocks);
                     return -1;
                 }
+                bytes_remaining -= bytes_to_write;
+
+                if (bytes_remaining == 0) {
+                    break;  // Exit extent loop
+                }
             }
+        }
+
+        if (bytes_remaining == 0) {
+            break;  // Exit fs record loop
         }
     }
     if (!found_file_extent) {
