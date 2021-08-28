@@ -265,3 +265,7 @@ void print_j_drec_val(j_drec_val_t* val, bool has_xfields) {
     
     // TODO: Print actual details of extended fields/attributes
 }
+
+void print_j_dir_stats_val(j_dir_stats_val_t* val) {
+    // TODO: Implement this
+}
