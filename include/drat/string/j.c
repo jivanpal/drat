@@ -44,7 +44,24 @@
 #include <drat/asize.h>
 #include <drat/time.h>
 
+#include <drat/func/xf.h>
+
 #include <drat/string/common.h>
+#include <drat/string/xf.h>
+
+// Helper function for printing objects which have xfields
+static void print_xf_details(bool has_xfields, xf_blob_t* xfields) {
+    printf("Number of extended fields:  %u\n", has_xfields ? xfields->xf_num_exts : 0);
+    if (has_xfields) {
+        printf("Details of extended fields:\n\n");
+        xf_pair_t** xf_pairs_array = get_xf_pairs_array(xfields);
+        if (!xf_pairs_array) {
+            fprintf(stderr, "\nERROR: %s: Call to `get_xf_pairs_array()` failed.\n", __func__);
+        } else {
+            print_xf_pairs_array(xf_pairs_array);
+        }
+    }
+}
 
 char* j_key_type_to_string(uint8_t j_key_type) {
     switch (j_key_type) {
@@ -136,7 +153,7 @@ char* get_j_inode_bsd_flags_string(uint32_t bsd_flags) {
     return get_flags_enum_string(flags, ARRAY_SIZE(flags), bsd_flags, false);
 }
 
-void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {
+void print_j_inode_val(j_inode_val_t* val, uint16_t val_len) {
     printf("Parent ID:      0x%" PRIx64 "\n",  val->parent_id);
     printf("Private ID:     0x%" PRIx64 "\n",  val->private_id);
     printf("\n");
@@ -184,11 +201,7 @@ void print_j_inode_val(j_inode_val_t* val, bool has_xfields) {
     printf("\n");
     free(tmp_string);
 
-    printf("Number of extended fields:          %u\n",
-        has_xfields ? ((xf_blob_t*)(val->xfields))->xf_num_exts : 0
-    );
-    
-    // TODO: Print actual details of extended fields/attributes
+    print_xf_details(val_len == sizeof(j_inode_val_t), val->xfields);
 }
 
 void print_j_file_extent_key(j_file_extent_key_t* key) {
@@ -251,19 +264,11 @@ char* drec_val_to_short_type_string(j_drec_val_t* val) {
     }
 }
 
-void print_j_drec_val(j_drec_val_t* val, bool has_xfields) {
+void print_j_drec_val(j_drec_val_t* val, uint16_t val_len) {
     printf("Dentry Virtual OID:     0x%" PRIx64 "\n", val->file_id);
     printf("Time added:             %s",    apfs_timestamp_to_string(val->date_added));
     printf("Dentry type:            %s\n",  drec_val_to_type_string(val));
-
-    printf("No. extended fields:    ");
-    if (!has_xfields) {
-        printf("0\n");
-        return;
-    }
-    printf("%u\n", ((xf_blob_t*)(val->xfields))->xf_num_exts);
-    
-    // TODO: Print actual details of extended fields/attributes
+    print_xf_details(val_len == sizeof(j_drec_val_t), val->xfields);
 }
 
 void print_j_dir_stats_val(j_dir_stats_val_t* val) {

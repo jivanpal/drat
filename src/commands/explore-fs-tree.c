@@ -270,7 +270,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
                     j_inode_key_t* key = fs_rec->data;
                     j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
                     print_j_inode_key(key);
-                    print_j_inode_val(val, fs_rec->val_len == sizeof(j_inode_val_t));
+                    print_j_inode_val(val, fs_rec->val_len);
                 } break;
                 case APFS_TYPE_XATTR: {
                     j_xattr_key_t* key = fs_rec->data;
@@ -299,7 +299,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
                     j_drec_hashed_key_t*    key = fs_rec->data;
                     j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
                     print_j_drec_hashed_key(key);
-                    print_j_drec_val(val, fs_rec->val_len == sizeof(j_drec_val_t));
+                    print_j_drec_val(val, fs_rec->val_len);
                 } break;
                 case APFS_TYPE_DIR_STATS: {
                     j_dir_stats_key_t* key = fs_rec->data;

@@ -570,7 +570,7 @@ int cmd_inspect(int argc, char** argv) {
                         j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
                         printf("INODE");
                         // print_j_inode_key(key);
-                        // print_j_inode_val(val, fs_rec->val_len == sizeof(j_inode_val_t));
+                        // print_j_inode_val(val, fs_rec->val_len);
                     } break;
                     case APFS_TYPE_XATTR: {
                         j_xattr_key_t* key = fs_rec->data;
@@ -629,7 +629,7 @@ int cmd_inspect(int argc, char** argv) {
                             key->name
                         );
                         // print_j_drec_hashed_key(key);
-                        // print_j_drec_val(val, fs_rec->val_len == sizeof(j_drec_val_t));
+                        // print_j_drec_val(val, fs_rec->val_len);
                     } break;
                     case APFS_TYPE_DIR_STATS: {
                         j_dir_stats_key_t* key = fs_rec->data;
