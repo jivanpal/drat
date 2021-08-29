@@ -5,7 +5,8 @@ INCDIR=include
 
 ### Compiler definition ###
 CC := gcc
-CFLAGS := \
+
+override CFLAGS += \
 -std=c99 \
 -D _GNU_SOURCE \
 -Werror \
@@ -20,13 +21,13 @@ CFLAGS := \
 
 ### Linker definition ###
 LD := gcc
-LDFLAGS := # Nothing
+override LDFLAGS += # Nothing
 
 ### On macOS, include <argp.h> from Homebrew package `argp-standalone`
 ifneq ($(OS),Windows_NT)
 	ifeq ($(shell uname -s),Darwin)
-		CFLAGS  += -I/usr/local/Cellar/argp-standalone/1.3/include/
-		LDFLAGS += -L/usr/local/Cellar/argp-standalone/1.3/lib/ -largp
+		override CFLAGS  += -I/usr/local/Cellar/argp-standalone/1.3/include/
+		override LDFLAGS += -L/usr/local/Cellar/argp-standalone/1.3/lib/ -largp
 	endif
 endif
 
@@ -82,6 +83,9 @@ binaries: $(BINARIES)
 clean:
 	rm -rf $(BINARIES) $(OUTDIR)
 
+.PHONY: all
+all: headers commands binaries
+
 ##
 
 .PHONY: docs
@@ -91,8 +95,3 @@ docs:
 .PHONY: clean-docs
 clean-docs:
 	(cd docs && make clean)
-
-##
-
-.PHONY: all
-all: headers commands binaries

@@ -107,7 +107,7 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
         printf("none (spans 0 blocks)\n");
     } else {
         printf(
-            "first block %#" PRIx64 ", spans %" PRIu64 " (%#" PRIx64 ") blocks (last block %#" PRIx64 ")\n",
+            "first block %#"PRIx64", spans %"PRIu64" (%#"PRIx64") blocks (last block %#"PRIx64")\n",
             nxsb->nx_keylocker.pr_start_paddr,
             nxsb->nx_keylocker.pr_block_count,
             nxsb->nx_keylocker.pr_block_count,
@@ -120,14 +120,13 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
         printf("none (spans 0 blocks)\n");
     } else {
         printf(
-            "first block %#" PRIx64 ", spans %" PRIu64 " (%#" PRIx64 ") blocks (last block %#" PRIx64 ")\n",
+            "first block %#"PRIx64", spans %"PRIu64" (%#"PRIx64") blocks (last block %#"PRIx64")\n",
             nxsb->nx_mkb_locker.pr_start_paddr,
             nxsb->nx_mkb_locker.pr_block_count,
             nxsb->nx_mkb_locker.pr_block_count,
             nxsb->nx_mkb_locker.pr_start_paddr + nxsb->nx_mkb_locker.pr_block_count - 1
         );
     }
-
 
     char magic_string[] = {
         (char)(nxsb->nx_magic),
@@ -140,17 +139,17 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
 
     printf(
         "Latest version of Apple APFS software that mounted this container: "
-        "%" PRIu64 ".%llu.%llu.%llu.%llu\n",
+        "%"PRIu64".%"PRIu64".%"PRIu64".%"PRIu64".%"PRIu64"\n",
 
          nxsb->nx_newest_mounted_version >> 40,
-        (nxsb->nx_newest_mounted_version >> 30) & ~(~0ULL << 10),
-        (nxsb->nx_newest_mounted_version >> 20) & ~(~0ULL << 10),
-        (nxsb->nx_newest_mounted_version >> 10) & ~(~0ULL << 10),
-        (nxsb->nx_newest_mounted_version)       & ~(~0ULL << 10)
+        (nxsb->nx_newest_mounted_version >> 30) & 0x3ff,    // mask 0x3ff is lowest 10 bits
+        (nxsb->nx_newest_mounted_version >> 20) & 0x3ff,
+        (nxsb->nx_newest_mounted_version >> 10) & 0x3ff,
+        (nxsb->nx_newest_mounted_version)       & 0x3ff
     );
 
-    printf("Block size:         %u bytes\n",    nxsb->nx_block_size);
-    printf("Block count:        %" PRIu64 " (last block %#" PRIx64 ")\n",
+    printf("Block size:         %"PRIu32" bytes\n", nxsb->nx_block_size);
+    printf("Block count:        %"PRIu64" (last block %#"PRIx64")\n",
         nxsb->nx_block_count,
         nxsb->nx_block_count - 1
     );
@@ -171,14 +170,14 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
     print_uuid(nxsb->nx_uuid);
     printf("\n");
 
-    printf("Next OID:                       0x%" PRIx64 "\n",  nxsb->nx_next_oid);
-    printf("Next XID:                       0x%" PRIx64 "\n",  nxsb->nx_next_xid);
+    printf("Next OID:                       %#"PRIx64"\n",  nxsb->nx_next_oid);
+    printf("Next XID:                       %#"PRIx64"\n",  nxsb->nx_next_xid);
 
     // TODO: Maybe print `xp_desc` and `xp_data` fields.
 
-    printf("Space manager Ephemeral OID:    0x%" PRIx64 "\n",  nxsb->nx_spaceman_oid);
-    printf("Object map Physical OID:        0x%" PRIx64 "\n",  nxsb->nx_omap_oid);
-    printf("Reaper Ephemeral OID:           0x%" PRIx64 "\n",  nxsb->nx_reaper_oid);
+    printf("Space manager Ephemeral OID:    %#"PRIx64"\n",  nxsb->nx_spaceman_oid);
+    printf("Object map Physical OID:        %#"PRIx64"\n",  nxsb->nx_omap_oid);
+    printf("Reaper Ephemeral OID:           %#"PRIx64"\n",  nxsb->nx_reaper_oid);
 
     char* flags_string = get_nx_flags_string(nxsb);
     printf("Other flags:\n%s", flags_string);
@@ -197,8 +196,8 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
  * cpm:     A pointer to the checkpoint-mapping in question.
  */
 void print_checkpoint_mapping(checkpoint_mapping_t* cpm) {
-    printf("Ephemeral OID:                      0x%" PRIx64 "\n",      cpm->cpm_oid);
-    printf("Logical block address on disk:      0x%" PRIx64 "\n",      cpm->cpm_paddr);
+    printf("Ephemeral OID:                      %#"PRIx64"\n",  cpm->cpm_oid);
+    printf("Logical block address on disk:      %#"PRIx64"\n",  cpm->cpm_paddr);
 
     char* type_string = get_o_type_string(cpm->cpm_type);
     printf("Object type:                        %s\n",          type_string);
@@ -208,8 +207,8 @@ void print_checkpoint_mapping(checkpoint_mapping_t* cpm) {
     printf("Object subtype:                     %s\n",          subtype_string);
     free(subtype_string);
     
-    printf("Object size:                        %u bytes\n",    cpm->cpm_size);
-    printf("Associated volume OID (virtual):    0x%" PRIx64 "\n",      cpm->cpm_fs_oid);
+    printf("Object size:                        %"PRIu32" bytes\n", cpm->cpm_size);
+    printf("Associated volume OID (virtual):    %#"PRIx64"\n",      cpm->cpm_fs_oid);
 }
 
 /**
@@ -246,7 +245,7 @@ void print_checkpoint_map_phys(checkpoint_map_phys_t* cpm) {
     printf("Flags:\n%s",    flags_string);
     free(flags_string);
 
-    printf("Number of mappings: %u\n",  cpm->cpm_count);
+    printf("Number of mappings: %"PRIu32"\n",  cpm->cpm_count);
 }
 
 /**
