@@ -98,54 +98,60 @@ void print_xf_pair(xf_pair_t* xf_pair) {
     /*
      * xfield types whose values are of unknown data type (e.g. reserved types,
      * Finder data, purgeable flags) appear together at the bottom of this list.
+     * 
+     * NOTE: Need to enclose each case here in a block `{}` to prevent the
+     * following error when compiling on Linux: "a label can only be part of
+     * a statement and a declaration is not a statement". This practice also
+     * mitigates the possibility of names being declared multiple times in the
+     * same variable scope.
      */
     switch(xf_pair->key.x_type) {
-        case INO_EXT_TYPE_SNAP_XID:
+        case INO_EXT_TYPE_SNAP_XID: {
             xid_t* snap_xid = value;
             printf("Snapshot XID:   %#"PRIx64"\n", *snap_xid);
-            break;
-        case INO_EXT_TYPE_DELTA_TREE_OID:
+        } break;
+        case INO_EXT_TYPE_DELTA_TREE_OID: {
             oid_t* delta_tree_oid = value;
             printf("Delta tree Virtual OID: %#"PRIx64"\n", *delta_tree_oid);
-            break;
-        case INO_EXT_TYPE_DOCUMENT_ID:
+        } break;
+        case INO_EXT_TYPE_DOCUMENT_ID: {
             uint32_t* document_id = value;
             printf("Document ID:    %#"PRIx32"\n", *document_id);
-            break;
-        case INO_EXT_TYPE_NAME:
+        } break;
+        case INO_EXT_TYPE_NAME: {
             char* name = value;
             printf("Item name: %s\n", name);
-            break;
-        case INO_EXT_TYPE_PREV_FSIZE:
+        } break;
+        case INO_EXT_TYPE_PREV_FSIZE: {
             uint64_t* size = value;
             printf("Previous file size: %"PRIu64" bytes\n", *size);
-            break;
-        case INO_EXT_TYPE_DSTREAM:
+        } break;
+        case INO_EXT_TYPE_DSTREAM: {
             j_dstream_t* dstream = value;
             print_j_dstream(dstream);
-            break;
-        case INO_EXT_TYPE_DIR_STATS_KEY:
+        } break;
+        case INO_EXT_TYPE_DIR_STATS_KEY: {
             j_dir_stats_val_t* dir_stats = value;
             print_j_dir_stats_val(dir_stats);
-            break;
-        case INO_EXT_TYPE_FS_UUID:
+        } break;
+        case INO_EXT_TYPE_FS_UUID: {
             unsigned char* uuid = value;
             printf("Filesystem UUID:    ");
             print_uuid(uuid);
             printf("\n");
-            break;
-        case INO_EXT_TYPE_SPARSE_BYTES:
+        } break;
+        case INO_EXT_TYPE_SPARSE_BYTES: {
             uint64_t* bytes = value;
             printf("Number of sparse bytes: %"PRIu64" bytes\n", *bytes);
-            break;
-        case INO_EXT_TYPE_RDEV:
+        } break;
+        case INO_EXT_TYPE_RDEV: {
             uint32_t* rdev = value;
             printf("Device ID:  %#"PRIx32"\n", *rdev);
-            break;
-        case INO_EXT_TYPE_ORIG_SYNC_ROOT_ID:
+        } break;
+        case INO_EXT_TYPE_ORIG_SYNC_ROOT_ID: {
             uint64_t* inode_number = value;
             printf("Inode number:   %#"PRIx64"\n", *inode_number);
-            break;
+        } break;
 
         // xfield types whose value is of unknown type
         case INO_EXT_TYPE_RESERVED_6:
@@ -153,7 +159,7 @@ void print_xf_pair(xf_pair_t* xf_pair) {
         case INO_EXT_TYPE_RESERVED_12:
         case INO_EXT_TYPE_FINDER_INFO:
         case INO_EXT_TYPE_PURGEABLE_FLAGS:
-        default:
+        default: {
             printf("Value has unknown type. Hexdump:\n");
             // Print hexdump
             for (uint16_t i = 0; i < xf_pair->key.x_size; i++) {
@@ -165,7 +171,7 @@ void print_xf_pair(xf_pair_t* xf_pair) {
                 printf("%02x", xf_pair->value[i]);
             }
             printf("\n");
-            break;
+        } break;
     }
 }
 

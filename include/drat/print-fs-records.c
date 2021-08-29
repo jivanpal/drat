@@ -25,10 +25,16 @@ void print_fs_records(j_rec_t** fs_records) {
         fprintf(stderr, "- ");
 
         switch ( (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT ) {
-            // NOTE: Need to enclose each case in a block `{}` since the
-            // names `key` and `val` are potentially declared multiple times
-            // in this switch-statement (though in practice it is not a
-            // concern since every `case` here ends in a `break`.)
+            /*
+             * NOTE: Need to enclose each case in a block `{}` since the
+             * names `key` and `val` are potentially declared multiple times
+             * in the same variable scope (though in practice it is not a
+             * concern since every `case` here ends in a `break`.)
+             * 
+             * This practice also prevents the following error when compiling
+             * on Linux: "a label can only be part of a statement and a
+             * declaration is not a statement".
+             */
             case APFS_TYPE_SNAP_METADATA: {
                 j_snap_metadata_key_t* key = fs_rec->data;
                 j_snap_metadata_val_t* val = fs_rec->data + fs_rec->key_len;

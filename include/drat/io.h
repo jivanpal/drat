@@ -2,6 +2,7 @@
 #define DRAT_IO_H
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <sys/errno.h>
