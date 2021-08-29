@@ -1,5 +1,65 @@
 # Drat changelog
 
+## v0.1.3 (2021-08-29)
+
+### Functional changes
+
+- Linux support added (tested under Ubuntu 20.04.3). From this version onwards,
+  binaries for Linux on x86-64 will also be provided for versioned releases.
+  Some more general code portability provisions have also been made.
+
+- `drat inspect` now automatically detects the APFS block size, based on the
+  block size value provided by the container superblock found at block 0.
+
+- Extended fields (xfields) are now supported.
+
+- `drat recover` now gets the actual file size and thus outputs files of the
+  correct size rather than a multiple of the APFS block size. The tools in
+  `/supplemental-tools` have thus been removed. ([Issue #2](https://github.com/jivanpal/drat/issues/2)).
+
+- UUIDs are now printed in standard format.
+
+- Fixed bug in `get_nx_incompatible_features_string()` and `get_nx_flags_string()`
+  that caused these functions to analyse the `nx_features` field instead.
+
+- `drat version` now outputs legal info (copyright notice, warranty, and
+  licence).
+
+### Other changes
+
+- Refactored libraries:
+
+  - `/include` has been added to the compilation include path to avoid use of
+    relative paths.
+
+  - `/src/apfs/struct` has moved to `/include/apfs`, and can thus be included
+    as `<apfs>`. This library contains headers that define all data structures
+    detailed in Apple's APFS specfication.
+
+  - The remainder of `/src/apfs` has moved to `/include/drat`, and can thus be
+    included as `<drat>`. This library contains functionality specific to Drat:
+    
+    - Headers in `<drat/func>` define functions that facilitate common
+      operations on data strctures provided by `<apfs>`;
+
+    - Headers in `<drat/string>` define functions that produce human-readable
+      strings/output detailing the data contained in data structures provided
+      by `<apfs>`; and
+
+    - Headers in `<drat>` define miscellaneous functions.
+
+- Refactored code:
+
+  - String generation functions that operate on enum fields have had their
+    shared code factored into `<drat/string/common.h>` as
+    `get_single_enum_string()` and `get_flags_enum_string()`.
+
+  - Use of `ctime()` for printing timestamps has been factored into
+    `get_apfs_timestamp_string()`.
+
+- Documentation for v0.2.x has been drafted in `/docs` using
+  [Sphinx](https://www.sphinx-doc.org/en/master/).
+
 ## v0.1.2 (2021-02-05)
 
 - Renamed `src/apfs/struct/const.h` to `src/apfs/struct/jconst.h`

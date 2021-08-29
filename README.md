@@ -17,36 +17,35 @@ Currently, all of Drat's commands (except `modify`, which is currently disabled
 as it is not fit for use) operate in a read-only fashion, as they are intended
 to be used in situations involving data recovery or data forensics.
 
-## Build instructions
+### Running the software
 
-If you're running macOS on an Intel Mac, precompiled binaries for versioned
-releases are available on the [releases page](https://github.com/jivanpal/drat/releases).
+If you're using an Intel machine that's running macOS or Linux, you can find
+binaries for versioned releases on the [releases page](https://github.com/jivanpal/drat/releases).
 
 Documentation for versioned releases and as generated from the `main` branch
 [can be viewed online](https://drat.readthedocs.io/).
-
-Compilation and execution has been tested on macOS Catalina 10.15.7 (19H524) on
-an Intel x86-64 machine (MacBookPro9,2).
 
 ### Compiling the software
 
 #### Requirements
 
-- `gcc` — Required because we use `__attribute__((packed))`. Tested with
-  GCC 11.2.0, installed via [Homebrew](https://brew.sh) (Homebrew GCC 11.2.0).
+- GNU C Compiler (`gcc`) — Required because we use `__attribute__((packed))`. 
 
-- `make` — Tested with GNU Make 3.81, as included in Xcode Command Line Tools.
+- GNU Make (`make`).
 
-- `<argp.h>` (GNU Argp library) — If compiling on macOS, you can get this by
-  installing the [Homebrew](https://brew.sh) package `argp-standalone`; the
-  Makefile will handle this configuration automatically. If you acquire this
-  library any other way, you will need to configure `CFLAGS` and `LDFLAGS` as
-  appropriate (see lines in `Makefile` after `ifeq ($(shell uname -s),Darwin)`).
+- GNU Argp library (`<argp.h>`) — Part of the GNU C Library (glibc):
+
+  - On Ubuntu, ensure that the package `libc6-dev` is installed.
+  
+  - On macOS, you can install just Argp via the [Homebrew](https://brew.sh)
+    package `argp-standalone`. The Makefile will handle this configuration
+    automatically. If you acquire Argp any other way, such as by installing
+    glibc in its entirety, you may need to configure `CFLAGS` and `LDFLAGS` as
+    appropriate.
 
 #### Instructions
 
-- Ensure that `gcc` is in your `$PATH`, or modify the `CC` and `LD` values in 
-  `Makefile` to reflect the location of `gcc` on your system.
+- Ensure that `gcc` is in your `$PATH`, or configure `CC` and `LD` as appropriate.
   
 - Run `make` from the project root (where this `README.md` file resides). An
   `out` directory will be created in which the object files will be stored. The
@@ -54,6 +53,22 @@ an Intel x86-64 machine (MacBookPro9,2).
 
 - Run `make clean` to remove the compiled binary (`drat`) and other output files
   (`out` directory).
+
+#### Tested platforms
+
+Compilation and execution has been tested on the following platforms:
+
+- macOS Catalina 10.15.7 (19H524) on an Intel x86-64 machine (MacBookPro9,2), using:
+
+  - GCC 11.2.0 (Homebrew GCC 11.2.0)
+  - GNU Make 3.81 (as included in Xcode Command Line Tools)
+  - Homebrew package `argp-standalone`, version 1.3
+
+- Ubuntu 20.04.3 on an Intel x86-64 machine (Intel Core i5-4288U), using:
+
+  - GCC 9.3.0
+  - GNU Make 4.2.1
+  - GNU C Library (glibc) 2.31
 
 ### Generating the documentation
 

@@ -2,7 +2,7 @@
 #define DRAT_LEGAL_H
 
 #define VERSION_AND_COPYRIGHT_STRING \
-    "Drat version 0.1.2\n" \
+    "Drat version 0.1.3\n" \
     "Copyright (C) 2019-2021 Jivan Pal\n" \
     "<https://dratapp.com>\n"
 
