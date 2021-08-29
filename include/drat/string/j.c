@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #if defined(__APPLE__) || defined(__BSD__)
     #include <sys/stat.h>
@@ -173,12 +172,9 @@ void print_j_inode_val(j_inode_val_t* val, uint16_t val_len) {
     printf("Uncompressed size:      %s\n", tmp_string);
     free(tmp_string);
 
-    time_t timestamp = val->create_time / 1000000000;
-    printf("Creation time:          %s",    ctime(&timestamp));
-    timestamp = val->mod_time / 1000000000;
-    printf("Last modification time: %s",    ctime(&timestamp));
-    timestamp = val->change_time / 1000000000;
-    printf("Last access time:       %s",    ctime(&timestamp));
+    printf("Creation time:          %s",    apfs_timestamp_to_string(val->create_time));
+    printf("Last modification time: %s",    apfs_timestamp_to_string(val->mod_time));
+    printf("Last access time:       %s",    apfs_timestamp_to_string(val->change_time));
     printf("\n");
 
     printf("Number of children / hard links:    %u\n", val->nchildren);

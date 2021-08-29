@@ -4,8 +4,9 @@
 
 /**
  * Get a human-readable timestamp from an APFS timestamp (Unix timestamp in
- * nanoseconds). The return value is a newline-terminated C-string store in the
- * static buffer provided by the `ctime` API, so it must not be freed.
+ * nanoseconds). The return value is a newline-terminated C-string stored in
+ * the static buffer provided by the `ctime` API, so it must not be freed, and
+ * this function is not thread-safe.
  */
 char* apfs_timestamp_to_string(uint64_t apfs_timestamp) {
     // Dividing timestamps by 10^9 to convert APFS timestamps (Unix timestamps
