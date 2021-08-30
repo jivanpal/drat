@@ -1,10 +1,9 @@
-#ifndef DRAT_LEGAL_H
-#define DRAT_LEGAL_H
+#ifndef DRAT_STRINGS_H
+#define DRAT_STRINGS_H
 
-#define VERSION_AND_COPYRIGHT_STRING \
-    "Drat version 0.1.3\n" \
-    "Copyright (C) 2019-2021 Jivan Pal\n" \
-    "<https://dratapp.com>\n"
+#define VERSION_STRING      "Drat 0.1.3"
+#define COPYRIGHT_STRING    "Copyright (C) 2019-2021 Jivan Pal"
+#define URL_STRING          "<https://dratapp.com>"
 
 #define WARRANTY_AND_LICENSE_STRING \
     "This program comes with ABSOLUTELY NO WARRANTY; not even the implied warranty\n" \
@@ -13,4 +12,4 @@
     "License, version 3 only, as published by the Free Software Foundation, which\n" \
     "can be found at <https://www.gnu.org/licenses/gpl-3.0.html>.\n" \
 
-#endif // DRAT_LEGAL_H
+#endif // DRAT_STRINGS_H

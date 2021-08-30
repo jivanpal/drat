@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "../legal.h"
+#include <drat/strings.h>
 
 int cmd_version(int argc, char** argv) {
     if (argc != 1) {
@@ -8,7 +8,13 @@ int cmd_version(int argc, char** argv) {
         return 1;
     }
 
-    printf(VERSION_AND_COPYRIGHT_STRING "\n" WARRANTY_AND_LICENSE_STRING);
+    printf(
+        VERSION_STRING "\n"
+        COPYRIGHT_STRING "\n"
+        URL_STRING "\n"
+        "\n"
+        WARRANTY_AND_LICENSE_STRING
+    );
     
     return 0;
 }
