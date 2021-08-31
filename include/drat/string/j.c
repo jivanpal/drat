@@ -62,6 +62,28 @@ static void print_xf_details(bool has_xfields, xf_blob_t* xfields) {
     }
 }
 
+char* get_fn_record(xf_blob_t* xfields) {
+    xf_pair_t** xf_pairs_array = get_xf_pairs_array(xfields);
+    if (!xf_pairs_array) {
+        fprintf(stderr, "\nERROR: %s: Call to `get_xf_pairs_array()` failed.\n", __func__);
+    } else {
+        for (xf_pair_t** cursor = xf_pairs_array; *cursor; cursor++) {
+            xf_pair_t* xf_pair = *cursor;
+            void* value = &(xf_pair->value);
+            switch(xf_pair->key.x_type) {
+                case INO_EXT_TYPE_NAME: {
+                    char* name = value;
+                    return name;
+                } break;
+                default: {
+                    printf("Got xfield of type: %d\n", xf_pair->key.x_type);
+                } break;
+            }
+        }
+    }
+    return NULL;
+}
+
 char* j_key_type_to_string(uint8_t j_key_type) {
     switch (j_key_type) {
         case APFS_TYPE_SNAP_METADATA:   return "Snapshot metadata";
@@ -150,6 +172,27 @@ char* get_j_inode_bsd_flags_string(uint32_t bsd_flags) {
     };
 
     return get_flags_enum_string(flags, ARRAY_SIZE(flags), bsd_flags, false);
+}
+
+void print_j_inode_info(j_inode_val_t* val, uint16_t val_len) {
+    printf("\n");
+    printf("Creation time:          %s",    apfs_timestamp_to_string(val->create_time));
+    printf("Last modification time: %s",    apfs_timestamp_to_string(val->mod_time));
+    printf("Last access time:       %s",    apfs_timestamp_to_string(val->change_time));
+    printf("\n");
+    print_xf_details(val_len != sizeof(j_inode_val_t), val->xfields);
+}
+
+char* get_item_name(uint8_t *xfields, uint16_t val_len) {
+    if (val_len == sizeof(j_inode_val_t)) {
+        printf("Len is the same, no Xfields\n");
+        return NULL;
+    }
+    return get_fn_record(xfields);
+}
+
+char *get_j_inode_type(j_inode_val_t* val) {
+    return j_inode_mode_to_string(val->mode);
 }
 
 void print_j_inode_val(j_inode_val_t* val, uint16_t val_len) {

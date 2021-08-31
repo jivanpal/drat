@@ -14,6 +14,27 @@
 #include <drat/io.h>        // nx_block_size
 #include <drat/string/j.h>  // drec_val_to_short_type_string()
 
+char *get_file_name(j_rec_t** file_record) {
+    j_rec_t* fs_rec = *file_record; // Only one record gets passed
+    j_key_t* hdr = fs_rec->data;
+    j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
+    switch ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT) {
+        case APFS_TYPE_INODE: {
+            char* itemname = get_item_name(val->xfields, fs_rec->val_len);
+            if (itemname == NULL) {
+                printf("No Xfields found\n");
+                return NULL;
+            }
+            return itemname;
+        } break;
+        default: {
+            fprintf(stderr, "Not an inode...\n");
+            return NULL;
+        }
+    }
+    return NULL;
+}
+
 void print_fs_records(j_rec_t** fs_records) {
     size_t num_records = 0;
 
@@ -49,6 +70,7 @@ void print_fs_records(j_rec_t** fs_records) {
                 j_inode_key_t* key = fs_rec->data;
                 j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
                 fprintf(stderr, "INODE");
+                print_j_inode_info(val, fs_rec->val_len);
             } break;
             case APFS_TYPE_XATTR: {
                 j_xattr_key_t* key = fs_rec->data;
@@ -101,7 +123,9 @@ void print_fs_records(j_rec_t** fs_records) {
             } break;
             case APFS_TYPE_DIR_REC: {
                 // Apple's spec inorrectly says to use `j_drec_key_t`; see NOTE in <apfs/j.h>
-                j_drec_hashed_key_t*    key = fs_rec->data;
+                // On iOS 12 dmgs keys are of j_drec_key_t type
+                //j_drec_hashed_key_t*    key = fs_rec->data;
+                j_drec_key_t*           key = fs_rec->data;
                 j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
 
                 fprintf(stderr, "DIR REC"
