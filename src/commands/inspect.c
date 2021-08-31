@@ -1,9 +1,12 @@
 #include <stdio.h>
-#include <sys/errno.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+
+#include <sysexits.h>
+#include <sys/errno.h>
+
+#include <assert.h>
 
 #include <apfs/object.h>
 #include <apfs/nx.h>
@@ -14,6 +17,8 @@
 #include <apfs/sibling.h>
 #include <apfs/snap.h>
 
+#include <drat/globals.h>
+#include <drat/argp.h>
 #include <drat/io.h>
 
 #include <drat/func/boolean.h>
@@ -27,78 +32,67 @@
 #include <drat/string/fs.h>
 #include <drat/string/j.h>
 
-static void print_usage(int argc, char** argv) {
+static void print_usage(FILE* stream) {
     fprintf(
-        argc == 1 ? stdout : stderr,
-        
-        "Usage:   %s <container>\n"
-        "Example: %s /dev/disk0s2\n",
-        
-        argv[0],
-        argv[0]    
+        stream,
+        "Usage:   %s %s --container <container>\n"
+        "Example: %s %s --container /dev/disk0s2\n",
+        globals.program_name, globals.command_name,
+        globals.program_name, globals.command_name
     );
 }
 
 int cmd_inspect(int argc, char** argv) {
-    if (argc == 1) {
-        print_usage(argc, argv);
+    if (argc == 2) {
+        // Command was specified with no other arguments
+        print_usage(stdout);
         return 0;
     }
-    
-    setbuf(stdout, NULL);
 
-    // Extrapolate CLI arguments, exit if invalid
-    if (argc != 2) {
-        fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argc, argv);
-        return 1;
+    // Just parse global options
+    bool usage_error = true;
+    error_t parse_result = argp_parse(&argp_globals, argc, argv, ARGP_IN_ORDER, 0, 0);
+    if (!print_global_args_error(parse_result)) {
+        switch (parse_result) {
+            case 0:
+                usage_error = false;
+                break;
+            default:
+                print_arg_parse_error();
+                return -1;
+                break;
+        }
     }
-    nx_path = argv[1];
-    
-    // Open (device special) file corresponding to an APFS container, read-only
-    printf("Opening file at `%s` in read-only mode ... ", nx_path);
-    nx = fopen(nx_path, "rb");
-    if (!nx) {
-        fprintf(stderr, "\nABORT: ");
-        report_fopen_error();
-        printf("\n");
-        return -errno;
+    if (usage_error) {
+        print_usage(stderr);
+        return EX_USAGE;
     }
-    printf("OK.\nSimulating a mount of the APFS container.\n");
+
+    if (open_container() != 0) {
+        return EX_NOINPUT;
+    }
+
+    printf("Simulating a mount of the container.\n");
     
-    printf("Reading container superblock at address 0x0, assuming default block size of %"PRIu32" bytes ... ", nx_block_size);
-    nx_superblock_t* nxsb = malloc(nx_block_size);
+    printf("Reading block 0 ... ");
+    nx_superblock_t* nxsb = malloc(globals.block_size);
     if (!nxsb) {
         fprintf(stderr, "ABORT: Could not allocate sufficient memory for `nxsb`.\n");
         return -1;
     }
-    if (read_blocks(nxsb, 0x0, 1) != 1) {
-        fprintf(stderr, "ABORT: Failed to successfully read block 0x0.\n");
+    if (read_blocks(nxsb, 0, 1) != 1) {
+        fprintf(stderr, "ABORT: Failed to successfully read block 0.\n");
         return -1;
     }
 
-    if (nx_block_size != nxsb->nx_block_size) {
-        nx_block_size = nxsb->nx_block_size;
-        printf("Actual block size stated in container superblock is %"PRIu32" bytes; re-reading block 0x0 using new block size ... ", nx_block_size);
-        nxsb = realloc(nxsb, nx_block_size);
-        if (!nxsb) {
-            fprintf(stderr, "ABORT: Could not allocate sufficient memory for `nxsb`.\n");
-            return -1;
-        }
-        if (read_blocks(nxsb, 0x0, 1) != 1) {
-            fprintf(stderr, "ABORT: Failed to successfully read block 0x0.\n");
-            return -1;
-        }
-    }
-
-    printf("validating checksum ... ");
+    printf("validating ... ");
     if (is_cksum_valid(nxsb)) {
         printf("OK.\n");
     } else {
         printf("FAILED.\n!! APFS ERROR !! Checksum of block 0x0 should validate, but it doesn't. Proceeding as if it does.\n");
     }
 
-    printf("\nDetails of block 0x0:\n");
+    printf("\nDetails of block 0:\n");
     printf("--------------------------------------------------------------------------------\n");
     print_nx_superblock(nxsb);
     printf("--------------------------------------------------------------------------------\n");
@@ -116,7 +110,7 @@ int cmd_inspect(int argc, char** argv) {
     uint32_t xp_desc_blocks = nxsb->nx_xp_desc_blocks & ~(1 << 31);
     printf("- Its length is %"PRIu32" blocks.\n", xp_desc_blocks);
 
-    char (*xp_desc)[nx_block_size] = malloc(xp_desc_blocks * nx_block_size);
+    char (*xp_desc)[globals.block_size] = malloc(xp_desc_blocks * globals.block_size);
     if (!xp_desc) {
         fprintf(stderr, "ABORT: Could not allocate sufficient memory for %"PRIu32" blocks.\n", xp_desc_blocks);
         return -1;
@@ -202,7 +196,7 @@ int cmd_inspect(int argc, char** argv) {
     printf("Loading the corresponding checkpoint ... ");
     
     // The array `xp` will comprise the blocks in the checkpoint, in order.
-    char (*xp)[nx_block_size] = malloc(nxsb->nx_xp_desc_len * nx_block_size);
+    char (*xp)[globals.block_size] = malloc(nxsb->nx_xp_desc_len * globals.block_size);
     if (!xp) {
         fprintf(stderr, "\nABORT: Couldn't allocate sufficient memory.\n");
         return -1;
@@ -210,14 +204,14 @@ int cmd_inspect(int argc, char** argv) {
 
     if (nxsb->nx_xp_desc_index + nxsb->nx_xp_desc_len <= xp_desc_blocks) {
         // The simple case: the checkpoint is already contiguous in `xp_desc`.
-        memcpy(xp, xp_desc[nxsb->nx_xp_desc_index], nxsb->nx_xp_desc_len * nx_block_size);
+        memcpy(xp, xp_desc[nxsb->nx_xp_desc_index], nxsb->nx_xp_desc_len * globals.block_size);
     } else {
         // The case where the checkpoint wraps around from the end of the
         // checkpoint descriptor area to the start.
         uint32_t segment_1_len = xp_desc_blocks - nxsb->nx_xp_desc_index;
         uint32_t segment_2_len = nxsb->nx_xp_desc_len - segment_1_len;
-        memcpy(xp,                 xp_desc + nxsb->nx_xp_desc_index, segment_1_len * nx_block_size);
-        memcpy(xp + segment_1_len, xp_desc,                          segment_2_len * nx_block_size);
+        memcpy(xp,                 xp_desc + nxsb->nx_xp_desc_index, segment_1_len * globals.block_size);
+        memcpy(xp + segment_1_len, xp_desc,                          segment_2_len * globals.block_size);
     }
     printf("OK.\n");
     
@@ -252,7 +246,7 @@ int cmd_inspect(int argc, char** argv) {
     printf("- There are %"PRIu32" checkpoint-mappings in this checkpoint.\n\n", xp_obj_len);
 
     printf("Reading the Ephemeral objects used by this checkpoint ... ");
-    char (*xp_obj)[nx_block_size] = malloc(xp_obj_len * nx_block_size);
+    char (*xp_obj)[globals.block_size] = malloc(xp_obj_len * globals.block_size);
     if (!xp_obj) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `xp_obj`.\n");
         return -1;
@@ -300,7 +294,7 @@ int cmd_inspect(int argc, char** argv) {
     printf("The container superblock states that the container object map has Physical OID %#"PRIx64".\n", nxsb->nx_omap_oid);
 
     printf("Loading the container object map ... ");
-    omap_phys_t* nx_omap = malloc(nx_block_size);
+    omap_phys_t* nx_omap = malloc(globals.block_size);
     if (read_blocks(nx_omap, nxsb->nx_omap_oid, 1) != 1) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `nx_omap`.\n");
         return -1;
@@ -330,7 +324,7 @@ int cmd_inspect(int argc, char** argv) {
     }
 
     printf("Reading the root node of the container object map B-tree ... ");
-    btree_node_phys_t* nx_omap_btree = malloc(nx_block_size);
+    btree_node_phys_t* nx_omap_btree = malloc(globals.block_size);
     if (!nx_omap_btree) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `nx_omap_btree`.\n");
         return -1;
@@ -368,7 +362,7 @@ int cmd_inspect(int argc, char** argv) {
     printf("\n");
 
     printf("Reading the APFS volume superblocks ... ");
-    char (*apsbs)[nx_block_size] = malloc(nx_block_size * num_file_systems);
+    char (*apsbs)[globals.block_size] = malloc(globals.block_size * num_file_systems);
     if (!apsbs) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `apsbs`.\n");
         return -1;
@@ -426,7 +420,7 @@ int cmd_inspect(int argc, char** argv) {
         printf("The volume object map has Physical OID %#"PRIx64".\n", apsb->apfs_omap_oid);
 
         printf("Reading the volume object map ... ");
-        omap_phys_t* fs_omap = malloc(nx_block_size);
+        omap_phys_t* fs_omap = malloc(globals.block_size);
         if (!fs_omap) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_omap`.\n");
             return -1;
@@ -459,7 +453,7 @@ int cmd_inspect(int argc, char** argv) {
         }
 
         printf("Reading the root node of the volume object map B-tree ... ");
-        btree_node_phys_t* fs_omap_btree = malloc(nx_block_size);
+        btree_node_phys_t* fs_omap_btree = malloc(globals.block_size);
         if (!fs_omap_btree) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_omap_btree`.\n");
             return -1;
@@ -493,7 +487,7 @@ int cmd_inspect(int argc, char** argv) {
         printf("corresponding block address is %#"PRIx64".\n", fs_root_entry->val.ov_paddr);
 
         printf("Reading ... ");
-        btree_node_phys_t* fs_root_btree = malloc(nx_block_size);
+        btree_node_phys_t* fs_root_btree = malloc(globals.block_size);
         if (!fs_root_btree) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_root_btree`.\n");
             return -1;
@@ -608,7 +602,7 @@ int cmd_inspect(int argc, char** argv) {
                         j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
 
                         uint64_t extent_length_bytes = val->len_and_flags & J_FILE_EXTENT_LEN_MASK;
-                        uint64_t extent_length_blocks = extent_length_bytes / nx_block_size;
+                        uint64_t extent_length_blocks = extent_length_bytes / globals.block_size;
 
                         printf( "FILE EXTENT"
                             " || file ID = %#8"PRIx64""
@@ -688,7 +682,7 @@ int cmd_inspect(int argc, char** argv) {
     free(nx_omap);
     free(xp_obj);
     free(nxsb);
-    fclose(nx);
+    close_container();
     printf("END: All done.\n");
     return 0;
 }

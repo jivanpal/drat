@@ -4,14 +4,14 @@
 
 #include "cksum.h"
 
-#include <drat/io.h>    // nx_block_size
+#include <drat/globals.h>
 
 /**
  * Compute or validate the checksum of a given APFS block. This is a helper
  * function for `compute_block_cksum()` and `is_cksum_valid()`.
  * 
  * block:   A pointer to the raw APFS block data. This pointer should point
- *          to at least `nx_block_size` bytes (typically 4096 bytes) of data.
+ *          to at least `globals.block_size` bytes of data.
  * 
  * compute: If true, then compute the checksum of the block, treating the
  *          first 64 bits of the block (where the checksum is stored) as zero.
@@ -24,7 +24,7 @@
  *          successfully, and non-zero if it fails to do so.
  */
 uint64_t fletcher_cksum(uint32_t* block, bool compute) {
-    int num_words = nx_block_size / 4;  // Using 32-bit (4-byte) words.
+    int num_words = globals.block_size / 4; // Using 32-bit (4-byte) words.
     uint32_t modulus = ~0;  // all ones; = 2^32 - 1
 
     // These are 32-bit values, but we need at least 33 bits of memory for each
@@ -77,7 +77,7 @@ uint64_t fletcher_cksum(uint32_t* block, bool compute) {
  * of the block (the location where the checksum is usually stored) as zero.
  * 
  * block:   A pointer to the raw APFS block data. This pointer should point to
- *      at least `nx_block_size` bytes (typically 4096 bytes) of data.
+ *      at least `globals.block_size` bytes of data.
  * 
  * RETURN VALUE:    The computed checksum.
  */

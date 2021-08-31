@@ -11,7 +11,7 @@
 #include <apfs/dstream.h>   // j_phys_ext_*, j_dstream_id_*, j_file_extent_*
 #include <apfs/crypto.h>    // j_crypto_*
 
-#include <drat/io.h>        // nx_block_size
+#include <drat/globals.h>
 #include <drat/string/j.h>  // drec_val_to_short_type_string()
 
 void print_fs_records(j_rec_t** fs_records) {
@@ -85,7 +85,7 @@ void print_fs_records(j_rec_t** fs_records) {
                 j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
 
                 uint64_t extent_length_bytes = val->len_and_flags & J_FILE_EXTENT_LEN_MASK;
-                uint64_t extent_length_blocks = extent_length_bytes / nx_block_size;
+                uint64_t extent_length_blocks = extent_length_bytes / globals.block_size;
 
                 fprintf(stderr, "FILE EXTENT"
                     " || file ID = %#8"PRIx64

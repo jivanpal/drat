@@ -12,7 +12,8 @@
 #include <string.h>
 
 #include <drat/asize.h>
-#include <drat/io.h>    // nx_block_size
+#include <drat/globals.h>
+#include <drat/io.h>
 
 #include <drat/func/boolean.h>
 #include <drat/string/common.h>
@@ -118,6 +119,6 @@ void print_btree_node_phys(btree_node_phys_t* btn) {
 
     if (is_btree_node_phys_root(btn)) {
         printf("\n");
-        print_btree_info((char*)btn + nx_block_size - sizeof(btree_info_t));
+        print_btree_info((char*)btn + globals.block_size - sizeof(btree_info_t));
     }
 }
