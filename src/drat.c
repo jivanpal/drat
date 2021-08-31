@@ -64,10 +64,9 @@ int main(int argc, char** argv) {
         // Specified command is inavlid
         fprintf(
             stderr,
-            "%s: unrecognized command `%s`; run `%s` without any arguments to see a list of commands.\n",
+            "%1$s: unrecognized command `%2$s`; run `%1$s` without any arguments to see a list of commands.\n",
             globals.program_name,
-            globals.command_name,
-            globals.program_name
+            globals.command_name
         );
         return EX_USAGE;
     }

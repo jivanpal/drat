@@ -137,6 +137,7 @@ void print_nx_superblock(nx_superblock_t* nxsb) {
     };
     printf("Magic string:       %s\n",          magic_string);
 
+    // TODO: Check if we're interpreting this field correctly
     printf(
         "Latest version of Apple APFS software that mounted this container: "
         "%"PRIu64".%"PRIu64".%"PRIu64".%"PRIu64".%"PRIu64"\n",

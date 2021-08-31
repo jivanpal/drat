@@ -25,8 +25,8 @@ void print_globals() {
         "program name   = %s\n"
         "container path = %s\n"
         "max xid        = %#"PRIx64"\n"
-        "block size     = %"PRIu32" bytes\n"
-        "volume index   = %"PRId8"\n"
+        "block size     = %"PRId64" bytes\n"
+        "volume index   = %"PRId64"\n"
         "volume name    = %s\n",
 
         globals.program_name,

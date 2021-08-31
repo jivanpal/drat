@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <sysexits.h>
 
 #include <apfs/general.h>
 #include <apfs/j.h>
@@ -12,6 +13,9 @@
 #include <apfs/sibling.h>
 #include <apfs/snap.h>
 
+#include <drat/globals.h>
+#include <drat/argp.h>
+#include <drat/strings.h>
 #include <drat/io.h>
 
 #include <drat/func/boolean.h>
@@ -25,79 +29,168 @@
 #include <drat/string/fs.h>
 #include <drat/string/j.h>
 
-static void print_usage(int argc, char** argv) {
+typedef struct {
+    paddr_t fs_root_addr;
+    paddr_t omap_root_addr;
+} options_t;
+
+#define DRAT_ARG_KEY_FS     (DRAT_GLOBAL_ARGS_LAST_KEY - 1)
+#define DRAT_ARG_KEY_OMAP   (DRAT_GLOBAL_ARGS_LAST_KEY - 2)
+
+#define DRAT_ARG_ERR_INVALID_FS     (DRAT_GLOBAL_ARGS_LAST_ERR - 1)
+#define DRAT_ARG_ERR_INVALID_OMAP   (DRAT_GLOBAL_ARGS_LAST_ERR - 2)
+#define DRAT_ARG_ERR_NO_FS          (DRAT_GLOBAL_ARGS_LAST_ERR - 3)
+#define DRAT_ARG_ERR_NO_OMAP        (DRAT_GLOBAL_ARGS_LAST_ERR - 4)
+
+static const struct argp_option argp_options[] = {
+    // char* name,  int key,                    char* arg,          int flags,  char* doc
+    { "fs",         DRAT_ARG_KEY_FS,            "fs tree addr",     0,          "Block address of filesystem B-tree" },
+    { "omap",       DRAT_ARG_KEY_OMAP,          "omap tree addr",   0,          "Block address of object map B-tree" },
+    {0}
+};
+
+static error_t argp_parser(int key, char* arg, struct argp_state* state) {
+    options_t* options = state->input;
+
+    switch (key) {
+        case DRAT_ARG_KEY_FS:
+            if (!parse_number(&options->fs_root_addr, arg)) {
+                return DRAT_ARG_ERR_INVALID_FS;
+            }
+            break;
+        case DRAT_ARG_KEY_OMAP:
+            if (!parse_number(&options->omap_root_addr, arg)) {
+                return DRAT_ARG_ERR_INVALID_OMAP;
+            }
+            break;
+        case ARGP_KEY_END:
+            if (options->fs_root_addr == -1) {
+                return DRAT_ARG_ERR_NO_FS;
+            }
+            if (options->omap_root_addr == -1) {
+                return DRAT_ARG_ERR_NO_OMAP;
+            }
+            // fall through
+        default:
+            return ARGP_ERR_UNKNOWN;
+    }
+
+    return 0;
+}
+
+static const struct argp_child argp_children[] = {
+    // struct argp* argp,   int flags,  char* header
+    { &argp_globals,        0,          "Global options" },
+    {0}
+};
+
+static const struct argp argp = {
+    &argp_options,  // struct argp_option* options
+    &argp_parser,   // argp_parser_t parser
+    0,              // char* args_doc
+    0,              // char* doc
+    &argp_children  // struct argp_child* children
+};
+
+static void print_usage(FILE* stream) {
+    // TODO: Add all possible syntaxes.
     fprintf(
-        argc == 1 ? stdout : stderr,
-        
-        "Usage:   %s <container> <fs tree root node address> <omap tree root node address>\n"
-        "Example: %s /dev/disk0s2 0xd02a4 0x3af2\n",
-        
-        argv[0],
-        argv[0]
+        stream,
+        "Usage:   %1$s %2$s --container <container> --fs <fs tree root node address> --omap <omap tree root node address>\n"
+        "Example: %1$s %2$s --container /dev/disk0s2 --fs 0xd02a4 --omap 0x3af2\n",
+        globals.program_name,
+        globals.command_name
     );
 }
 
 int cmd_explore_fs_tree(int argc, char** argv) {
-    if (argc == 1) {
-        print_usage(argc, argv);
+    if (argc == 2) {
+        // Command was specified with no other arguments
+        print_usage(stdout);
         return 0;
     }
 
-    // Extrapolate CLI arguments, exit if invalid
-    if (argc != 4) {
-        fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argc, argv);
-        return 1;
+    options_t options = {-1, -1};
+
+    bool usage_error = true;
+    error_t parse_result = argp_parse(&argp, argc, argv, ARGP_IN_ORDER, 0, &options);
+    if (!print_global_args_error(parse_result)) {
+        switch (parse_result) {
+            case 0:
+                usage_error = false;
+                break;
+            case DRAT_ARG_ERR_INVALID_FS:
+                fprintf(stderr, "%s: option `--fs`" INVALID_HEX_STRING, globals.program_name);
+                break;
+            case DRAT_ARG_ERR_INVALID_OMAP:
+                fprintf(stderr, "%s: option `--omap`" INVALID_HEX_STRING, globals.program_name);
+                break;
+            case DRAT_ARG_ERR_NO_FS:
+                fprintf(stderr, "%s: option `--fs` is mandatory.\n", globals.program_name);
+                break;
+            case DRAT_ARG_ERR_NO_OMAP:
+                fprintf(stderr, "%s: option `--omap` is mandatory.\n", globals.program_name);
+                break;
+            default:
+                print_arg_parse_error();
+                return -1;
+        }
+    }
+    if (usage_error) {
+        print_usage(stderr);
+        return EX_USAGE;
     }
 
-    char* nx_path = argv[1];
-    
-    // Capture <fs tree root node address>
-    paddr_t fs_root_addr;
-    bool parse_success = sscanf(argv[2], "0x%"SCNx64"", &fs_root_addr);
-    if (!parse_success) {
-        parse_success = sscanf(argv[2], "%"SCNu64"", &fs_root_addr);
-    }
-    if (!parse_success) {
-        fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
-        print_usage(argc, argv);
-        return 1;
-    }
+    // TODO: Remove this old arg parse section
+    if (false) {
+        // // Extrapolate CLI arguments, exit if invalid
+        // if (argc != 4) {
+        //     fprintf(stderr, "Incorrect number of arguments.\n");
+        //     print_usage(argc, argv);
+        //     return 1;
+        // }
 
-    // Capture <omap tree root node address>
-    paddr_t omap_root_addr;
-    parse_success = sscanf(argv[3], "0x%"SCNx64"", &omap_root_addr);
-    if (!parse_success) {
-        parse_success = sscanf(argv[3], "%"SCNu64"", &omap_root_addr);
-    }
-    if (!parse_success) {
-        fprintf(stderr, "%s is not a valid block address.\n", argv[3]);
-        print_usage(argc, argv);
-        return 1;
+        // char* nx_path = argv[1];
+        
+        // // Capture <fs tree root node address>
+        // paddr_t fs_root_addr;
+        // bool parse_success = sscanf(argv[2], "0x%"SCNx64"", &fs_root_addr);
+        // if (!parse_success) {
+        //     parse_success = sscanf(argv[2], "%"SCNu64"", &fs_root_addr);
+        // }
+        // if (!parse_success) {
+        //     fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
+        //     print_usage(argc, argv);
+        //     return 1;
+        // }
+
+        // // Capture <omap tree root node address>
+        // paddr_t omap_root_addr;
+        // parse_success = sscanf(argv[3], "0x%"SCNx64"", &omap_root_addr);
+        // if (!parse_success) {
+        //     parse_success = sscanf(argv[3], "%"SCNu64"", &omap_root_addr);
+        // }
+        // if (!parse_success) {
+        //     fprintf(stderr, "%s is not a valid block address.\n", argv[3]);
+        //     print_usage(argc, argv);
+        //     return 1;
+        // }
     }
     
-    // Open (device special) file corresponding to an APFS container, read-only
-    printf("Opening file at `%s` in read-only mode ... ", nx_path);
-    nx = fopen(nx_path, "rb");
-    if (!nx) {
-        fprintf(stderr, "\nABORT: main: ");
-        report_fopen_error();
-        printf("\n");
-        return -errno;
+    if (open_container() != 0) {
+        return EX_NOINPUT;
     }
-    printf("OK.\n\n");
 
     // Read the specified root nodes
-    printf("Reading the file-system tree root node (block %#"PRIx64") ... ", fs_root_addr);
-    btree_node_phys_t* fs_root_node = malloc(nx_block_size);
+    printf("Reading the file-system tree root node (block %#"PRIx64") ... ", options.fs_root_addr);
+    btree_node_phys_t* fs_root_node = malloc(globals.block_size);
     if (!fs_root_node) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_root_node`.\n");
         return -1;
     }
 
-    if (read_blocks(fs_root_node, fs_root_addr, 1) == 0) {
-        printf("\nEND: Block index %s does not exist in `%s`.\n", argv[2], nx_path);
-        return 0;
+    if (read_blocks(fs_root_node, options.fs_root_addr, 1) == 0) {
+        return EX_NOINPUT;
     }
 
     printf("validating ... ");
@@ -108,16 +201,15 @@ int cmd_explore_fs_tree(int argc, char** argv) {
     }
     printf("\n");
 
-    printf("Reading the object map root node (block %#"PRIx64") ... ", omap_root_addr);
-    btree_node_phys_t* omap_root_node = malloc(nx_block_size);
+    printf("Reading the object map root node (block %#"PRIx64") ... ", options.omap_root_addr);
+    btree_node_phys_t* omap_root_node = malloc(globals.block_size);
     if (!omap_root_node) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `omap_root_node`.\n");
         return -1;
     }
 
-    if (read_blocks(omap_root_node, omap_root_addr, 1) == 0) {
-        printf("\nEND: Block index %s does not exist in `%s`.\n", argv[2], nx_path);
-        return 0;
+    if (read_blocks(omap_root_node, options.omap_root_addr, 1) == 0) {
+        return EX_NOINPUT;
     }
 
     printf("validating ... ");
@@ -130,17 +222,17 @@ int cmd_explore_fs_tree(int argc, char** argv) {
 
     // Allocate space for the current working node in the file-system tree,
     // then copy the root node to this space.
-    btree_node_phys_t* node = malloc(nx_block_size);
+    btree_node_phys_t* node = malloc(globals.block_size);
     if (!node) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `node`.\n");
         return -1;
     }
-    memcpy(node, fs_root_node, nx_block_size);
+    memcpy(node, fs_root_node, globals.block_size);
 
     // Pointers to areas of the node
     char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
     char* key_start = toc_start + node->btn_table_space.len;
-    char* val_end   = (char*)node + nx_block_size;
+    char* val_end   = (char*)node + globals.block_size;
     if (node->btn_flags & BTNODE_ROOT) {
         val_end -= sizeof(btree_info_t);
     }
@@ -199,7 +291,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
                 if (!child_node_omap_entry) {
                     printf("  ||  UNRESOLVABLE");
                 } else {
-                    btree_node_phys_t* child_node = malloc(nx_block_size);
+                    btree_node_phys_t* child_node = malloc(globals.block_size);
                     if (!child_node) {
                         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `child_node`.\n");
                         return -1;
@@ -361,7 +453,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
 
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
-        val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
+        val_end   = (char*)node + globals.block_size;    // Always dealing with non-root node here
 
         free(child_node_omap_entry);
     }

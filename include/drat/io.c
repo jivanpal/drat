@@ -6,6 +6,8 @@
 #include "io.h"
 
 #include <sys/types.h>
+#include <inttypes.h>
+
 #include <apfs/nx.h>    // for NX_DEFAULT_BLOCK_SIZE
 #include <drat/globals.h>
 
@@ -92,7 +94,7 @@ int open_container() {
         }
         globals.block_size = superblock->nx_block_size;
 
-        printf("%d bytes.\n", globals.block_size);
+        printf("%"PRId64" bytes.\n", globals.block_size);
     }
 
     return 0;
