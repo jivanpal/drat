@@ -1,3 +1,4 @@
+// Get all the filenames from a previous xid with their data stream
 #include <stdio.h>
 #include <sys/errno.h>
 #include <assert.h>
@@ -21,6 +22,7 @@
 #include <drat/func/boolean.h>
 #include <drat/func/cksum.h>
 #include <drat/func/btree.h>
+#include <drat/func/j.h>
 
 #include <drat/string/object.h>
 #include <drat/string/nx.h>
@@ -30,153 +32,6 @@
 #include <drat/string/j.h>
 #include <drat/utilities.h>
 
-typedef struct file_metadata {
-    char            *filename;
-    uint64_t        create_time;
-    uint64_t        mod_time;
-    uint64_t        change_time;
-    uint64_t        access_time;
-    cp_key_class_t  default_protection_class;
-    // cprotect xattr ?
-} file_metadata;
-
-static int fs_file_index = 0;
-
-int compare_create(file_metadata *first, file_metadata *second) {
-    struct file_metadata *ptr_to_first = *(file_metadata **)first;
-    struct file_metadata *ptr_to_second = *(file_metadata **)second;
-    return ptr_to_first->create_time - ptr_to_second->create_time;
-}
-
-int compare_mod(file_metadata *first, file_metadata *second) {
-    struct file_metadata *ptr_to_first = *(file_metadata **)first;
-    struct file_metadata *ptr_to_second = *(file_metadata **)second;
-    return ptr_to_first->mod_time - ptr_to_second->mod_time;
-}
-
-int compare_change(file_metadata *first, file_metadata *second) {
-    struct file_metadata *ptr_to_first = *(file_metadata **)first;
-    struct file_metadata *ptr_to_second = *(file_metadata **)second;
-    return ptr_to_first->change_time - ptr_to_second->change_time;
-}
-
-int compare_access(file_metadata *first, file_metadata *second) {
-    struct file_metadata *ptr_to_first = *(file_metadata **)first;
-    struct file_metadata *ptr_to_second = *(file_metadata **)second;
-    return ptr_to_first->access_time - ptr_to_second->access_time;
-}
-
-const char* nth_strchr(const char* s, char c, int n) {
-    int c_count;
-    char* nth_ptr;
-    for (c_count=1,nth_ptr=strchr(s,c); nth_ptr != NULL && c_count < n && c!=0; c_count++) {
-         nth_ptr = strchr(nth_ptr+1, c);
-    }
-    return nth_ptr;
-}
-
-// /private/var/etc -> /var/etc -> /etc -> null
-char *getRemainingUrl(char *url, char token) {
-    const char *position_ptr = nth_strchr(url, token, 2);
-    int position = (position_ptr == NULL ? -1 : position_ptr - url);
-
-    if (position > 0) {
-        char *newurl = malloc(strlen(url) - position);
-        strncpy(newurl, url+position, strlen(url) - position + 1);
-        return newurl;
-    }
-    return NULL;
-}
-
-// /private/var/etc -> private
-char *getFirstEntry(char *url, char token) {
-    char *left_position_ptr = strchr(url, token);
-    if (left_position_ptr == NULL) {
-        return NULL;
-    }
-    
-    int left_position = left_position_ptr - url;
-    const char *right_position_ptr = nth_strchr(url, token, 2);
-    if (right_position_ptr == NULL) {
-        char *entry = malloc(strlen(url));
-        strncpy(entry, url + left_position + 1, strlen(url));
-        return entry;
-    }
-    int right_position = right_position_ptr - url;
-    char *entry = malloc(right_position - left_position - 1);
-    strncpy(entry, url+left_position+1, right_position - left_position - 1);
-    return entry;
-}
-
-
-void parse_fs(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, btree_node_phys_t *fs_root_btree, struct file_metadata **fs_files, char *path, char *full_path)
-{
-    if (fs_records == NULL || fs_records[0] == NULL) {
-        return;
-    }
-    int res = -1;
-    char *entry = NULL;
-    char *rest = NULL;
-    if (path != NULL) {
-        entry = getFirstEntry(path, '/');
-        rest = getRemainingUrl(path, '/');
-    }
-    for (j_rec_t **fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) // for each directory entry...
-    {
-        j_rec_t *fs_rec = *fs_rec_cursor;
-        j_key_t *hdr = fs_rec->data;
-        if (((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT) == APFS_TYPE_DIR_REC)
-        {
-            j_drec_key_t *key = fs_rec->data;
-            if (path != NULL) {
-                res = strcmp((char *)key->name, entry);
-            }
-            if (res == 0 || path == NULL || strcmp(path, "/") == 0) {
-                printf("Analysing record: %s\n", (char *)key->name);
-                // diff between found index and start index
-                signed int matching_record_index = fs_rec_cursor - fs_records;
-                // Get the file ID of the matching record's target
-                j_rec_t *fs_rec = fs_records[matching_record_index];
-                j_drec_val_t *val = fs_rec->data + fs_rec->key_len;
-
-                // Get the records for the target
-                oid_t dir_oid = val->file_id;
-                char *new_full_path = malloc(strlen(full_path) + strlen((char *)key->name) + 2);
-                strncpy(new_full_path, full_path, strlen(full_path));
-                const char* separator = "/";
-                strncpy(new_full_path + strlen(full_path), separator, 1);
-                strncpy(new_full_path + strlen(full_path) + 1, (char *)key->name, strlen((char *)key->name) + 1);
-                //printf("Entering absolute directory: %s\n", new_full_path);
-                parse_fs(get_fs_records(fs_omap_btree, fs_root_btree, dir_oid, (xid_t)(~0)), fs_omap_btree, fs_root_btree, fs_files, rest, new_full_path);
-            }
-        } else if (((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT) == APFS_TYPE_INODE){
-            oid_t file_oid = hdr->obj_id_and_type & OBJ_ID_MASK;
-            j_rec_t **file_record = get_fs_records(fs_omap_btree, fs_root_btree, file_oid, (xid_t)(~0));
-            print_fs_records(file_record);
-            // get the inode value records
-            j_rec_t* fs_rec = *file_record;
-            j_key_t* hdr = fs_rec->data;
-            j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
-            printf("Inode record type: %s\n", get_j_inode_type(val));
-            char *fn = get_file_name(file_record);
-            bool is_reg_file = strcmp(get_j_inode_type(val), "Regular file") == 0;
-            if (fn && is_reg_file) {
-                struct file_metadata *fs_file = malloc(sizeof(struct file_metadata));
-                fs_file->filename = full_path;
-                fs_file->create_time = val->create_time; 
-                fs_file->mod_time = val->mod_time; 
-                fs_file->change_time = val->change_time; 
-                fs_file->access_time = val->access_time;
-                fs_file->default_protection_class = val->default_protection_class;
-                fs_files[fs_file_index++] = fs_file;
-            }
-        } else {
-            continue;
-        }
-    }
-    free_j_rec_array(fs_records);
-}
-
 /**
  * Print usage info for this program.
  */
@@ -184,15 +39,13 @@ static void print_usage(int argc, char **argv)
 {
     fprintf(
         argc == 1 ? stdout : stderr,
-
-        "Usage:   %s <container> <volume ID> <path in volume> <timestamp>\n"
-        "Example: %s /dev/disk0s2  0  /Users/john/Documents access\n"
-        "Available timestamps: modify, access, change, birth\n",
+        "Usage:   %s <container> <volume ID> <path in volume> <number of backward transactions>\n"
+        "Example: %s /dev/disk0s2  0  /Users/john/Documents/file.txt 1\n",
         argv[0],
         argv[0]);
 }
 
-int cmd_timeline(int argc, char **argv)
+int cmd_rollback(int argc, char **argv)
 {
     setbuf(stdout, NULL);
 
@@ -203,9 +56,12 @@ int cmd_timeline(int argc, char **argv)
         print_usage(argc, argv);
         return 1;
     }
-
+    int rollbacks = atoi(argv[4]);
+    if (rollbacks < 0) {
+        fprintf(stderr, "Rollbacks must be positive integers.\n");
+        return 1;
+    }
     nx_path = argv[1];
-    char* timestamp = argv[4];
 
     uint32_t volume_id;
     bool parse_success = sscanf(argv[2], "%u", &volume_id);
@@ -297,8 +153,9 @@ int cmd_timeline(int argc, char **argv)
 
     fprintf(stderr, "Locating the most recent well-formed container superblock in the checkpoint descriptor area:\n");
 
-    uint32_t i_latest_nx = 0;
+    uint32_t i_target_nx = 0;
     xid_t xid_latest_nx = 0;
+    xid_t nx_xids[xp_desc_blocks];
 
     xid_t max_xid = ~0; // `~0` is the highest possible XID
 
@@ -309,7 +166,6 @@ int cmd_timeline(int argc, char **argv)
             fprintf(stderr, "- Block at index %u within this area failed checksum validation. Skipping it.\n", i);
             continue;
         }
-
         if (is_nx_superblock(xp_desc[i]))
         {
             if (((nx_superblock_t *)xp_desc[i])->nx_magic != NX_MAGIC)
@@ -317,11 +173,10 @@ int cmd_timeline(int argc, char **argv)
                 fprintf(stderr, "- Container superblock at index %u within this area is malformed; incorrect magic number. Skipping it.\n", i);
                 continue;
             }
-
+            //printf("Found nxsb block at index %d with XID: %" PRIu64 "\n", i, ((nx_superblock_t *)xp_desc[i])->nx_o.o_xid);
             if (
                 (((nx_superblock_t *)xp_desc[i])->nx_o.o_xid > xid_latest_nx) && (((nx_superblock_t *)xp_desc[i])->nx_o.o_xid <= max_xid))
             {
-                i_latest_nx = i;
                 xid_latest_nx = ((nx_superblock_t *)xp_desc[i])->nx_o.o_xid;
             }
         }
@@ -337,13 +192,45 @@ int cmd_timeline(int argc, char **argv)
         fprintf(stderr, "No container superblock with an XID that doesn't exceed 0x%" PRIx64 " exists in the checkpoint descriptor area.\n", max_xid);
         return 0;
     }
+    xid_t target_xid = xid_latest_nx - rollbacks;
+    // Do it again...
+    for (uint32_t i = 0; i < xp_desc_blocks; i++)
+    {
+        if (!is_cksum_valid(xp_desc[i]))
+        {
+            fprintf(stderr, "- Block at index %u within this area failed checksum validation. Skipping it.\n", i);
+            continue;
+        }
+        if (is_nx_superblock(xp_desc[i]))
+        {
+            if (((nx_superblock_t *)xp_desc[i])->nx_magic != NX_MAGIC)
+            {
+                fprintf(stderr, "- Container superblock at index %u within this area is malformed; incorrect magic number. Skipping it.\n", i);
+                continue;
+            }
+
+            if (((nx_superblock_t *)xp_desc[i])->nx_o.o_xid == target_xid)
+            {
+                i_target_nx = i;
+            }
+        }
+        else if (!is_checkpoint_map_phys(xp_desc[i]))
+        {
+            fprintf(stderr, "- Block at index %u within this area is not a container superblock or checkpoint map. Skipping it.\n", i);
+            continue;
+        }
+    }
+    if (i_target_nx == 0) {
+        fprintf(stderr, "Could not find the requested rollback, it has probably been overwritten, try with another one\n");
+        return 1;
+    }
+    printf("Found target XID at index %d\n", i_target_nx);
 
     // Don't need a copy of the block 0x0 NXSB which is stored in `nxsb`
     // anymore; replace that data with the latest NXSB.
     // This also lets us avoid repeatedly casting to `nx_superblock_t*`.
-    memcpy(nxsb, xp_desc[i_latest_nx], sizeof(nx_superblock_t));
-
-    fprintf(stderr, "- It lies at index %u within the checkpoint descriptor area.\n", i_latest_nx);
+    memcpy(nxsb, xp_desc[i_target_nx], sizeof(nx_superblock_t));
+    fprintf(stderr, "- It lies at index %u within the checkpoint descriptor area.\n", i_target_nx);
     fprintf(stderr, "- The corresponding checkpoint starts at index %u within the checkpoint descriptor area, and spans %u blocks.\n\n", nxsb->nx_xp_desc_index, nxsb->nx_xp_desc_len);
 
     // Copy the contents of the checkpoint we are currently considering to its
@@ -665,35 +552,126 @@ int cmd_timeline(int argc, char **argv)
     }
     memcpy(path, path_stack, strlen(path_stack) + 1);
 
-    struct file_metadata **fs_files = malloc(sizeof(struct file_metadata *) * apsb->apfs_num_files);
-    printf("Entering directory /\n");
-    char *path_builder = "";
-    parse_fs(fs_records, fs_omap_btree, fs_root_btree, fs_files, path, path_builder);
-    printf("Sorting %d elements by timestamp...\n", fs_file_index);
-    int (*comparePtr)(file_metadata *, file_metadata *);
-    if (strcmp(timestamp, "modify")) {
-        comparePtr = &compare_mod;
-    } else if (strcmp(timestamp, "access")) {
-        comparePtr = &compare_access;
-    } else if (strcmp(timestamp, "change")) {
-        comparePtr = &compare_change;
-    } else if (strcmp(timestamp, "birth")) {
-        comparePtr = &compare_create;
-    } else {
-        fprintf(stderr, "Wrong timestamp requested\n");
-    }
-    qsort(fs_files, fs_file_index, sizeof(file_metadata *), comparePtr);
-    printf("======================================================================\n");
-    printf("Timeline:\n");
-    printf("======================================================================\n");
-    for (int i = 0; i < fs_file_index; i++) {
-        printf("Filename:      %s\n",   fs_files[i]->filename);
-        printf("%s timestamp:  %s\n",   timestamp, apfs_timestamp_to_string(fs_files[i]->create_time));
-        printf("\n");
+    char* path_element;
+    while ((path_element = strsep(&path, "/")) != NULL ) {
+        // If path element is empty string, skip it
+        if (*path_element == '\0') {
+            continue;
+        }
+        
+        signed int matching_record_index = -1;
+        for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
+            j_rec_t* fs_rec = *fs_rec_cursor;
+            j_key_t* hdr = fs_rec->data;
+            if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_DIR_REC ) {
+                j_drec_key_t* key = fs_rec->data;   // hashed_key when??
+                if (strcmp((char*)key->name, path_element) == 0) {
+                    matching_record_index = fs_rec_cursor - fs_records;
+                    break;
+                }
+            }
+        }
+
+        if (matching_record_index == -1) {
+            // No match
+            fprintf(stderr, "Could not find a dentry for that path. Exiting.\n");
+            return -1;
+        }
+
+        // Get the file ID of the matching record's target
+        j_rec_t* fs_rec = fs_records[matching_record_index];
+        j_drec_val_t* val = fs_rec->data + fs_rec->key_len;
+
+        // Get the records for the target
+        fs_oid = val->file_id;
+        free_j_rec_array(fs_records);
+        fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, (xid_t)(~0) );
     }
 
+    fprintf(stderr, "\nRecords for file-system object %#" PRIx64 " -- `%s` --\n", fs_oid, path_stack);
+    // `fs_records` now contains the records for the item at the specified path
+    print_fs_records(fs_records);
+
+    // Output content from all matching file extents
+    char* buffer = malloc(nx_block_size);
+    if (!buffer) {
+        fprintf(stderr, "Could not allocate sufficient memory for `buffer`.\n");
+        return -1;
+    }
+
+    // Get file size
+    uint64_t file_size = 0;
+    for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
+        j_rec_t* fs_rec = *fs_rec_cursor;
+        j_key_t* hdr = fs_rec->data;
+        printf("Looping\n");
+        if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_INODE ) {
+            j_inode_val_t* inode = fs_rec->data + fs_rec->key_len;
+            file_size = get_file_size(inode, fs_rec->val_len);
+            printf("File size: %" PRIu64 "\n", file_size);
+        }
+    }
+    if (file_size == 0) {
+        // Not a file, or file size couldn't be found; abort.
+        exit(-1);
+    }
+
+    // Keep track of how many more bytes we need to output
+    uint64_t bytes_remaining = file_size;
+
+    bool found_file_extent = false;
+    // Go through all the fs records
+    for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
+        j_rec_t* fs_rec = *fs_rec_cursor;
+        j_key_t* hdr = fs_rec->data;
+
+        // Go through all the extent records
+        if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_FILE_EXTENT ) {
+            found_file_extent = true;
+            j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
+
+            // Output the content from this particular file extent
+            uint64_t block_addr = val->phys_block_num;
+
+            uint64_t extent_len_blocks = (val->len_and_flags & J_FILE_EXTENT_LEN_MASK) / nx_block_size;
+            for (uint64_t i = 0;   i < extent_len_blocks;   i++, block_addr++) {
+                if (read_blocks(buffer, block_addr, 1) != 1) {
+                    fprintf(stderr, "\n\nEncountered an error reading block %#" PRIx64 " (block %" PRIu64 " of %" PRIu64 "). Exiting.\n\n", block_addr, i+1, extent_len_blocks);
+                    return -1;
+                }
+                
+                uint64_t bytes_to_write = nx_block_size;
+                if (bytes_remaining < nx_block_size) {
+                    bytes_to_write = bytes_remaining;
+                }
+                if (fwrite(buffer, bytes_to_write, 1, stdout) != 1) {
+                    fprintf(stderr, "\n\nEncountered an error writing block %" PRIu64 " of %" PRIu64 " to `stdout`. Exiting.\n\n", i+1, extent_len_blocks);
+                    return -1;
+                }
+                bytes_remaining -= bytes_to_write;
+
+                if (bytes_remaining == 0) {
+                    break;  // Exit extent loop
+                }
+            }
+        }
+
+        if (bytes_remaining == 0) {
+            break;  // Exit fs record loop
+        }
+    }
+    if (!found_file_extent) {
+        fprintf(stderr, "Could not find any file extents for the specified path.\n");
+    }
+
+    free_j_rec_array(fs_records);
+    
+    // TODO: RESUME HERE
+    
     free(fs_omap_btree);
     free(fs_omap);
+
+    // Closing statements; de-allocate all memory, close all file descriptors.
     free(apsbs);
     free(nx_omap_btree);
     free(nx_omap);

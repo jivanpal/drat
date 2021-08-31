@@ -24,6 +24,7 @@ command_function cmd_inspect;
 command_function cmd_list_raw;
 command_function cmd_list;
 command_function cmd_timeline;
+command_function cmd_rollback;
 command_function cmd_modify;
 command_function cmd_read;
 command_function cmd_recover_raw;
@@ -40,6 +41,7 @@ static drat_command_t drat_commands[] = {
     { "list-raw"                , cmd_list_raw                  , "List directory contents or file info based on its filesystem OID" },
     { "list"                    , cmd_list                      , "List directory contents or file info based on its filepath" },
     { "timeline"                , cmd_timeline                  , "Parse the whole filesystem recursively and build a MACB timeline" },
+    { "rollback"                , cmd_rollback                  , "Print file contents in an older filesystem state" },
     // { "modify"                  , cmd_modify                    , "Modify structures on disk to resolve problems" },
     { "read"                    , cmd_read                      , "Read a block and display information about it" },
     { "recover-raw"             , cmd_recover_raw               , "Recover a file based on its filesystem OID" },
