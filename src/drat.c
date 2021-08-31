@@ -14,7 +14,6 @@ static void print_usage() {
         "Usage: %s [global options] <command> [options]\n"
         "\n"
         "List of commands:\n",
-
         globals.program_name
     );
 
@@ -39,7 +38,7 @@ int main(int argc, char** argv) {
             URL_STRING "\n"
             "\n"
         );
-        print_usage(false);
+        print_usage();
         return 0;
     }
     
@@ -57,7 +56,12 @@ int main(int argc, char** argv) {
 
     if (!command.seen) {
         // Options were specified, but no command. Complain on stderr and exit.
-        fprintf(stderr, "%s: no command specified; run `%s` without any arguments to see a list of commands.\n", globals.program_name, globals.program_name);
+        fprintf(
+            stderr,
+            "%s: no command specified; run `%s` without any arguments to see a list of commands.\n",
+            globals.program_name,
+            globals.program_name
+        );
         return 0;
     }
 

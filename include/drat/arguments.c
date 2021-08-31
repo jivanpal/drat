@@ -1,7 +1,8 @@
 #include "arguments.h"
 
+#include <inttypes.h>
+
 #include <drat/strings.h>
-#include <stdio.h>
 
 const char* argp_program_version = VERSION_STRING;
 const char* argp_program_bug_address = URL_STRING;
@@ -31,28 +32,48 @@ const struct argp_option argp_options_globals[] = {
  */
 error_t argp_parser_globals(int key, char* arg, struct argp_state* state) {
     switch (key) {
-        case ARGP_KEY_CONTAINER:
-            //
-            break;
-        case ARGP_KEY_BLOCK_SIZE:
-            //
-            break;
-        case ARGP_KEY_VOLUME:
-            //
-            break;
-        case ARGP_KEY_VOLUME_NAME:
-            //
-            break;
-        case ARGP_KEY_MAX_XID:
-            //
-            break;
-        case ARGP_KEY_ARG:
-            // Non-option argument
-            break;
-        case ARGP_KEY_ARGS:
-            // All remaining arguments (this case hit if
-            // we returned ARGP_ERR_UNKNOWN for ARGP_KEY_ARG)
-            break;
+        case ARGP_KEY_CONTAINER: {
+            globals.container_path = arg;
+        } break;
+        case ARGP_KEY_BLOCK_SIZE: {
+            if (strcmp(arg, "auto") == 0) {
+                globals.block_size = 0;
+                break;
+            }
+            char* endptr = NULL;
+            uintmax_t value = strtoumax(arg, &endptr, 0);
+            if (*arg == '\0' || *endptr != '\0') {
+                return EINVAL;
+            }
+            globals.block_size = value;
+        } break;
+        case ARGP_KEY_VOLUME: {
+            char* endptr = NULL;
+            uintmax_t value = strtoumax(arg, &endptr, 10);
+            if (*arg == '\0' || *endptr != '\0') {
+                return EINVAL;
+            }
+            globals.volume_index = value;
+        } break;
+        case ARGP_KEY_VOLUME_NAME: {
+            globals.volume_name = arg;
+        } break;
+        case ARGP_KEY_MAX_XID: {
+            char* endptr = NULL;
+            intmax_t value = strtoimax(arg, &endptr, 0);
+            if (*arg == '\0' || *endptr != '\0') {
+                return EINVAL;
+            }
+            globals.max_xid = value;
+        } break;
+        case ARGP_KEY_ARG: {
+            if (state->arg_num == 0) {
+                // This is the Drat command; skip.
+                break;
+            }
+            // This is some other non-option argument; pass to parent parser.
+            return ARGP_ERR_UNKNOWN;
+        } break;
         default:
             return ARGP_ERR_UNKNOWN;
     }
@@ -71,7 +92,7 @@ error_t argp_parser_command(int key, char* arg, struct argp_state* state) {
             state->next = state->argc;  // Stop parsing args
             break;
         default:
-            // Do nothing; skip all valid global option arguments
+            // Do nothing; skip all valid global option arguments.
             break;
     }
 
@@ -82,8 +103,8 @@ error_t argp_parser_command(int key, char* arg, struct argp_state* state) {
  * Argp stucture defining an Argp parser for Drat's global options.
  */
 const struct argp argp_globals = {
-    &argp_options_globals,  // const struct argp_option* options
-    &argp_parser_globals,   // argp_parser_t parser
+    &argp_options_globals,
+    &argp_parser_globals,
 };
 
 const struct argp argp_command = {
