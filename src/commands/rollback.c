@@ -1,4 +1,3 @@
-// Get all the filenames from a previous xid with their data stream
 #include <stdio.h>
 #include <sys/errno.h>
 #include <assert.h>
@@ -599,7 +598,7 @@ int cmd_rollback(int argc, char **argv)
         return -1;
     }
 
-    // Get file size
+    // Get file size from the inode object records
     uint64_t file_size = 0;
     for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
         j_rec_t* fs_rec = *fs_rec_cursor;

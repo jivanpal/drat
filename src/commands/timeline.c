@@ -76,7 +76,7 @@ const char* nth_strchr(const char* s, char c, int n) {
 }
 
 // /private/var/etc -> /var/etc -> /etc -> null
-char *getRemainingUrl(char *url, char token) {
+char *get_remaining_url(char *url, char token) {
     const char *position_ptr = nth_strchr(url, token, 2);
     int position = (position_ptr == NULL ? -1 : position_ptr - url);
 
@@ -89,7 +89,7 @@ char *getRemainingUrl(char *url, char token) {
 }
 
 // /private/var/etc -> private
-char *getFirstEntry(char *url, char token) {
+char *get_first_entry(char *url, char token) {
     char *left_position_ptr = strchr(url, token);
     if (left_position_ptr == NULL) {
         return NULL;
@@ -109,7 +109,7 @@ char *getFirstEntry(char *url, char token) {
 }
 
 
-void parse_fs(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, btree_node_phys_t *fs_root_btree, struct file_metadata **fs_files, char *path, char *full_path)
+void parse_fs(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, btree_node_phys_t *fs_root_btree, struct file_metadata **fs_files, char *path_to_process, char *full_path)
 {
     if (fs_records == NULL || fs_records[0] == NULL) {
         return;
@@ -117,9 +117,9 @@ void parse_fs(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, btree_node
     int res = -1;
     char *entry = NULL;
     char *rest = NULL;
-    if (path != NULL) {
-        entry = getFirstEntry(path, '/');
-        rest = getRemainingUrl(path, '/');
+    if (path_to_process != NULL) {
+        entry = get_first_entry(path_to_process, '/');
+        rest = get_remaining_url(path_to_process, '/');
     }
     for (j_rec_t **fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) // for each directory entry...
     {
@@ -128,10 +128,10 @@ void parse_fs(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, btree_node
         if (((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT) == APFS_TYPE_DIR_REC)
         {
             j_drec_key_t *key = fs_rec->data;
-            if (path != NULL) {
+            if (path_to_process != NULL) {
                 res = strcmp((char *)key->name, entry);
             }
-            if (res == 0 || path == NULL || strcmp(path, "/") == 0) {
+            if (res == 0 || path_to_process == NULL || strcmp(path_to_process, "/") == 0) {
                 printf("Analysing record: %s\n", (char *)key->name);
                 // diff between found index and start index
                 signed int matching_record_index = fs_rec_cursor - fs_records;
@@ -149,7 +149,7 @@ void parse_fs(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, btree_node
                 //printf("Entering absolute directory: %s\n", new_full_path);
                 parse_fs(get_fs_records(fs_omap_btree, fs_root_btree, dir_oid, (xid_t)(~0)), fs_omap_btree, fs_root_btree, fs_files, rest, new_full_path);
             }
-        } else if (((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT) == APFS_TYPE_INODE){
+        } else if (((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT) == APFS_TYPE_INODE) {
             oid_t file_oid = hdr->obj_id_and_type & OBJ_ID_MASK;
             j_rec_t **file_record = get_fs_records(fs_omap_btree, fs_root_btree, file_oid, (xid_t)(~0));
             print_fs_records(file_record);

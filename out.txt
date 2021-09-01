@@ -1,0 +1,104 @@
+Opening file at `../apfs.dmg` in read-only mode ... OK.
+Simulating a mount of the APFS container.
+Validating checksum of block 0x0 ... OK.
+Locating the checkpoint descriptor area:
+- Its length is 48 blocks.
+- It is contiguous.
+- The address of its first block is 0xb43d.
+Loading the checkpoint descriptor area into memory ... OK.
+Locating the most recent well-formed container superblock in the checkpoint descriptor area:
+- It lies at index 3 within the checkpoint descriptor area.
+- The corresponding checkpoint starts at index 2 within the checkpoint descriptor area, and spans 2 blocks.
+
+Loading the corresponding checkpoint ... OK.
+- There are 5 checkpoint-mappings in this checkpoint.
+
+Reading the Ephemeral objects used by this checkpoint ... OK.
+Validating the Ephemeral objects ... OK.
+The container superblock states that the container object map has Physical OID 0x1ae.
+Loading the container object map ... OK.
+Validating the container object map ... OK.
+Reading the root node of the container object map B-tree ... OK.
+Validating the root node of the container object map B-tree ... OK.
+The container superblock lists 1 APFS volumes, whose superblocks have the following Virtual OIDs:
+- 0x402
+
+Reading the APFS volume superblocks ... OK.
+Validating the APFS volume superblocks ... OK.
+
+ Volume list
+================
+ 0: Peace16A366.D10D101D20D201OS
+The volume object map has Physical OID 0x1a6.
+Reading the volume object map ... OK.
+Validating the volume object map ... OK.
+Reading the root node of the volume object map B-tree ... OK.
+Validating the root node of the volume object map B-tree ... OK.
+The file-system tree root for this volume has Virtual OID 0xa7c5.
+Looking up this Virtual OID in the volume object map ... corresponding block address is 0x19e.
+Reading ... validating ... OK.
+Entering directory /
+- INODE
+Creation time:          Wed Aug 29 09:12:17 2018
+Last modification time: Sat Aug 28 15:54:39 2021
+Last access time:       Sat Aug 28 15:54:39 2021
+
+Number of extended fields:  1
+Details of extended fields:
+
+== KEY ==
+Type:   Item name
+Size:   5 bytes
+Flags:  Do not copy
+== VALUE ==
+Item name: root
+
+
+- DIR REC || Dirctry || target ID = 0x10002f6ae || name = .DocumentRevisions-V100
+- DIR REC || Dirctry || target ID =     0x13 || name = .HFS+ Private Directory Data
+- DIR REC || Dirctry || target ID = 0x10002f6b9 || name = .TemporaryItems
+- DIR REC || RegFile || target ID =  0x2f731 || name = .Trashes
+- DIR REC || Dirctry || target ID =    0x49b || name = .ba
+- DIR REC || RegFile || target ID =    0x499 || name = .file
+- DIR REC || Dirctry || target ID = 0x10002f6a8 || name = .fseventsd
+- DIR REC || Dirctry || target ID =    0x2a7 || name = .mb
+- DIR REC || Dirctry || target ID =     0x14 || name = Applications
+- DIR REC || Dirctry || target ID =   0x3002 || name = Developer
+- DIR REC || Dirctry || target ID =   0x28c5 || name = Library
+- DIR REC || Dirctry || target ID =   0x2cab || name = System
+- DIR REC || Dirctry || target ID =  0x2b5c2 || name = bin
+- DIR REC || Dirctry || target ID =  0x2b5dc || name = cores
+- DIR REC || Dirctry || target ID =  0x2b5e6 || name = dev
+- DIR REC || Symlink || target ID =  0x2b5f0 || name = etc
+- DIR REC || Dirctry || target ID =  0x2b5f9 || name = private
+- DIR REC || Dirctry || target ID =  0x2f0c0 || name = sbin
+- DIR REC || Symlink || target ID =  0x2f0e7 || name = tmp
+- DIR REC || Dirctry || target ID =  0x2f0d0 || name = usr
+- DIR REC || Symlink || target ID =  0x2f57c || name = var
+
+Inode record type: Directory
+Analysing record: etc
+- INODE
+Creation time:          Wed Aug 29 09:20:42 2018
+Last modification time: Wed Aug 29 09:20:42 2018
+Last access time:       Wed Aug 29 09:20:42 2018
+
+Number of extended fields:  1
+Details of extended fields:
+
+== KEY ==
+Type:   Item name
+Size:   4 bytes
+Flags:  Do not copy
+== VALUE ==
+Item name: etc
+
+
+- XATTR || name = com.apple.fs.symlink
+
+Inode record type: Symbolic link
+Sorting 0 elements by timestamp...
+======================================================================
+Timeline:
+======================================================================
+END: All done.

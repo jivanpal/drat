@@ -127,7 +127,7 @@ void print_fs_records(j_rec_t** fs_records) {
                 //j_drec_hashed_key_t*    key = fs_rec->data;
                 j_drec_key_t*           key = fs_rec->data;
                 j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
-
+                
                 fprintf(stderr, "DIR REC"
                     " || %s"
                     " || target ID = %#8" PRIx64
