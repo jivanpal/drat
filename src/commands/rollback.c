@@ -154,8 +154,6 @@ int cmd_rollback(int argc, char **argv)
 
     uint32_t i_target_nx = 0;
     xid_t xid_latest_nx = 0;
-    xid_t nx_xids[xp_desc_blocks];
-
     xid_t max_xid = ~0; // `~0` is the highest possible XID
 
     for (uint32_t i = 0; i < xp_desc_blocks; i++)
@@ -603,7 +601,6 @@ int cmd_rollback(int argc, char **argv)
     for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
         j_rec_t* fs_rec = *fs_rec_cursor;
         j_key_t* hdr = fs_rec->data;
-        printf("Looping\n");
         if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_INODE ) {
             j_inode_val_t* inode = fs_rec->data + fs_rec->key_len;
             file_size = get_file_size(inode, fs_rec->val_len);

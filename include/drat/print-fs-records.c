@@ -123,7 +123,7 @@ void print_fs_records(j_rec_t** fs_records) {
             } break;
             case APFS_TYPE_DIR_REC: {
                 // Apple's spec inorrectly says to use `j_drec_key_t`; see NOTE in <apfs/j.h>
-                // On iOS 12 dmgs keys are of j_drec_key_t type
+                // iOS 12 dmgs keys are of j_drec_key_t type (pre 2019)
                 //j_drec_hashed_key_t*    key = fs_rec->data;
                 j_drec_key_t*           key = fs_rec->data;
                 j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
