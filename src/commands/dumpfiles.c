@@ -47,12 +47,21 @@ static void print_usage(int argc, char **argv)
         argc == 1 ? stdout : stderr,
 
         "Usage:   %s <container> <volume ID> <path in volume> <output directory with trailing />\n"
-        "Example: %s /dev/disk0s2  0  /private/var/mobile/ /Users/john/Desktop/\n",
+        "Example: %s /dev/disk0s2  0  /private/var/mobile /Users/john/Desktop/\n",
         argv[0],
         argv[0]);
 }
 
-void parse_fs_and_write(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, btree_node_phys_t *fs_root_btree, char *path_to_process, char *full_path, char *outdir)
+char *gen_directory(char *base_dir, char *fn, int xid) {
+    char xid_str[10];
+    sprintf(xid_str, "%d", xid);
+    char *out = malloc(strlen(base_dir) + strlen(xid_str) + strlen(fn) + 3);
+     // cannot import sys/stat.h to mkdir because of constant redefinition :(
+    sprintf(out, "%s_%s_%s", base_dir, xid_str, fn);
+    return out;
+}
+
+void parse_fs_and_write(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, btree_node_phys_t *fs_root_btree, char *path_to_process, char *full_path, char *outdir, xid_t xid)
 {
     if (fs_records == NULL || fs_records[0] == NULL) {
         return;
@@ -60,6 +69,7 @@ void parse_fs_and_write(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, 
     int res = -1;
     char *entry = NULL;
     char *rest = NULL;
+    char *result;
     if (path_to_process != NULL) {
         entry = get_first_entry(path_to_process, '/');
         rest = get_remaining_url(path_to_process, '/');
@@ -70,8 +80,8 @@ void parse_fs_and_write(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, 
         j_key_t *hdr = fs_rec->data;
         if (((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT) == APFS_TYPE_DIR_REC)
         {
-            j_drec_key_t *key = fs_rec->data;
-            //j_drec_hashed_key_t *key = fs_rec->data;
+            //j_drec_key_t *key = fs_rec->data;
+            j_drec_hashed_key_t *key = fs_rec->data;
             if (path_to_process != NULL) {
                 res = strcmp((char *)key->name, entry);
             }
@@ -91,7 +101,7 @@ void parse_fs_and_write(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, 
                 strncpy(new_full_path + strlen(full_path), separator, 1);
                 strncpy(new_full_path + strlen(full_path) + 1, (char *)key->name, strlen((char *)key->name) + 1);
                 //printf("Entering absolute path: %s\n", new_full_path);
-                parse_fs_and_write(get_fs_records(fs_omap_btree, fs_root_btree, dir_oid, (xid_t)(~0)), fs_omap_btree, fs_root_btree, rest, new_full_path, outdir);
+                parse_fs_and_write(get_fs_records(fs_omap_btree, fs_root_btree, dir_oid, (xid_t)(~0)), fs_omap_btree, fs_root_btree, rest, new_full_path, outdir, xid);
             }
         } else if (((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT) == APFS_TYPE_INODE) {
             oid_t file_oid = hdr->obj_id_and_type & OBJ_ID_MASK;
@@ -103,6 +113,7 @@ void parse_fs_and_write(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, 
             printf("Inode record type: %s\n", get_j_inode_type(inode));
             char *fn = get_file_name(file_record);
             bool is_reg_file = strcmp(get_j_inode_type(inode), "Regular file") == 0;
+            result = gen_directory(outdir, fn, xid);
             if (fn && is_reg_file) {
                 // Output content from all matching file extents
                 char* buffer = malloc(nx_block_size);
@@ -113,8 +124,9 @@ void parse_fs_and_write(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, 
                 uint64_t file_size = get_file_size(inode, fs_rec->val_len);
                 printf("File size: %" PRIu64 "\n", file_size);
                 if (file_size == 0) {
-                    // Not a file, or file size couldn't be found; abort.
-                    exit(-1);
+                    // Not a file, or file size couldn't be found; skip it in this case.
+                    //exit(-1);
+                    continue;
                 }
 
                 // Keep track of how many more bytes we need to output
@@ -145,9 +157,7 @@ void parse_fs_and_write(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, 
                             if (bytes_remaining < nx_block_size) {
                                 bytes_to_write = bytes_remaining;
                             }
-                            char *result = malloc(strlen(outdir) + strlen(fn) + 1);
-                            strcpy(result, outdir);
-                            strcat(result, fn);
+                            
                             FILE *fp = fopen(result, "ab");
                             if (fwrite(buffer, bytes_to_write, 1, fp) != 1) {
                                 fprintf(stderr, "\n\nEncountered an error writing block %" PRIu64 " of %" PRIu64 " to `stdout`. Exiting.\n\n", i+1, extent_len_blocks);
@@ -177,6 +187,7 @@ void parse_fs_and_write(j_rec_t **fs_records, btree_node_phys_t *fs_omap_btree, 
         }
     }
     free_j_rec_array(fs_records);
+    free(result);
 }
 
 struct fs_browse_info* get_root_fs_tree(nx_superblock_t* nxsb, uint32_t volume_id, char(*xp_desc)[nx_block_size], uint32_t xp_desc_blocks) {
@@ -551,7 +562,8 @@ int cmd_dumpfiles(int argc, char **argv)
     fprintf(stderr, "Locating the requested container superblock in the checkpoint descriptor area:\n");
     uint32_t i_target_nx = 0;
     xid_t xid_latest_nx = 0;
-    uint32_t nx_xids[xp_desc_blocks]; // collect all the valid indexes
+    uint32_t nx_indexes[xp_desc_blocks]; // collect all the valid indexes
+    xid_t nx_xids[xp_desc_blocks];
 
     xid_t max_xid = ~0; // `~0` is the highest possible XID
     uint32_t j = 0;
@@ -570,8 +582,8 @@ int cmd_dumpfiles(int argc, char **argv)
                 continue;
             }
             printf("Found nxsb block at index %d with XID: %" PRIu64 "\n", i, ((nx_superblock_t *)xp_desc[i])->nx_o.o_xid);
-            nx_xids[j] = i; 
-            j++;
+            nx_indexes[j] = i; 
+            nx_xids[j++] = ((nx_superblock_t *)xp_desc[i])->nx_o.o_xid;
         }
         else if (!is_checkpoint_map_phys(xp_desc[i]))
         {
@@ -585,10 +597,9 @@ int cmd_dumpfiles(int argc, char **argv)
         fprintf(stderr, "No container superblock with an XID that doesn't exceed 0x%" PRIx64 " exists in the checkpoint descriptor area.\n", max_xid);
         return 1;
     }
-
     for (uint32_t i = 0; i < j; i++) {
-        memcpy(nxsb, xp_desc[nx_xids[i]], sizeof(nx_superblock_t));
-        fprintf(stderr, "- It lies at index %u within the checkpoint descriptor area.\n", nx_xids[i]);
+        memcpy(nxsb, xp_desc[nx_indexes[i]], sizeof(nx_superblock_t));
+        fprintf(stderr, "- It lies at index %u within the checkpoint descriptor area.\n", nx_indexes[i]);
         fprintf(stderr, "- The corresponding checkpoint starts at index %u within the checkpoint descriptor area, and spans %u blocks.\n\n", nxsb->nx_xp_desc_index, nxsb->nx_xp_desc_len);
         struct fs_browse_info *fs_trees = get_root_fs_tree(nxsb, volume_id, xp_desc, xp_desc_blocks);
         if (fs_trees == NULL) {
@@ -614,7 +625,7 @@ int cmd_dumpfiles(int argc, char **argv)
 
         printf("Entering directory /\n");
         char *path_builder = "";
-        parse_fs_and_write(fs_records, fs_trees->fs_omap_btree, fs_trees->fs_root_btree, path, path_builder, outdir);
+        parse_fs_and_write(fs_records, fs_trees->fs_omap_btree, fs_trees->fs_root_btree, path, path_builder, outdir, nx_xids[i]);
         free(fs_trees->fs_omap_btree);
         free(fs_trees->fs_root_btree);
         free(fs_trees);
