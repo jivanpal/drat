@@ -110,6 +110,8 @@ int cmd_explore_fs_tree(int argc, char** argv) {
         return 0;
     }
 
+    // Set placeholder values so that the parser can identify whether the user
+    // has set mandatory options or not
     options_t options = {-1, -1};
 
     bool usage_error = true;
@@ -139,42 +141,6 @@ int cmd_explore_fs_tree(int argc, char** argv) {
     if (usage_error) {
         print_usage(stderr);
         return EX_USAGE;
-    }
-
-    // TODO: Remove this old arg parse section
-    if (false) {
-        // // Extrapolate CLI arguments, exit if invalid
-        // if (argc != 4) {
-        //     fprintf(stderr, "Incorrect number of arguments.\n");
-        //     print_usage(argc, argv);
-        //     return 1;
-        // }
-
-        // char* nx_path = argv[1];
-        
-        // // Capture <fs tree root node address>
-        // paddr_t fs_root_addr;
-        // bool parse_success = sscanf(argv[2], "0x%"SCNx64"", &fs_root_addr);
-        // if (!parse_success) {
-        //     parse_success = sscanf(argv[2], "%"SCNu64"", &fs_root_addr);
-        // }
-        // if (!parse_success) {
-        //     fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
-        //     print_usage(argc, argv);
-        //     return 1;
-        // }
-
-        // // Capture <omap tree root node address>
-        // paddr_t omap_root_addr;
-        // parse_success = sscanf(argv[3], "0x%"SCNx64"", &omap_root_addr);
-        // if (!parse_success) {
-        //     parse_success = sscanf(argv[3], "%"SCNu64"", &omap_root_addr);
-        // }
-        // if (!parse_success) {
-        //     fprintf(stderr, "%s is not a valid block address.\n", argv[3]);
-        //     print_usage(argc, argv);
-        //     return 1;
-        // }
     }
     
     if (open_container() != 0) {
