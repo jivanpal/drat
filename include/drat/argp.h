@@ -29,7 +29,8 @@ bool parse_number(int64_t* var, char* string);
 extern const struct argp_option argp_options_globals[];
 error_t argp_parser_command(int key, char* arg, struct argp_state* state);
 error_t argp_parser_globals(int key, char* arg, struct argp_state* state);
-extern const struct argp argp_command;
 extern const struct argp argp_globals;
+extern const struct argp argp_command;
+extern const struct argp_child argp_children[];
 
 #endif // DRAT_ARGP_H

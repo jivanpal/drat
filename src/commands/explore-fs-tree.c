@@ -43,9 +43,9 @@ typedef struct {
 #define DRAT_ARG_ERR_NO_OMAP        (DRAT_GLOBAL_ARGS_LAST_ERR - 4)
 
 static const struct argp_option argp_options[] = {
-    // char* name,  int key,                    char* arg,          int flags,  char* doc
-    { "fs",         DRAT_ARG_KEY_FS,            "fs tree addr",     0,          "Block address of filesystem B-tree" },
-    { "omap",       DRAT_ARG_KEY_OMAP,          "omap tree addr",   0,          "Block address of object map B-tree" },
+    // char* name,  int key,            char* arg,          int flags,  char* doc
+    { "fs",         DRAT_ARG_KEY_FS,    "fs tree addr",     0,          "Block address of filesystem B-tree" },
+    { "omap",       DRAT_ARG_KEY_OMAP,  "omap tree addr",   0,          "Block address of object map B-tree" },
     {0}
 };
 
@@ -78,12 +78,7 @@ static error_t argp_parser(int key, char* arg, struct argp_state* state) {
     return 0;
 }
 
-static const struct argp_child argp_children[] = {
-    // struct argp* argp,   int flags,  char* header
-    { &argp_globals,        0,          "Global options" },
-    {0}
-};
-
+// TODO: Perhaps factor out from all commands
 static const struct argp argp = {
     &argp_options,  // struct argp_option* options
     &argp_parser,   // argp_parser_t parser
@@ -143,6 +138,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
         return EX_USAGE;
     }
     
+    // TODO: Perhaps handle other return values and factor out
     if (open_container() != 0) {
         return EX_NOINPUT;
     }

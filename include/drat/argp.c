@@ -173,3 +173,9 @@ const struct argp argp_command = {
     " without any arguments to see a list of commands, and run a Drat command"
     " without any additional arguments for info on that coammand and its options.",
 };
+
+const struct argp_child argp_children[] = {
+    // struct argp* argp,   int flags,  char* header
+    { &argp_globals,        0,          "Global options" },
+    {0}
+};
