@@ -135,7 +135,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
                 break;
             default:
                 print_arg_parse_error();
-                return -1;
+                return EX_SOFTWARE;
         }
     }
     if (usage_error) {

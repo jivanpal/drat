@@ -59,7 +59,7 @@ int cmd_inspect(int argc, char** argv) {
                 break;
             default:
                 print_arg_parse_error();
-                return -1;
+                return EX_SOFTWARE;
                 break;
         }
     }
