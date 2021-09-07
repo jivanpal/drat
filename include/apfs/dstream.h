@@ -42,8 +42,9 @@ typedef struct {
     uint64_t    crypto_id;
 } __attribute__((packed))   j_file_extent_val_t;
 
-#define J_FILE_EXTENT_LEN_MASK      0x00ffffffffffffffULL
-#define J_FILE_EXTENT_FLAG_MASK     0xff00000000000000ULL
+// Apple's spec uses `ULL` suffix, we use `UINT64_C()` for portability
+#define J_FILE_EXTENT_LEN_MASK      UINT64_C(0x00ffffffffffffff)
+#define J_FILE_EXTENT_FLAG_MASK     UINT64_C(0xff00000000000000)
 #define J_FILE_EXTENT_FLAG_SHIFT    56
 
 /** `j_dstream_id_key_t` **/

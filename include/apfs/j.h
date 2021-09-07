@@ -16,11 +16,12 @@ typedef struct {
     uint64_t    obj_id_and_type;
 } __attribute__((packed))   j_key_t;
 
-#define OBJ_ID_MASK         0x0fffffffffffffffULL
-#define OBJ_TYPE_MASK       0xf000000000000000ULL
+// Apple's spec uses `ULL` suffix, we use `UINT64_C()` for portability
+#define OBJ_ID_MASK         UINT64_C(0x0fffffffffffffff)
+#define OBJ_TYPE_MASK       UINT64_C(0xf000000000000000)
 #define OBJ_TYPE_SHIFT      60
 
-#define SYSTEM_OBJ_ID_MARK  0x0fffffff00000000ULL
+#define SYSTEM_OBJ_ID_MARK  UINT64_C(0x0fffffff00000000)
 
 /** `j_inode_key_t` **/
 
