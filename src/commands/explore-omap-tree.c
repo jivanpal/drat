@@ -153,14 +153,6 @@ int cmd_explore_omap_tree(int argc, char** argv) {
         val_end -= sizeof(btree_info_t);
     }
 
-    // // Copy the B-tree info somewhere else for easy referencing
-    // btree_info_t* bt_info = malloc(sizeof(btree_info_t));
-    // if (!bt_info) {
-    //     fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `bt_info`.\n");
-    //     return -1;
-    // }
-    // memcpy(bt_info, val_end, sizeof(btree_info_t));
-
     // Descend the tree
     while (true) {
         if (!(node->btn_flags & BTNODE_FIXED_KV_SIZE)) {
@@ -177,6 +169,7 @@ int cmd_explore_omap_tree(int argc, char** argv) {
                 fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `block`.\n");
                 return -1;
             }
+
             for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
                 omap_key_t* key = key_start + toc_entry->k;
                 omap_val_t* val = val_end   - toc_entry->v;
@@ -201,6 +194,7 @@ int cmd_explore_omap_tree(int argc, char** argv) {
                     block->o_xid,   block->o_xid == key->ok_xid ? "YES  " : "   NO"
                 );
             }
+            
             free(block);
         } else {
             for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
@@ -263,6 +257,10 @@ int cmd_explore_omap_tree(int argc, char** argv) {
         key_start = toc_start + node->btn_table_space.len;
         val_end   = (char*)node + globals.block_size;   // Always dealing with non-root node here
     }
+
+    free(node);
+    free(omap_root_node);
+    close_container();
     
     return 0;
 }
