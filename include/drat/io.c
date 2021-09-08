@@ -92,9 +92,13 @@ int open_container() {
             fprintf(stderr, "%s: ERROR: Couldn't read block 0 in order to determine block size.\n", __func__);
             return -1;
         }
-        globals.block_size = superblock->nx_block_size;
 
-        printf("%"PRId64" bytes.\n", globals.block_size);
+        if (superblock->nx_block_size != 0) {
+            globals.block_size = superblock->nx_block_size;
+            printf("%"PRId64" bytes.\n", globals.block_size);
+        } else {
+            printf("field says 0 bytes, using default size of %"PRIu64" bytes instead.\n", globals.block_size);
+        }
     }
 
     return 0;
