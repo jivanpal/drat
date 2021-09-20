@@ -90,8 +90,8 @@ void print_fs_records(j_rec_t** fs_records) {
                 j_dstream_id_key_t* key = fs_rec->data;
                 j_dstream_id_val_t* val = fs_rec->data + fs_rec->key_len;
                 fprintf(stderr, "DSTREAM ID "
-                    " || file ID = %#8llx"
-                    " || ref. count = %u",
+                    " || file ID = %#8"PRIx64
+                    " || ref. count = %"PRIu32,
 
                     key->hdr.obj_id_and_type & OBJ_ID_MASK,
                     val->refcnt
@@ -110,10 +110,10 @@ void print_fs_records(j_rec_t** fs_records) {
                 uint64_t extent_length_blocks = extent_length_bytes / nx_block_size;
 
                 fprintf(stderr, "FILE EXTENT"
-                    " || file ID = %#8llx"
-                    " || log. addr. = %#10" PRIx64
-                    " || length = %8" PRIu64 " B = %#10" PRIx64 " B = %5" PRIu64 " blocks = %#7" PRIx64 " blocks"
-                    " || phys. block = %#10" PRIx64,
+                    " || file ID = %#8"PRIx64
+                    " || log. addr. = %#10"PRIx64
+                    " || length = %8"PRIu64" B = %#10"PRIx64" B = %5"PRIu64" blocks = %#7"PRIx64" blocks"
+                    " || phys. block = %#10"PRIx64,
 
                     key->hdr.obj_id_and_type & OBJ_ID_MASK,
                     key->logical_addr,
@@ -130,7 +130,7 @@ void print_fs_records(j_rec_t** fs_records) {
                 
                 fprintf(stderr, "DIR REC"
                     " || %s"
-                    " || target ID = %#8" PRIx64
+                    " || target ID = %#8"PRIx64
                     " || name = %s",
 
                     drec_val_to_short_type_string(val),

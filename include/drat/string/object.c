@@ -164,13 +164,13 @@ void print_obj_phys(obj_phys_t* obj) {
     char* subtype_string    = get_o_subtype_string(obj->o_subtype);
 
     // Print the info
-    printf("Stored checksum:    0x%016" PRIx64 "\n",   *(uint64_t*)obj);
-    printf("OID:                0x%" PRIx64 "\n",      obj->o_oid);
-    printf("XID:                0x%" PRIx64 "\n",      obj->o_xid);
-    printf("Storage type:       %s\n",          o_storage_type_to_string(obj->o_type));
-    printf("Type flags:         %s\n",          type_flags_string);
-    printf("Type:               %s\n",          type_string);
-    printf("Subtype:            %s\n",          subtype_string);
+    printf("Stored checksum:    %#016"PRIx64"\n",   *(uint64_t*)obj);
+    printf("OID:                %#"PRIx64"\n",      obj->o_oid);
+    printf("XID:                %#"PRIx64"\n",      obj->o_xid);
+    printf("Storage type:       %s\n",              o_storage_type_to_string(obj->o_type));
+    printf("Type flags:         %s\n",              type_flags_string);
+    printf("Type:               %s\n",              type_string);
+    printf("Subtype:            %s\n",              subtype_string);
 
     free(type_flags_string);
     free(type_string);

@@ -49,9 +49,9 @@ int cmd_explore_omap_tree(int argc, char** argv) {
     char* nx_path = argv[1];
     
     paddr_t root_node_block_addr;
-    bool parse_success = sscanf(argv[2], "0x%" PRIx64 "", &root_node_block_addr);
+    bool parse_success = sscanf(argv[2], "0x%"SCNx64"", &root_node_block_addr);
     if (!parse_success) {
-        parse_success = sscanf(argv[2], "%" PRIu64, &root_node_block_addr);
+        parse_success = sscanf(argv[2], "%"SCNu64"", &root_node_block_addr);
     }
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
@@ -71,7 +71,7 @@ int cmd_explore_omap_tree(int argc, char** argv) {
     printf("OK.\n\n");
 
     // Read the specified root node
-    printf("Reading block 0x%" PRIx64 " ... ", root_node_block_addr);
+    printf("Reading block %#"PRIx64" ... ", root_node_block_addr);
     btree_node_phys_t* root_node = malloc(nx_block_size);
     if (!root_node) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `root_node`.\n");
@@ -123,7 +123,7 @@ int cmd_explore_omap_tree(int argc, char** argv) {
             return 0;
         }
 
-        printf("\nNode has %u entries, as follows:\n", node->btn_nkeys);
+        printf("\nNode has %"PRIu32" entries, as follows:\n", node->btn_nkeys);
         kvoff_t* toc_entry = toc_start;
         // Print mapped block's details if explroing a leaf node
         if (node->btn_flags & BTNODE_LEAF) {
@@ -136,24 +136,24 @@ int cmd_explore_omap_tree(int argc, char** argv) {
                 omap_key_t* key = key_start + toc_entry->k;
                 omap_val_t* val = val_end   - toc_entry->v;
                 if (read_blocks(block, val->ov_paddr, 1) != 1) {
-                    fprintf(stderr, "\nABORT: read_blocks: Error reading block %#" PRIx64 ".\n", val->ov_paddr);
+                    fprintf(stderr, "\nABORT: read_blocks: Error reading block %#"PRIx64".\n", val->ov_paddr);
                     return -1;
                 }
 
                 printf(
-                    "- %3u:"
-                    "  OID = %#9" PRIx64 ""
-                    "  ||  XID = %#9" PRIx64 ""
-                    "  ||  Target block = %#9" PRIx64 ""
-                    "  ||  Target's actual OID = %#9" PRIx64 " (%s)"
-                    "  ||  Target's actual XID = %#9" PRIx64 " (%s)\n", 
+                    "- %3"PRIu32":"
+                    "  OID = %#9"PRIx64""
+                    "  ||  XID = %#9"PRIx64""
+                    "  ||  Target block = %#9"PRIx64""
+                    "  ||  Target's actual OID = %#9"PRIx64" (%s)"
+                    "  ||  Target's actual XID = %#9"PRIx64" (%s)\n", 
                     
                     i,
                     key->ok_oid,
                     key->ok_xid,
                     val->ov_paddr,
-                    block->o_oid,   (block->o_oid == key->ok_oid ? "YES  " : "   NO"),
-                    block->o_xid,   (block->o_xid == key->ok_xid ? "YES  " : "   NO")
+                    block->o_oid,   block->o_oid == key->ok_oid ? "YES  " : "   NO",
+                    block->o_xid,   block->o_xid == key->ok_xid ? "YES  " : "   NO"
                 );
             }
             free(block);
@@ -163,9 +163,9 @@ int cmd_explore_omap_tree(int argc, char** argv) {
                 omap_val_t* val = val_end - toc_entry->v;
 
                 printf(
-                    "- %3u:"
-                    "  OID = %#9" PRIx64
-                    "  ||  XID = %#9" PRIx64
+                    "- %3"PRIu32":"
+                    "  OID = %#9"PRIx64""
+                    "  ||  XID = %#9"PRIx64""
                     "  ||  Target child node = %#9"PRIx64"\n",
                     
                     i,
@@ -177,11 +177,11 @@ int cmd_explore_omap_tree(int argc, char** argv) {
         } 
         
         uint32_t entry_index;
-        printf("Choose an entry [0-%u]: ", node->btn_nkeys - 1);
-        scanf("%u", &entry_index);
+        printf("Choose an entry [0-%"PRIu32"]: ", node->btn_nkeys - 1);
+        scanf("%"SCNu32"", &entry_index);
         while (entry_index >= node->btn_nkeys) {
-            printf("Invalid choice; choose an entry [0-%u]: ", node->btn_nkeys - 1);
-            scanf("%u", &entry_index);
+            printf("Invalid choice; choose an entry [0-%"PRIu32"]: ", node->btn_nkeys - 1);
+            scanf("%"SCNu32"", &entry_index);
         }
 
         toc_entry = (kvoff_t*)toc_start + entry_index;
@@ -201,9 +201,9 @@ int cmd_explore_omap_tree(int argc, char** argv) {
         // Else, read the corresponding child node into `node` and loop
         paddr_t* child_node_addr = val_end - toc_entry->v;
 
-        printf("Child node resides at address 0x%" PRIx64 ". Reading ... ", *child_node_addr);
+        printf("Child node resides at address %#"PRIx64". Reading ... ", *child_node_addr);
         if (read_blocks(node, *child_node_addr, 1) != 1) {
-            fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", *child_node_addr);
+            fprintf(stderr, "\nABORT: Failed to read block %#"PRIx64".\n", *child_node_addr);
             return -1;
         }
 
