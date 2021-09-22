@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #if defined(__APPLE__) || defined(__BSD__)
     #include <sys/stat.h>
@@ -50,7 +51,7 @@
 
 // Helper function for printing objects which have xfields
 static void print_xf_details(bool has_xfields, xf_blob_t* xfields) {
-    printf("Number of extended fields:  %"PRIu16"\n", has_xfields ? xfields->xf_num_exts : 0);
+    printf("Number of extended fields:  %"PRIu16"\n", has_xfields ? xfields->xf_num_exts : UINT16_C(0));
     if (has_xfields) {
         printf("Details of extended fields:\n\n");
         xf_pair_t** xf_pairs_array = get_xf_pairs_array(xfields);
