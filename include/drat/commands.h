@@ -15,7 +15,6 @@ typedef int command_function(int argc, char** argv);
 command_function cmd_explore_fs_tree;
 command_function cmd_explore_omap_tree;
 command_function cmd_inspect;
-command_function cmd_list_raw;
 command_function cmd_list;
 command_function cmd_modify;
 command_function cmd_read;
