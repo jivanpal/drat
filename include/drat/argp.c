@@ -171,7 +171,7 @@ const struct argp argp_command = {
     "\v<command> refers to one of Drat's commands, and [command option...]"
     " refers to any number of the options specific to that command. Run Drat"
     " without any arguments to see a list of commands, and run a Drat command"
-    " without any additional arguments for info on that coammand and its options.",
+    " without any additional arguments for info on that command and its options.",
 };
 
 const struct argp_child argp_children[] = {

@@ -1,11 +1,13 @@
 #include <stdio.h>
+#include <sysexits.h>
 
+#include <drat/globals.h>
 #include <drat/strings.h>
 
 int cmd_version(int argc, char** argv) {
-    if (argc != 1) {
-        fprintf(stderr, "The `about` command doesn't take any arguments.\n");
-        return 1;
+    if (argc > 2) {
+        fprintf(stderr, "The `%s` command doesn't take any arguments.\n", globals.command_name);
+        return EX_USAGE;
     }
 
     printf(
