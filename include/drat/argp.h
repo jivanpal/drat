@@ -25,6 +25,7 @@
 void print_arg_parse_error();
 bool print_global_args_error(int error);
 bool parse_number(int64_t* var, char* string);
+int	getsubopt_posix(char** optionp, char* const* tokens, char** valuep);
 
 extern const struct argp_option argp_options_globals[];
 error_t argp_parser_command(int key, char* arg, struct argp_state* state);

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <sysexits.h>
 
 #include <apfs/object.h>
 #include <apfs/nx.h>
@@ -14,6 +15,9 @@
 #include <apfs/sibling.h>
 #include <apfs/snap.h>
 
+#include <drat/globals.h>
+#include <drat/argp.h>
+#include <drat/strings.h>
 #include <drat/io.h>
 
 #include <drat/func/boolean.h>
@@ -27,53 +31,162 @@
 #include <drat/string/fs.h>
 #include <drat/string/j.h>
 
+typedef struct {
+    int64_t omap_root_addr;
+    size_t  num_oids;
+    int64_t oids[];
+} options_t;
+
+#define DRAT_ARG_KEY_OMAP   (DRAT_GLOBAL_ARGS_LAST_KEY - 1)
+#define DRAT_ARG_KEY_OIDS   (DRAT_GLOBAL_ARGS_LAST_KEY - 2)
+
+#define DRAT_ARG_ERR_INVALID_OMAP   (DRAT_GLOBAL_ARGS_LAST_ERR - 1)
+#define DRAT_ARG_ERR_INVALID_OID    (DRAT_GLOBAL_ARGS_LAST_ERR - 2)
+#define DRAT_ARG_ERR_NO_OMAP        (DRAT_GLOBAL_ARGS_LAST_ERR - 3)
+#define DRAT_ARG_ERR_NO_OIDS        (DRAT_GLOBAL_ARGS_LAST_ERR - 4)
+
+static const struct argp_option argp_options[] = {
+    // char* name,  int key,            char* arg,          int flags,      char* doc
+    { "omap",       DRAT_ARG_KEY_OMAP,  "omap tree addr",   0,              "Block address of object map B-tree" },
+    { "oids",       DRAT_ARG_KEY_OIDS,  "oid[,...]",        0,              "Comma-delimited list of OIDs" },
+    { "oid",        DRAT_ARG_KEY_OIDS,  "oid",              OPTION_ALIAS,   "An OID" },
+    {0}
+};
+
+static error_t argp_parser(int key, char* arg, struct argp_state* state) {
+    options_t** options_p = state->input;
+    options_t* options = *options_p;
+
+    switch (key) {
+        case DRAT_ARG_KEY_OMAP:
+            if (!parse_number(&options->omap_root_addr, arg)) {
+                return DRAT_ARG_ERR_INVALID_OMAP;
+            }
+            break;
+            
+        case DRAT_ARG_KEY_OIDS: {
+            /*
+             * NOTE: Need to enclose this case in a block `{}` to prevent the
+             * following error when compiling on Linux: "a label can only be
+             * part of a statement and a declaration is not a statement". This
+             * practice also mitigates the possibility of names being declared
+             * multiple times in the same variable scope.
+             */
+            char* option = arg;
+            char* const tokens[] = {0};
+            char* value = NULL;
+            
+            while (*option) {
+                switch (getsubopt_posix(&option, tokens, &value)) {
+                    case -1: {  // Need brace to prevent compile-time error on Linux
+                        int64_t oid = -1;
+                        if (!parse_number(&oid, value) || oid == -1) {
+                            return DRAT_ARG_ERR_INVALID_OID;
+                        }
+                        options->num_oids++;
+                        options = *options_p = realloc(options, sizeof(options_t) + options->num_oids * sizeof(options->oids[0]));
+                        options->oids[options->num_oids - 1] = oid;
+                        break;
+                    }
+                    default:
+                        // This should never happen since `tokens` is empty
+                        assert(false);
+                        print_arg_parse_error();
+                        break;
+                }
+            }
+            break;
+        }
+
+        case ARGP_KEY_END:
+            if (options->omap_root_addr == -1) {
+                return DRAT_ARG_ERR_NO_OMAP;
+            }
+            if (options->num_oids == 0) {
+                return DRAT_ARG_ERR_NO_OIDS;
+            }
+            // fall through
+        default:
+            return ARGP_ERR_UNKNOWN;
+    }
+
+    return 0;
+}
+
+// TODO: Perhaps factor out from all commands
+static const struct argp argp = {
+    &argp_options,  // struct argp_option* options
+    &argp_parser,   // argp_parser_t parser
+    0,              // char* args_doc
+    0,              // char* doc
+    &argp_children  // struct argp_child* children
+};
+
 /**
  * Print usage info for this program.
  */
-static void print_usage(int argc, char** argv) {
+static void print_usage(FILE* stream) {
     fprintf(
-        argc == 1 ? stdout : stderr,
-        
-        "Usage:   %s <container>\n"
-        "Example: %s /dev/disk0s2\n",
-
-        argv[0],
-        argv[0]
+        stream,
+        "Usage:   %1$s %2$s --container <container> --volume <volume> --oids <oid>[,...]\n"
+        "Example: %1$s %2$s --container /dev/disk0s2 --volume 0 --oids 0x247,0x11f3,0x10a\n",
+        globals.program_name,
+        globals.command_name
     );
 }
 
 int cmd_resolver(int argc, char** argv) {
-    if (argc == 1) {
-        print_usage(argc, argv);
+    if (argc == 2) {
+        // Command was specified with no other arguments
+        print_usage(stdout);
         return 0;
     }
+
+    // Set placeholder values so that the parser can identify whether the user
+    // has set mandatory options or not
+    globals.volume = -1;
+    options_t* options = malloc(sizeof(options_t));
+    options->omap_root_addr = -1;
+    options->num_oids = 0;
+
+    bool usage_error = true;
+    error_t parse_result = argp_parse(&argp, argc, argv, ARGP_IN_ORDER, 0, &options);
+    if (!print_global_args_error(parse_result)) {
+        switch (parse_result) {
+            case 0:
+                usage_error = false;
+                break;
+            case DRAT_ARG_ERR_INVALID_OMAP:
+                fprintf(stderr, "%s: option `--omap`" INVALID_HEX_STRING, globals.program_name);
+                break;
+            case DRAT_ARG_ERR_INVALID_OID:
+                fprintf(stderr, "%s: option `--oids`" INVALID_HEX_STRING, globals.program_name);
+                break;
+            case DRAT_ARG_ERR_NO_OMAP:
+                fprintf(stderr, "%s: option `--omap` is mandatory.\n", globals.program_name);
+                break;
+            case DRAT_ARG_ERR_NO_OIDS:
+                fprintf(stderr, "%s: option `--oids` is mandatory.\n", globals.program_name);
+                break;
+            default:
+                print_arg_parse_error();
+                return EX_SOFTWARE;
+        }
+    }
+    if (usage_error) {
+        print_usage(stderr);
+        return EX_USAGE;
+    }
+
+    // TODO: Perhaps handle other return values and factor out
+    if (open_container() != 0) {
+        return EX_NOINPUT;
+    }
+    printf("\n");
     
     setbuf(stdout, NULL);
 
-    // Extrapolate CLI arguments, exit if invalid
-    if (argc != 2) {
-        fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argc, argv);
-        return 1;
-    }
-    nx_path = argv[1];
-    
-    // Open (device special) file corresponding to an APFS container, read-only
-    printf("Opening file at `%s` in read-only mode ... ", nx_path);
-    nx = fopen(nx_path, "rb");
-    if (!nx) {
-        fprintf(stderr, "\nABORT: ");
-        report_fopen_error();
-        printf("\n");
-        return -errno;
-    }
-    printf("OK.\nSimulating a mount of the APFS container.\n");
-    
-    // Using `nx_superblock_t*`, but allocating a whole block of memory.
-    // This way, we can read the entire block and validate its checksum,
-    // but still have direct access to the fields in `nx_superblock_t`
-    // without needing to epxlicitly cast to that datatype.
-    nx_superblock_t* nxsb = malloc(nx_block_size);
+    nx_superblock_t* nxsb = malloc(globals.block_size);
     if (!nxsb) {
         fprintf(stderr, "ABORT: Could not allocate sufficient memory to create `nxsb`.\n");
         return -1;
@@ -109,7 +222,7 @@ int cmd_resolver(int argc, char** argv) {
     uint32_t xp_desc_blocks = nxsb->nx_xp_desc_blocks & ~(1 << 31);
     printf("- Its length is %"PRIu32" blocks.\n", xp_desc_blocks);
 
-    char (*xp_desc)[nx_block_size] = malloc(xp_desc_blocks * nx_block_size);
+    char (*xp_desc)[globals.block_size] = malloc(xp_desc_blocks * globals.block_size);
     if (!xp_desc) {
         fprintf(stderr, "ABORT: Could not allocate sufficient memory for %"PRIu32" blocks.\n", xp_desc_blocks);
         return -1;
@@ -194,7 +307,7 @@ int cmd_resolver(int argc, char** argv) {
     printf("Loading the corresponding checkpoint ... ");
     
     // The array `xp` will comprise the blocks in the checkpoint, in order.
-    char (*xp)[nx_block_size] = malloc(nxsb->nx_xp_desc_len * nx_block_size);
+    char (*xp)[globals.block_size] = malloc(nxsb->nx_xp_desc_len * globals.block_size);
     if (!xp) {
         fprintf(stderr, "\nABORT: Couldn't allocate sufficient memory.\n");
         return -1;
@@ -202,14 +315,14 @@ int cmd_resolver(int argc, char** argv) {
 
     if (nxsb->nx_xp_desc_index + nxsb->nx_xp_desc_len <= xp_desc_blocks) {
         // The simple case: the checkpoint is already contiguous in `xp_desc`.
-        memcpy(xp, xp_desc[nxsb->nx_xp_desc_index], nxsb->nx_xp_desc_len * nx_block_size);
+        memcpy(xp, xp_desc[nxsb->nx_xp_desc_index], nxsb->nx_xp_desc_len * globals.block_size);
     } else {
         // The case where the checkpoint wraps around from the end of the
         // checkpoint descriptor area to the start.
         uint32_t segment_1_len = xp_desc_blocks - nxsb->nx_xp_desc_index;
         uint32_t segment_2_len = nxsb->nx_xp_desc_len - segment_1_len;
-        memcpy(xp,                 xp_desc + nxsb->nx_xp_desc_index, segment_1_len * nx_block_size);
-        memcpy(xp + segment_1_len, xp_desc,                          segment_2_len * nx_block_size);
+        memcpy(xp,                 xp_desc + nxsb->nx_xp_desc_index, segment_1_len * globals.block_size);
+        memcpy(xp + segment_1_len, xp_desc,                          segment_2_len * globals.block_size);
     }
     printf("OK.\n");
     
@@ -244,7 +357,7 @@ int cmd_resolver(int argc, char** argv) {
     printf("- There are %"PRIu32" checkpoint-mappings in this checkpoint.\n\n", xp_obj_len);
 
     printf("Reading the Ephemeral objects used by this checkpoint ... ");
-    char (*xp_obj)[nx_block_size] = malloc(xp_obj_len * nx_block_size);
+    char (*xp_obj)[globals.block_size] = malloc(xp_obj_len * globals.block_size);
     if (!xp_obj) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `xp_obj`.\n");
         return -1;
@@ -292,7 +405,7 @@ int cmd_resolver(int argc, char** argv) {
     printf("The container superblock states that the container object map has Physical OID %#"PRIx64".\n", nxsb->nx_omap_oid);
 
     printf("Loading the container object map ... ");
-    omap_phys_t* nx_omap = malloc(nx_block_size);
+    omap_phys_t* nx_omap = malloc(globals.block_size);
     if (read_blocks(nx_omap, nxsb->nx_omap_oid, 1) != 1) {
         printf("\nABORT: Could not allocate sufficient memory for `nx_omap`.\n");
         return -1;
@@ -322,7 +435,7 @@ int cmd_resolver(int argc, char** argv) {
     }
 
     printf("Reading the root node of the container object map B-tree ... ");
-    btree_node_phys_t* nx_omap_btree = malloc(nx_block_size);
+    btree_node_phys_t* nx_omap_btree = malloc(globals.block_size);
     if (!nx_omap_btree) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `nx_omap_btree`.\n");
         return -1;
@@ -360,7 +473,7 @@ int cmd_resolver(int argc, char** argv) {
     printf("\n");
 
     printf("Reading the APFS volume superblocks ... ");
-    char (*apsbs)[nx_block_size] = malloc(nx_block_size * num_file_systems);
+    char (*apsbs)[globals.block_size] = malloc(globals.block_size * num_file_systems);
     if (!apsbs) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `apsbs`.\n");
         return -1;
@@ -434,7 +547,7 @@ int cmd_resolver(int argc, char** argv) {
     printf("The volume object map has Physical OID %#"PRIx64".\n", apsb->apfs_omap_oid);
 
     printf("Reading the volume object map ... ");
-    omap_phys_t* fs_omap = malloc(nx_block_size);
+    omap_phys_t* fs_omap = malloc(globals.block_size);
     if (!fs_omap) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_omap`.\n");
         return -1;
@@ -467,7 +580,7 @@ int cmd_resolver(int argc, char** argv) {
     }
 
     printf("Reading the root node of the volume object map B-tree ... ");
-    btree_node_phys_t* fs_omap_btree = malloc(nx_block_size);
+    btree_node_phys_t* fs_omap_btree = malloc(globals.block_size);
     if (!fs_omap_btree) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_omap_btree`.\n");
         return -1;
@@ -590,7 +703,7 @@ int cmd_resolver(int argc, char** argv) {
     free(nx_omap);
     free(xp_obj);
     free(nxsb);
-    fclose(nx);
+    close_container();
     printf("END: All done.\n");
     return 0;
 }

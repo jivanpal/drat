@@ -2,6 +2,7 @@
 
 #include <inttypes.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include <drat/strings.h>
 #include <drat/globals.h>
@@ -82,6 +83,27 @@ bool parse_number(int64_t* var, char* string) {
     }
     *var = value;
     return true;
+}
+
+/**
+ * Portable version of `getsubopt()` that enforces POSIX behaviour. This is
+ * used to avoid the BSD-style behaviour of `getsubopt()` seen on macOS, in
+ * which what would be `value` on POSIX gets separated into `suboptarg` and
+ * `value`.
+ */
+int	getsubopt_posix(char** optionp, char* const* tokens, char** valuep) {
+    int result = getsubopt(optionp, tokens, valuep);
+    
+    #if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+    // We're on macOS: combine `suboptarg` and `value` into `value` to
+    // replicate POSIX behaviour
+    if (*valuep) {
+        *(*valuep - 1) = '=';
+    }
+    *valuep = suboptarg;
+    #endif
+
+    return result;
 }
 
 /**
