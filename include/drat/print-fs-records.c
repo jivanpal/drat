@@ -14,7 +14,7 @@
 #include <drat/globals.h>
 #include <drat/string/j.h>  // drec_val_to_short_type_string()
 
-void print_fs_records(j_rec_t** fs_records) {
+void print_fs_records(FILE* stream, j_rec_t** fs_records) {
     size_t num_records = 0;
 
     for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
@@ -22,7 +22,7 @@ void print_fs_records(j_rec_t** fs_records) {
         j_rec_t* fs_rec = *fs_rec_cursor;
 
         j_key_t* hdr = fs_rec->data;
-        fprintf(stderr, "- ");
+        fprintf(stream, "- ");
 
         switch ( (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT ) {
             /*
@@ -38,22 +38,22 @@ void print_fs_records(j_rec_t** fs_records) {
             case APFS_TYPE_SNAP_METADATA: {
                 j_snap_metadata_key_t* key = fs_rec->data;
                 j_snap_metadata_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "SNAP METADATA");
+                fprintf(stream, "SNAP METADATA");
             } break;
             case APFS_TYPE_EXTENT: {
                 j_phys_ext_key_t* key = fs_rec->data;
                 j_phys_ext_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "EXTENT");
+                fprintf(stream, "EXTENT");
             } break;
             case APFS_TYPE_INODE: {
                 j_inode_key_t* key = fs_rec->data;
                 j_inode_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "INODE");
+                fprintf(stream, "INODE");
             } break;
             case APFS_TYPE_XATTR: {
                 j_xattr_key_t* key = fs_rec->data;
                 j_xattr_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "XATTR"
+                fprintf(stream, "XATTR"
                     " || name = %s",
                     
                     key->name
@@ -62,12 +62,12 @@ void print_fs_records(j_rec_t** fs_records) {
             case APFS_TYPE_SIBLING_LINK: {
                 j_sibling_key_t* key = fs_rec->data;
                 j_sibling_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "SIBLING LINK");
+                fprintf(stream, "SIBLING LINK");
             } break;
             case APFS_TYPE_DSTREAM_ID: {
                 j_dstream_id_key_t* key = fs_rec->data;
                 j_dstream_id_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "DSTREAM ID "
+                fprintf(stream, "DSTREAM ID "
                     " || file ID = %#8"PRIx64
                     " || ref. count = %"PRIu32,
 
@@ -78,7 +78,7 @@ void print_fs_records(j_rec_t** fs_records) {
             case APFS_TYPE_CRYPTO_STATE: {
                 j_crypto_key_t* key = fs_rec->data;
                 j_crypto_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "CRYPTO STATE");
+                fprintf(stream, "CRYPTO STATE");
             } break;
             case APFS_TYPE_FILE_EXTENT: {
                 j_file_extent_key_t* key = fs_rec->data;
@@ -87,7 +87,7 @@ void print_fs_records(j_rec_t** fs_records) {
                 uint64_t extent_length_bytes = val->len_and_flags & J_FILE_EXTENT_LEN_MASK;
                 uint64_t extent_length_blocks = extent_length_bytes / globals.block_size;
 
-                fprintf(stderr, "FILE EXTENT"
+                fprintf(stream, "FILE EXTENT"
                     " || file ID = %#8"PRIx64
                     " || log. addr. = %#10"PRIx64
                     " || length = %8"PRIu64" B = %#10"PRIx64" B = %5"PRIu64" blocks = %#7"PRIx64" blocks"
@@ -104,7 +104,7 @@ void print_fs_records(j_rec_t** fs_records) {
                 j_drec_hashed_key_t*    key = fs_rec->data;
                 j_drec_val_t*           val = fs_rec->data + fs_rec->key_len;
 
-                fprintf(stderr, "DIR REC"
+                fprintf(stream, "DIR REC"
                     " || %s"
                     " || target ID = %#8"PRIx64
                     " || name = %s",
@@ -118,28 +118,28 @@ void print_fs_records(j_rec_t** fs_records) {
                 j_dir_stats_key_t* key = fs_rec->data;
                 // Apple's spec incorrectly says to use `j_drec_val_t`; see NOTE in <apfs/jconst.h>
                 j_dir_stats_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "DIR STATS");
+                fprintf(stream, "DIR STATS");
             } break;
             case APFS_TYPE_SNAP_NAME: {
                 j_snap_name_key_t* key = fs_rec->data;
                 j_snap_name_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "SNAP NAME");
+                fprintf(stream, "SNAP NAME");
             } break;
             case APFS_TYPE_SIBLING_MAP: {
                 j_sibling_map_key_t* key = fs_rec->data;
                 j_sibling_map_val_t* val = fs_rec->data + fs_rec->key_len;
-                fprintf(stderr, "SIBLING MAP");
+                fprintf(stream, "SIBLING MAP");
             } break;
             case APFS_TYPE_INVALID:
-                fprintf(stderr, "INVALID");
+                fprintf(stream, "INVALID");
                 break;
             default:
-                fprintf(stderr, "(unknown)");
+                fprintf(stream, "(unknown)");
                 break;
         }
 
-        fprintf(stderr, "\n");
+        fprintf(stream, "\n");
     }
 
-    fprintf(stderr, "\n");
+    fprintf(stream, "\n");
 }

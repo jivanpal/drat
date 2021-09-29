@@ -92,7 +92,7 @@ static error_t argp_parser(int key, char* arg, struct argp_state* state) {
                         // This should never happen since `tokens` is empty
                         assert(false);
                         print_arg_parse_error();
-                        break;
+                        exit(EX_SOFTWARE);
                 }
             }
             break;

@@ -60,7 +60,6 @@ int cmd_inspect(int argc, char** argv) {
             default:
                 print_arg_parse_error();
                 return EX_SOFTWARE;
-                break;
         }
     }
     if (usage_error) {

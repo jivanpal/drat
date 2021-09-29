@@ -7,7 +7,6 @@ const drat_command_t commands[] = {
     { "list"                    , cmd_list                      , "List directory contents or file info based on its FSOID or filepath" },
     // { "modify"                  , cmd_modify                    , "Modify structures on disk to resolve problems" },
     { "read"                    , cmd_read                      , "Read a block and display information about it" },
-    { "recover-raw"             , cmd_recover_raw               , "Recover a file based on its filesystem OID" },
     { "recover"                 , cmd_recover                   , "Recover a file based on its filepath" },
     { "resolver"                , cmd_resolver                  , "Check if given Virtual OIDs resolve to given Physical OIDs" },
     { "search-last-btree-node"  , cmd_search_last_btree_node    , "Search the partition for B-tree nodes, reporting the Physical OID of the last one discovered" },

@@ -37,8 +37,8 @@ typedef struct {
     char* path;
 } options_t;
 
-#define DRAT_ARG_KEY_FSOID  (DRAT_GLOBAL_ARGS_LAST_KEY - 2)
-#define DRAT_ARG_KEY_PATH   (DRAT_GLOBAL_ARGS_LAST_KEY - 1)
+#define DRAT_ARG_KEY_FSOID  (DRAT_GLOBAL_ARGS_LAST_KEY - 1)
+#define DRAT_ARG_KEY_PATH   (DRAT_GLOBAL_ARGS_LAST_KEY - 2)
 
 #define DRAT_ARG_ERR_INVALID_FSOID  (DRAT_GLOBAL_ARGS_LAST_ERR - 1)
 #define DRAT_ARG_ERR_INVALID_PATH   (DRAT_GLOBAL_ARGS_LAST_ERR - 2)
@@ -96,8 +96,8 @@ static void print_usage(FILE* stream) {
     fprintf(
         stream,
         "Usage:\n"
-        "  %1$s %2$s --container <container> --volume <volume ID> --fsoid <filesystem object ID>\n"
-        "  %1$s %2$s --container <container> --volume <volume ID> --path <file/directory path>\n"
+        "  %1$s %2$s --container <container> --volume <volume index> --fsoid <filesystem object ID>\n"
+        "  %1$s %2$s --container <container> --volume <volume index> --path <file/directory path>\n"
         "Examples:\n"
         "  %1$s %2$s --container /dev/disk0s2 --volume 1 0xd02a4 --fsoid 0x3af2\n"
         "  %1$s %2$s --container /dev/disk0s2 --volume 1 0xd02a4 --path /Users/john/Documents\n",
@@ -458,7 +458,7 @@ int cmd_list(int argc, char** argv) {
         num_records++;
     }
     printf("Filesystem object has %zu records, as follows:\n", num_records);
-    print_fs_records(fs_records);
+    print_fs_records(stdout, fs_records);
 
     // TODO: RESUME HERE, implement exploration loop for `explore-fs`
     

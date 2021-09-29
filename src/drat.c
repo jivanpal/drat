@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     
     if (argp_parse(&argp_command, argc, argv, ARGP_IN_ORDER, 0, 0)) {
         print_arg_parse_error();
-        return -1;
+        return EX_SOFTWARE;
     }
 
     if (!globals.command_name) {

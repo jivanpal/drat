@@ -20,7 +20,7 @@ uint64_t get_file_size(j_inode_val_t* inode, uint16_t inode_len) {
         xf_pair_t** xf_pairs = get_xf_pairs_array(inode->xfields);
         if (!xf_pairs) {
             // TODO: Error handling using `errno`?
-            fprintf("\nERROR: %s: Call to `get_xf_pairs_array()` failed.\n", __func__);
+            fprintf(stderr, "\nERROR: %s: Call to `get_xf_pairs_array()` failed.\n", __func__);
             return 0;
         }
 
@@ -34,6 +34,6 @@ uint64_t get_file_size(j_inode_val_t* inode, uint16_t inode_len) {
     }
 
     // TODO: Error handling using `errno`?
-    fprintf("\nERROR: %s: No file size found.\n", __func__);
+    fprintf(stderr, "\nERROR: %s: No file size found.\n", __func__);
     return 0;
 }
