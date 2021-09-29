@@ -47,10 +47,7 @@ typedef struct {
 
 static const struct argp_option argp_options[] = {
     // char* name,  int key,            char* arg,          int flags,      char* doc
-    
-    // TODO: Handle `--omap`
-    // { "omap",       DRAT_ARG_KEY_OMAP,  "omap tree addr",   0,              "Block address of object map B-tree" },
-
+    { "omap",       DRAT_ARG_KEY_OMAP,  "omap tree addr",   0,              "Block address of object map B-tree" },
     { "oids",       DRAT_ARG_KEY_OIDS,  "oid[,...]",        0,              "Comma-delimited list of OIDs" },
     { "oid",        DRAT_ARG_KEY_OIDS,  "oid",              OPTION_ALIAS,   "An OID" },
     {0}
@@ -102,11 +99,9 @@ static error_t argp_parser(int key, char* arg, struct argp_state* state) {
         }
 
         case ARGP_KEY_END:
-            // TODO: Handle `--omap`
-            // if (options->omap_root_addr == -1) {
-            //     return DRAT_ARG_ERR_NO_OMAP;
-            // }
-            
+            if (options->omap_root_addr == -1 && globals.volume == -1 && !globals.volume_name) {
+                return DRAT_ARG_ERR_NO_OMAP;
+            }
             if (options->num_oids == 0) {
                 return DRAT_ARG_ERR_NO_OIDS;
             }
@@ -168,7 +163,7 @@ int cmd_resolver(int argc, char** argv) {
                 fprintf(stderr, "%s: option `--oids`" INVALID_HEX_STRING, globals.program_name);
                 break;
             case DRAT_ARG_ERR_NO_OMAP:
-                fprintf(stderr, "%s: option `--omap` is mandatory.\n", globals.program_name);
+                fprintf(stderr, "%s: No omap specified; use `--omap`, `--volume`, or `--volume-name`.\n", globals.program_name);
                 break;
             case DRAT_ARG_ERR_NO_OIDS:
                 fprintf(stderr, "%s: option `--oids` is mandatory.\n", globals.program_name);
@@ -191,121 +186,218 @@ int cmd_resolver(int argc, char** argv) {
     
     setbuf(stdout, NULL);
 
-    printf("Finding most recent container superblock:\n");
+    if (options->omap_root_addr == -1) {
+        printf("Finding most recent container superblock:\n");
 
-    printf("- Reading block 0x0 ... ");
-    nx_superblock_t* nxsb = malloc(globals.block_size);
-    if (!nxsb) {
-        fprintf(stderr, "ABORT: Not enough memory to create `nxsb`.\n");
-        return EX_OSERR;
-    }
-    if (read_blocks(nxsb, 0, 1) != 1) {
-        fprintf(stderr, "ABORT: Failed to read block 0.\n");
-        return EX_IOERR;
-    }
-    printf("validating ... ");
-    if (!is_cksum_valid(nxsb)) {
-        printf("FAILED.\n");
-        printf("WARNING: Block 0 did not validate.\n");
-    } else {
-        printf("OK.\n");
-    }
-
-    if (!is_nx_superblock(nxsb)) {
-        printf("WARNING: Block 0 should be a container superblock, but has the wrong object type.\n\n");
-    }
-    if (nxsb->nx_magic != NX_MAGIC) {
-        printf(
-            "WARNING: Block 0 %s a container superblock but doesn't have the correct magic number.\n",
-            is_nx_superblock(nxsb) ? "is" : "should be"
-        );
-    }
-
-    printf("- Loading checkpoint descriptor area ... ");
-    
-    uint32_t xp_desc_blocks = nxsb->nx_xp_desc_blocks & ~(1 << 31);
-    char (*xp_desc)[globals.block_size] = malloc(xp_desc_blocks * globals.block_size);
-    if (!xp_desc) {
-        fprintf(stderr, "ABORT: Not enough memory for %"PRIu32" blocks.\n", xp_desc_blocks);
-        return EX_OSERR;
-    }
-
-    if (nxsb->nx_xp_desc_blocks >> 31) {
-        // TODO: implement case when xp_desc area is not contiguous
-        printf("END: Checkpoint descriptor area is a B-tree, but we haven't implemented handling of this case yet.\n\n");
-        return 0;
-    } else {
-        size_t blocks_read = read_blocks(xp_desc, nxsb->nx_xp_desc_base, xp_desc_blocks);
-        if (blocks_read != xp_desc_blocks) {
-            printf("FAILED.\n");
-            fprintf(stderr, "\nABORT: Failed to read all blocks in the checkpoint descriptor area; only successfully read %zu blocks.\n", blocks_read);
+        printf("- Reading block 0x0 ... ");
+        nx_superblock_t* nxsb = malloc(globals.block_size);
+        if (!nxsb) {
+            fprintf(stderr, "ABORT: Not enough memory to create `nxsb`.\n");
+            return EX_OSERR;
+        }
+        if (read_blocks(nxsb, 0, 1) != 1) {
+            fprintf(stderr, "ABORT: Failed to read block 0.\n");
             return EX_IOERR;
+        }
+        printf("validating ... ");
+        if (!is_cksum_valid(nxsb)) {
+            printf("FAILED.\n");
+            printf("WARNING: Block 0 did not validate.\n");
         } else {
             printf("OK.\n");
         }
-    }
 
-    printf("- Searching checkpoint descriptor area ... ");
-    
-    uint32_t i_latest_nx = 0;
-    xid_t xid_latest_nx = 0;
-
-    for (uint32_t i = 0; i < xp_desc_blocks; i++) {
-        if (!is_cksum_valid(xp_desc[i])) {
-            printf("WARNING: Checkpoint descriptor block %"PRIu32" failed validation.\n", i);
-            continue;
+        if (!is_nx_superblock(nxsb)) {
+            printf("WARNING: Block 0 should be a container superblock, but has the wrong object type.\n\n");
         }
+        if (nxsb->nx_magic != NX_MAGIC) {
+            printf(
+                "WARNING: Block 0 %s a container superblock but doesn't have the correct magic number.\n",
+                is_nx_superblock(nxsb) ? "is" : "should be"
+            );
+        }
+
+        printf("- Loading checkpoint descriptor area ... ");
         
-        if (is_nx_superblock(xp_desc[i])) {
-            if ( ((nx_superblock_t*)xp_desc[i])->nx_magic  !=  NX_MAGIC ) {
-                printf("WARNING: Checkpoint descriptor block %"PRIu32" is a container superblock but doesn't have the correct magic number.\n", i);
+        uint32_t xp_desc_blocks = nxsb->nx_xp_desc_blocks & ~(1 << 31);
+        char (*xp_desc)[globals.block_size] = malloc(xp_desc_blocks * globals.block_size);
+        if (!xp_desc) {
+            fprintf(stderr, "ABORT: Not enough memory for %"PRIu32" blocks.\n", xp_desc_blocks);
+            return EX_OSERR;
+        }
+
+        if (nxsb->nx_xp_desc_blocks >> 31) {
+            // TODO: implement case when xp_desc area is not contiguous
+            printf("END: Checkpoint descriptor area is a B-tree, but we haven't implemented handling of this case yet.\n\n");
+            return 0;
+        } else {
+            size_t blocks_read = read_blocks(xp_desc, nxsb->nx_xp_desc_base, xp_desc_blocks);
+            if (blocks_read != xp_desc_blocks) {
+                printf("FAILED.\n");
+                fprintf(stderr, "\nABORT: Failed to read all blocks in the checkpoint descriptor area; only successfully read %zu blocks.\n", blocks_read);
+                return EX_IOERR;
+            } else {
+                printf("OK.\n");
+            }
+        }
+
+        printf("- Searching checkpoint descriptor area ... ");
+        
+        uint32_t i_latest_nx = 0;
+        xid_t xid_latest_nx = 0;
+
+        for (uint32_t i = 0; i < xp_desc_blocks; i++) {
+            if (!is_cksum_valid(xp_desc[i])) {
+                printf("WARNING: Checkpoint descriptor block %"PRIu32" failed validation.\n", i);
                 continue;
             }
+            
+            if (is_nx_superblock(xp_desc[i])) {
+                if ( ((nx_superblock_t*)xp_desc[i])->nx_magic  !=  NX_MAGIC ) {
+                    printf("WARNING: Checkpoint descriptor block %"PRIu32" is a container superblock but doesn't have the correct magic number.\n", i);
+                    continue;
+                }
 
-            xid_t nxsb_xid = ((nx_superblock_t*)xp_desc[i])->nx_o.o_xid;
+                xid_t nxsb_xid = ((nx_superblock_t*)xp_desc[i])->nx_o.o_xid;
 
-            if ( (nxsb_xid > xid_latest_nx) && (nxsb_xid <= (xid_t)(globals.max_xid)) ) {
-                i_latest_nx = i;
-                xid_latest_nx = nxsb_xid;
+                if ( (nxsb_xid > xid_latest_nx) && (nxsb_xid <= (xid_t)(globals.max_xid)) ) {
+                    i_latest_nx = i;
+                    xid_latest_nx = nxsb_xid;
+                }
+            } else if (!is_checkpoint_map_phys(xp_desc[i])) {
+                printf("WARNING: Checkpoint descriptor block %"PRIu32" is neither a container superblock nor a checkpoint map.\n", i);
+                continue;
             }
-        } else if (!is_checkpoint_map_phys(xp_desc[i])) {
-            printf("WARNING: Checkpoint descriptor block %"PRIu32" is neither a container superblock nor a checkpoint map.\n", i);
-            continue;
         }
+
+        if (xid_latest_nx == 0) {
+            printf("END: Didn't find any container superblock with maximum XID %#"PRIx64".\n", globals.max_xid);
+            return 0;
+        }
+        
+        // Don't need block 0 anymore; overwrite `nxsb` with the latest container superblock.
+        memcpy(nxsb, xp_desc[i_latest_nx], sizeof(nx_superblock_t));
+        // Don't need the checkpoint descriptor anymore
+        free(xp_desc);
+        
+        printf("found most recent container superblock at index %"PRIu32", its XID is %#"PRIx64".\n", i_latest_nx, nxsb->nx_o.o_xid);
+
+        printf("Finding container's omap tree:\n");
+        
+        printf("- Container's omap has Physical OID %#"PRIx64".\n", nxsb->nx_omap_oid);
+
+        printf("- Reading block %#"PRIx64" ... ", nxsb->nx_omap_oid);
+        omap_phys_t* nx_omap = malloc(globals.block_size);
+        if (read_blocks(nx_omap, nxsb->nx_omap_oid, 1) != 1) {
+            fprintf(stderr, "ABORT: Not enough memory for `nx_omap`.\n");
+            return EX_OSERR;
+        }
+        printf("validating ... ");
+        printf(is_cksum_valid(nx_omap) ? "OK.\n" : "FAILED.\n");
+        
+        if ((nx_omap->om_tree_type & OBJ_STORAGETYPE_MASK) != OBJ_PHYSICAL) {
+            printf("  - END: Container omap B-tree is not a Physical object, and thus cannot be located.\n");
+            return 0;
+        }
+        printf("- Container's omap tree has Physical OID %#"PRIx64".\n", nx_omap->om_tree_oid);
+
+        options->omap_root_addr = nx_omap->om_tree_oid;
+        
+        if (globals.volume > 0 || globals.volume_name) {
+            printf("- Reading block %#"PRIx64" ... ", nx_omap->om_tree_oid);
+            /**
+             * The B-tree of the omap to search. If we are interested in a volume rather
+             * than the container itself, then we will overwrite this with the volume's
+             * omap B-tree later.
+             */
+            btree_node_phys_t* nx_omap_btree = malloc(globals.block_size);
+            if (!nx_omap_btree) {
+                fprintf(stderr, "ABORT: Not enough memory for `nx_omap_btree`.\n");
+                return EX_OSERR;
+            }
+            if (read_blocks(nx_omap_btree, nx_omap->om_tree_oid, 1) != 1) {
+                fprintf(stderr, "ABORT: Failed to read block %#"PRIx64".\n", nx_omap->om_tree_oid);
+                return EX_IOERR;
+            }
+            printf("validating ...");
+            printf(is_cksum_valid(nx_omap_btree) ? "OK.\n" : "FAILED.\n");
+            
+            printf("\n");
+
+            // TODO: Handle `--volume-name` as well as `--volume` here.
+            if (globals.volume == -1) {
+                assert(globals.volume_name);
+                printf("END: Support for `--volume-name` is not yet implemented.\n");
+                return 0;
+            }
+
+            printf("Finding volume %"PRId64"'s superblock:\n", globals.volume);
+            oid_t apsb_oid = nxsb->nx_fs_oid[globals.volume - 1];
+            if (apsb_oid == 0) {
+                printf("  - END: Volume %"PRId64" does not exist (apparent Virtual OID is 0).\n", globals.volume);
+                return 0;
+            }
+            printf("- Volume %"PRId64" has Virtual OID %#"PRIx64" ... ", globals.volume, apsb_oid);
+
+            // Get the block address
+            omap_entry_t* fs_entry = get_btree_phys_omap_entry(nx_omap_btree, apsb_oid, nxsb->nx_o.o_xid);
+            if (!fs_entry) {
+                // TODO: Need better handling of this case; look at the previous transaction.
+                printf("END: No objects with Virtual OID %#"PRIx64" and maximum XID %#"PRIx64" exist in `omap_btree`.\n", apsb_oid, nxsb->nx_o.o_xid);
+                return 0;
+            }
+            
+            printf("maps to block %#"PRIx64" with XID %#"PRIx64".\n", fs_entry->val.ov_paddr, fs_entry->key.ok_xid);
+
+            // Read the block
+            printf("- Reading block %#"PRIx64" ... ", fs_entry->val.ov_paddr);
+            apfs_superblock_t* apsb = malloc(globals.block_size);
+            if (!apsb) {
+                fprintf(stderr, "ABORT: Not enough memory for `apsb`.\n");
+                return EX_OSERR;
+            }
+            if (read_blocks(apsb, fs_entry->val.ov_paddr, 1) != 1) {
+                fprintf(stderr, "ABORT: Failed to read block %#"PRIx64".\n", fs_entry->val.ov_paddr);
+                return EX_IOERR;
+            }
+            printf("validating ... ");
+            printf(is_cksum_valid(apsb) ? "OK.\n" : "FAILED.\n");
+            printf("- Volume name: %s\n", apsb->apfs_volname);
+
+            printf("Finding volume's omap tree:\n");
+
+            printf("- Volume's omap has Physical OID %#"PRIx64".\n", apsb->apfs_omap_oid);
+
+            printf("- Reading block %#"PRIx64" ... ", apsb->apfs_omap_oid);
+            omap_phys_t* fs_omap = malloc(globals.block_size);
+            if (!fs_omap) {
+                fprintf(stderr, "ABORT: Not enough memory for `fs_omap`.\n");
+                return EX_OSERR;
+            }
+            if (read_blocks(fs_omap, apsb->apfs_omap_oid, 1) != 1) {
+                fprintf(stderr, "ABORT: Failed to read block %#"PRIx64".\n", apsb->apfs_omap_oid);
+                return EX_IOERR;
+            }
+            printf("validating ... ");
+            printf(is_cksum_valid(fs_omap) ? "OK.\n" : "FAILED.\n");
+
+            if ((fs_omap->om_tree_type & OBJ_STORAGETYPE_MASK) != OBJ_PHYSICAL) {
+                printf("- END: Volume's omap tree is not a Physical object, and thus cannot be located.\n");
+                return 0;
+            }
+            printf("- Volume's omap tree has Physical OID %#"PRIx64".\n", fs_omap->om_tree_oid);
+
+            options->omap_root_addr = fs_omap->om_tree_oid;
+
+            free(fs_omap);
+            free(apsb);
+            free(fs_entry);
+        }
+
+        free(nx_omap);
+        free(nxsb);
     }
 
-    if (xid_latest_nx == 0) {
-        printf("END: Didn't find any container superblock with maximum XID %#"PRIx64".\n", globals.max_xid);
-        return 0;
-    }
-    
-    // Don't need block 0 anymore; overwrite `nxsb` with the latest container superblock.
-    memcpy(nxsb, xp_desc[i_latest_nx], sizeof(nx_superblock_t));
-    // Don't need the checkpoint descriptor anymore
-    free(xp_desc);
-    
-    printf("found most recent container superblock at index %"PRIu32", its XID is %#"PRIx64".\n", i_latest_nx, nxsb->nx_o.o_xid);
-
-    printf("Finding container's omap tree:\n");
-    
-    printf("- Container's omap has Physical OID %#"PRIx64".\n", nxsb->nx_omap_oid);
-
-    printf("- Reading block %#"PRIx64" ... ", nxsb->nx_omap_oid);
-    omap_phys_t* nx_omap = malloc(globals.block_size);
-    if (read_blocks(nx_omap, nxsb->nx_omap_oid, 1) != 1) {
-        fprintf(stderr, "ABORT: Not enough memory for `nx_omap`.\n");
-        return EX_OSERR;
-    }
-    printf("validating ... ");
-    printf(is_cksum_valid(nx_omap) ? "OK.\n" : "FAILED.\n");
-    
-    if ((nx_omap->om_tree_type & OBJ_STORAGETYPE_MASK) != OBJ_PHYSICAL) {
-        printf("  - END: Container omap B-tree is not a Physical object, and thus cannot be located.\n");
-        return 0;
-    }
-    printf("- Container's omap tree has Physical OID %#"PRIx64".\n", nx_omap->om_tree_oid);
-
-    printf("- Reading block %#"PRIx64" ... ", nx_omap->om_tree_oid);
     /**
      * The B-tree of the omap to search. If we are interested in a volume rather
      * than the container itself, then we will overwrite this with the volume's
@@ -316,100 +408,15 @@ int cmd_resolver(int argc, char** argv) {
         fprintf(stderr, "ABORT: Not enough memory for `omap_btree`.\n");
         return EX_OSERR;
     }
-    if (read_blocks(omap_btree, nx_omap->om_tree_oid, 1) != 1) {
-        fprintf(stderr, "ABORT: Failed to read block %#"PRIx64".\n", nx_omap->om_tree_oid);
+    if (read_blocks(omap_btree, options->omap_root_addr, 1) != 1) {
+        fprintf(stderr, "ABORT: Failed to read block %#"PRIx64".\n", options->omap_root_addr);
         return EX_IOERR;
     }
     printf("validating ...");
     printf(is_cksum_valid(omap_btree) ? "OK.\n" : "FAILED.\n");
 
-    if (globals.volume != 0) {
-        printf("\n");
-
-        // TODO: Handle `--volume-name` as well as `--volume` here.
-        printf("Finding volume %"PRId64"'s superblock:\n", globals.volume);
-        oid_t apsb_oid = nxsb->nx_fs_oid[globals.volume - 1];
-        if (apsb_oid == 0) {
-            printf("  - END: Volume %"PRId64" does not exist (apparent Virtual OID is 0).\n", globals.volume);
-            return 0;
-        }
-        printf("- Volume %"PRId64" has Virtual OID %#"PRIx64" ... ", globals.volume, apsb_oid);
-
-        // Get the block address
-        omap_entry_t* fs_entry = get_btree_phys_omap_entry(omap_btree, apsb_oid, nxsb->nx_o.o_xid);
-        if (!fs_entry) {
-            // TODO: Need better handling of this case; look at the previous transaction.
-            printf("END: No objects with Virtual OID %#"PRIx64" and maximum XID %#"PRIx64" exist in `omap_btree`.\n", apsb_oid, nxsb->nx_o.o_xid);
-            return 0;
-        }
-        
-        printf("maps to block %#"PRIx64" with XID %#"PRIx64".\n", fs_entry->val.ov_paddr, fs_entry->key.ok_xid);
-
-        // Read the block
-        printf("- Reading block %#"PRIx64" ... ", fs_entry->val.ov_paddr);
-        apfs_superblock_t* apsb = malloc(globals.block_size);
-        if (!apsb) {
-            fprintf(stderr, "ABORT: Not enough memory for `apsb`.\n");
-            return EX_OSERR;
-        }
-        if (read_blocks(apsb, fs_entry->val.ov_paddr, 1) != 1) {
-            fprintf(stderr, "ABORT: Failed to read block %#"PRIx64".\n", fs_entry->val.ov_paddr);
-            return EX_IOERR;
-        }
-        printf("validating ... ");
-        printf(is_cksum_valid(apsb) ? "OK.\n" : "FAILED.\n");
-        printf("- Volume name: %s\n", apsb->apfs_volname);
-
-        printf("Finding volume's omap tree:\n");
-
-        printf("- Volume's omap has Physical OID %#"PRIx64".\n", apsb->apfs_omap_oid);
-
-        printf("- Reading block %#"PRIx64" ... ", apsb->apfs_omap_oid);
-        omap_phys_t* fs_omap = malloc(globals.block_size);
-        if (!fs_omap) {
-            fprintf(stderr, "ABORT: Not enough memory for `fs_omap`.\n");
-            return EX_OSERR;
-        }
-        if (read_blocks(fs_omap, apsb->apfs_omap_oid, 1) != 1) {
-            fprintf(stderr, "ABORT: Failed to read block %#"PRIx64".\n", apsb->apfs_omap_oid);
-            return EX_IOERR;
-        }
-        printf("validating ... ");
-        printf(is_cksum_valid(fs_omap) ? "OK.\n" : "FAILED.\n");
-
-        if ((fs_omap->om_tree_type & OBJ_STORAGETYPE_MASK) != OBJ_PHYSICAL) {
-            printf("- END: Volume's omap tree is not a Physical object, and thus cannot be located.\n");
-            return 0;
-        }
-        printf("- Volume's omap tree has Physical OID %#"PRIx64".\n", fs_omap->om_tree_oid);
-
-        printf("- Reading block %#"PRIx64" ... ", fs_omap->om_tree_oid);
-        btree_node_phys_t* fs_omap_btree = malloc(globals.block_size);
-        if (!fs_omap_btree) {
-            fprintf(stderr, "ABORT: Not enough memory for `fs_omap_btree`.\n");
-            return EX_OSERR;
-        }
-        if (read_blocks(fs_omap_btree, fs_omap->om_tree_oid, 1) != 1) {
-            fprintf(stderr, "ABORT: Failed to read block %#"PRIx64".\n", fs_omap->om_tree_oid);
-            return EX_IOERR;
-        }
-        printf("validating ... ");
-        printf(is_cksum_valid(fs_omap_btree) ? "OK.\n" : "FAILED.\n");
-
-        /*
-         * We want to search the volume omap B-tree rather than the container
-         * omap B-tree; overwrite `omap_tree` accordingly.
-         */
-        memcpy(omap_btree, fs_omap_btree, globals.block_size);
-
-        free(fs_omap_btree);
-        free(fs_omap);
-        free(apsb);
-        free(fs_entry);
-    }
-
     printf("\n");
-    
+
     for (size_t i = 0; i < options->num_oids; i++) {
         oid_t oid = (oid_t)(options->oids[i]);
         printf("%#"PRIx64" -> ", oid);
@@ -426,8 +433,6 @@ int cmd_resolver(int argc, char** argv) {
 
     // Closing statements; de-allocate all memory, close all file descriptors.
     free(omap_btree);
-    free(nx_omap);
-    free(nxsb);
     close_container();
     free(options);
 
