@@ -8,6 +8,9 @@
 #include <assert.h>
 #include <sys/errno.h>
 
+char* get_fopen_error_msg();
+char* get_fseeko_error_msg();
+
 int open_container();
 int close_container();
 int read_block(void* buffer, uintmax_t block_address);

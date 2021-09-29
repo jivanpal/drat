@@ -13,7 +13,7 @@
 
 static FILE* nx;
 
-static char* get_fopen_error_msg() {
+char* get_fopen_error_msg() {
     switch (errno) {
         case EACCES:        return "You do not have sufficient privileges to read this file.";
         case EAGAIN:        return "open(2): the specified path is the slave side of a locked pseudo-terminal device.";
@@ -35,7 +35,7 @@ static char* get_fopen_error_msg() {
     }
 }
 
-static char* get_fseeko_error_msg() {
+char* get_fseeko_error_msg() {
     switch (errno) {
         case EBADF:     return "The container is not an open stream or cannot be seeked through.";
         case EINVAL:    return "Block address lies outside the valid range.";
