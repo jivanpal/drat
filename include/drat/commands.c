@@ -9,7 +9,6 @@ const drat_command_t commands[] = {
     { "read"                    , cmd_read                      , "Read a block and display information about it" },
     { "recover"                 , cmd_recover                   , "Recover a file based on its filepath" },
     { "resolver"                , cmd_resolver                  , "Check if given Virtual OIDs resolve to given Physical OIDs" },
-    { "search-last-btree-node"  , cmd_search_last_btree_node    , "Search the partition for B-tree nodes, reporting the Physical OID of the last one discovered" },
     { "search"                  , cmd_search                    , "Search the partition for blocks with certain features/properties" },
     { "version"                 , cmd_version                   , "Display Drat's version number along with legal info (copyright, warranty, and license)" },
     {0}
