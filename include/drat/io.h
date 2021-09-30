@@ -13,6 +13,7 @@ char* get_fseeko_error_msg();
 
 int open_container();
 int close_container();
+int end_of_container();
 int read_block(void* buffer, uintmax_t block_address);
 size_t read_blocks (void* buffer, uintmax_t start_block, size_t num_blocks);
 

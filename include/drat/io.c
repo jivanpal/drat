@@ -108,6 +108,10 @@ int close_container() {
     return fclose(nx);
 }
 
+int end_of_container() {
+    return feof(nx);
+}
+
 /**
  * Read a block from the APFS container.
  * 

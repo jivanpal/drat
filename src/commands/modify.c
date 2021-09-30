@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <sysexits.h>
 
 #include <apfs/object.h>
 #include <apfs/nx.h>
@@ -14,6 +15,8 @@
 #include <apfs/sibling.h>
 #include <apfs/snap.h>
 
+#include <drat/argp.h>
+#include <drat/globals.h>
 #include <drat/io.h>
 
 #include <drat/func/boolean.h>
@@ -30,53 +33,53 @@
 /**
  * Print usage info for this program.
  */
-static void print_usage(int argc, char** argv) {
+static void print_usage(FILE* stream) {
     fprintf(
-        argc == 1 ? stdout : stderr,
-
-        "Usage:   %s <container>\n"
-        "Example: %s /dev/disk0s2\n",
-        
-        argv[0],
-        argv[0]
+        stream,
+        "Usage:   %1$s %2$s --container <container>\n"
+        "Example: %1$s %2$s --container /dev/disk0s2\n",
+        globals.program_name,
+        globals.command_name
     );
 }
 
 int cmd_modify(int argc, char** argv) {
-    if (argc == 1) {
-        print_usage(argc, argv);
+    if (argc == 2) {
+        // Command was specified with no other arguments
+        print_usage(stdout);
         return 0;
     }
-    
-    /** Setup **/
 
+    // Just parse global options
+    bool usage_error = true;
+    error_t parse_result = argp_parse(&argp_globals, argc, argv, ARGP_IN_ORDER, 0, 0);
+    if (!print_global_args_error(parse_result)) {
+        switch (parse_result) {
+            case 0:
+                usage_error = false;
+                break;
+            default:
+                print_arg_parse_error();
+                return EX_SOFTWARE;
+        }
+    }
+    if (usage_error) {
+        print_usage(stderr);
+        return EX_USAGE;
+    }
+
+    if (open_container() != 0) {
+        return EX_NOINPUT;
+    }
+    
     setbuf(stdout, NULL);
-
-    // Extrapolate CLI arguments, exit if invalid
-    if (argc != 2) {
-        fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argc, argv);
-        return 1;
-    }
-    nx_path = argv[1];
-    
-    // Open (device special) file corresponding to an APFS container, read-only
-    printf("Opening file at `%s` in read-and-write mode ... ", nx_path);
-    nx = fopen(nx_path, "w+b");
-    if (!nx) {
-        fprintf(stderr, "\nABORT: ");
-        report_fopen_error();
-        printf("\n");
-        return -errno;
-    }
-    printf("OK.\n");
 
     /** Copy one block to another block address **/
     if (true) {
         long read_from  = 0xe1b61;
         long write_to   = 0xd3793;
 
-        char* block = malloc(nx_block_size);
+        char* block = malloc(globals.block_size);
         if (!block) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `block`.\n");
             return -1;
@@ -92,6 +95,8 @@ int cmd_modify(int argc, char** argv) {
             return -1;
         }
 
+        free(block);
+
         printf("Successfully copied block %#lx to %#lx.\n", read_from, write_to);
     }
 
@@ -101,7 +106,7 @@ int cmd_modify(int argc, char** argv) {
 
         /** Create a B-tree node in memory **/
 
-        btree_node_phys_t* node = calloc(1, nx_block_size); // Using `calloc()` to get zeroed out memory
+        btree_node_phys_t* node = calloc(1, globals.block_size); // Using `calloc()` to get zeroed out memory
         if (!node) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `node`.\n");
             return -1;
@@ -138,11 +143,11 @@ int cmd_modify(int argc, char** argv) {
 
         char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
         char* key_start = toc_start + node->btn_table_space.len;
-        char* val_end   = (char*)node + nx_block_size;
+        char* val_end   = (char*)node + globals.block_size;
 
         /** Add records to node by copying them from other nodes **/
 
-        btree_node_phys_t* ref_node = malloc(nx_block_size);
+        btree_node_phys_t* ref_node = malloc(globals.block_size);
         if (!ref_node) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `ref_node`.\n");
             return -1;
@@ -176,7 +181,7 @@ int cmd_modify(int argc, char** argv) {
 
             char* ref_toc_start = (char*)ref_node->btn_data + ref_node->btn_table_space.off;
             char* ref_key_start = ref_toc_start + ref_node->btn_table_space.len;
-            char* ref_val_end   = (char*)ref_node + nx_block_size;
+            char* ref_val_end   = (char*)ref_node + globals.block_size;
             
             uint32_t NUM_ENTRIES = (ref_nodes[i][2] - ref_nodes[i][1]) + 1;
 
@@ -235,7 +240,7 @@ int cmd_modify(int argc, char** argv) {
 
         /** Create a B-tree node in memory **/
 
-        btree_node_phys_t* node = malloc(nx_block_size);
+        btree_node_phys_t* node = malloc(globals.block_size);
         if (!node) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `node`.\n");
             return -1;
@@ -254,7 +259,7 @@ int cmd_modify(int argc, char** argv) {
 
         char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
         char* key_start = toc_start + node->btn_table_space.len;
-        char* val_end   = (char*)node + nx_block_size;
+        char* val_end   = (char*)node + globals.block_size;
 
         omap_key_t* key;
         omap_val_t* val;
@@ -312,7 +317,7 @@ int cmd_modify(int argc, char** argv) {
         key->ok_oid = 0x277afc;
         key->ok_xid = 0x1af045;
 
-        val->ov_size = nx_block_size;
+        val->ov_size = globals.block_size;
         val->ov_paddr = 0xe911f;
 
         // Shift the TOC entries as needed, then add the new entry
@@ -425,7 +430,7 @@ int cmd_modify(int argc, char** argv) {
 
         /** Create a B-tree node in memory **/
 
-        btree_node_phys_t* node = calloc(1, nx_block_size); // Using `calloc()` to get zeroed out memory
+        btree_node_phys_t* node = calloc(1, globals.block_size); // Using `calloc()` to get zeroed out memory
         if (!node) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `node`.\n");
             return -1;
@@ -462,7 +467,7 @@ int cmd_modify(int argc, char** argv) {
 
         char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
         char* key_start = toc_start + node->btn_table_space.len;
-        char* val_end   = (char*)node + nx_block_size;
+        char* val_end   = (char*)node + globals.block_size;
 
         kvloc_t* toc_entry  = toc_start;
         j_key_t* key        = key_start;
@@ -514,7 +519,7 @@ int cmd_modify(int argc, char** argv) {
         long write_to   = 0xd3aef;
 
         /** Read the B-tree node to modify **/
-        btree_node_phys_t* node = malloc(nx_block_size);
+        btree_node_phys_t* node = malloc(globals.block_size);
         if (!node) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `node`.\n");
             return -1;
@@ -544,7 +549,7 @@ int cmd_modify(int argc, char** argv) {
 
             char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
             char* key_start = toc_start + node->btn_table_space.len;
-            char* val_end   = (char*)node + nx_block_size;
+            char* val_end   = (char*)node + globals.block_size;
             if (node->btn_flags & BTNODE_ROOT) {
                 val_end -= sizeof(btree_info_t);
             }
@@ -577,7 +582,7 @@ int cmd_modify(int argc, char** argv) {
 
             char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
             char* key_start = toc_start + node->btn_table_space.len;
-            char* val_end   = (char*)node + nx_block_size;
+            char* val_end   = (char*)node + globals.block_size;
             if (node->btn_flags & BTNODE_ROOT) {
                 val_end -= sizeof(btree_info_t);
             }
@@ -637,7 +642,7 @@ int cmd_modify(int argc, char** argv) {
         };
 
         /** Read the B-tree node to modify **/
-        btree_node_phys_t* node = malloc(nx_block_size);
+        btree_node_phys_t* node = malloc(globals.block_size);
         if (!node) {
             fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `node`.\n");
             return -1;
@@ -651,7 +656,7 @@ int cmd_modify(int argc, char** argv) {
 
         char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
         char* key_start = toc_start + node->btn_table_space.len;
-        char* val_end   = (char*)node + nx_block_size;
+        char* val_end   = (char*)node + globals.block_size;
         if (node->btn_flags & BTNODE_ROOT) {
             val_end -= sizeof(btree_info_t);
         }
@@ -685,7 +690,7 @@ int cmd_modify(int argc, char** argv) {
         free(node);
     }
 
-    fclose(nx);
+    close_container();
     
     return 0;
 }

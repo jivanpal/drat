@@ -5,6 +5,7 @@
 #include <string.h>
 #include <strings.h>
 #include <inttypes.h>
+#include <sysexits.h>
 
 #include <apfs/object.h>
 #include <apfs/nx.h>
@@ -15,6 +16,8 @@
 #include <apfs/sibling.h>
 #include <apfs/snap.h>
 
+#include <drat/argp.h>
+#include <drat/globals.h>
 #include <drat/io.h>
 
 #include <drat/func/boolean.h>
@@ -31,46 +34,48 @@
 /**
  * Print usage info for this program.
  */
-static void print_usage(int argc, char** argv) {
+static void print_usage(FILE* stream) {
     fprintf(
-        argc == 1 ? stdout : stderr,
-        
-        "Usage:   %s <container>\n"
-        "Example: %s /dev/disk0s2\n",
-        
-        argv[0],
-        argv[0]
+        stream,
+        "Usage:   %1$s %2$s --container <container>\n"
+        "Example: %1$s %2$s --container /dev/disk0s2\n",
+        globals.program_name,
+        globals.command_name
     );
 }
 
 int cmd_search(int argc, char** argv) {
-    if (argc == 1) {
-        print_usage(argc, argv);
+    if (argc == 2) {
+        // Command was specified with no other arguments
+        print_usage(stdout);
         return 0;
     }
     
     setbuf(stdout, NULL);
 
-    // Extrapolate CLI arguments, exit if invalid
-    if (argc != 2) {
-        fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argc, argv);
-        return 1;
+    // Just parse global options
+    bool usage_error = true;
+    error_t parse_result = argp_parse(&argp_globals, argc, argv, ARGP_IN_ORDER, 0, 0);
+    if (!print_global_args_error(parse_result)) {
+        switch (parse_result) {
+            case 0:
+                usage_error = false;
+                break;
+            default:
+                print_arg_parse_error();
+                return EX_SOFTWARE;
+        }
     }
-    nx_path = argv[1];
-    
-    // Open (device special) file corresponding to an APFS container, read-only
-    printf("Opening file at `%s` in read-only mode ... ", nx_path);
-    nx = fopen(nx_path, "rb");
-    if (!nx) {
-        fprintf(stderr, "\nABORT: ");
-        report_fopen_error();
-        printf("\n");
-        return -errno;
+    if (usage_error) {
+        print_usage(stderr);
+        return EX_USAGE;
     }
-    printf("OK.\n");
 
-    obj_phys_t* block = malloc(nx_block_size);
+    if (open_container() != 0) {
+        return EX_NOINPUT;
+    }
+
+    obj_phys_t* block = malloc(globals.block_size);
     if (!block) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `block`.\n");
         return -1;
@@ -170,13 +175,12 @@ int cmd_search(int argc, char** argv) {
             printf("\rReading block %#9" PRIx64 " (%6.2f%%) ... ", addr, addr_index_100/addr_range_size);
 
             if (read_blocks(block, addr, 1) != 1) {
-                if (feof(nx)) {
-                    printf("Reached end of file; ending search.\n");
+                if (end_of_container()) {
+                    printf("Reached end of container; search complete.\n");
                     break;
                 }
 
-                assert(ferror(nx));
-                printf("- An error occurred whilst reading block %#" PRIx64 ".\n", addr);
+                printf("WARNING: Failed to read block %#"PRIx64".\n", addr);
                 continue;
             }
 
@@ -269,7 +273,7 @@ int cmd_search(int argc, char** argv) {
 
                     char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
                     char* key_start = toc_start + node->btn_table_space.len;
-                    char* val_end   = (char*)node + nx_block_size;
+                    char* val_end   = (char*)node + globals.block_size;
                     if (node->btn_flags & BTNODE_ROOT) {
                         val_end -= sizeof(btree_info_t);
                     }
@@ -324,7 +328,7 @@ int cmd_search(int argc, char** argv) {
                     
                     char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
                     char* key_start = toc_start + node->btn_table_space.len;
-                    char* val_end   = (char*)node + nx_block_size;
+                    char* val_end   = (char*)node + globals.block_size;
                     if (node->btn_flags & BTNODE_ROOT) {
                         printf("ALSO A ROOT NODE ...");
                         val_end -= sizeof(btree_info_t);
@@ -405,7 +409,7 @@ int cmd_search(int argc, char** argv) {
 
                     char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
                     char* key_start = toc_start + node->btn_table_space.len;
-                    char* val_end   = (char*)node + nx_block_size;
+                    char* val_end   = (char*)node + globals.block_size;
                     if (node->btn_flags & BTNODE_ROOT) {
                         val_end -= sizeof(btree_info_t);
                     }
@@ -479,13 +483,12 @@ int cmd_search(int argc, char** argv) {
             printf("\rReading block %2lu: %#" PRIx64 " ... ", block_index, addr);
 
             if (read_blocks(block, addr, 1) != 1) {
-                if (feof(nx)) {
+                if (end_of_container()) {
                     printf("Reached end of file; ending search.\n");
                     break;
                 }
 
-                assert(ferror(nx));
-                printf("- An error occurred whilst reading block %#" PRIx64 ".\n", addr);
+                printf("WARNING: Failed to read block %#" PRIx64 ".\n", addr);
                 continue;
             }
 

@@ -35,10 +35,10 @@
 static void print_usage(FILE* stream) {
     fprintf(
         stream,
-        "Usage:   %s %s --container <container>\n"
-        "Example: %s %s --container /dev/disk0s2\n",
-        globals.program_name, globals.command_name,
-        globals.program_name, globals.command_name
+        "Usage:   %1$s %2$s --container <container>\n"
+        "Example: %1$s %2$s --container /dev/disk0s2\n",
+        globals.program_name,
+        globals.command_name
     );
 }
 
