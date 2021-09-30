@@ -1,43 +1,75 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
-#include <argp.h>
+#include <sysexits.h>
 
-#include "commands.h"
-#include "legal.h"
+#include <apfs/object.h>    // xid_t
 
-static void print_usage(bool is_error) {
+#include <drat/commands.h>
+#include <drat/globals.h>
+#include <drat/argp.h>
+#include <drat/strings.h>
+
+static void print_usage(FILE* stream) {
     fprintf(
-        is_error ? stderr : stdout,
-        
-        "Usage: drat <command>\n"
-        "\n"
-        "List of commands:\n"
+        stream,
+        "Usage: %s [global options] <command> [options]\n\nList of commands:\n",
+        globals.program_name
     );
 
-    for (size_t i = 0; i < ARRAY_SIZE(drat_commands); i++) {
-        fprintf(
-            is_error ? stderr : stdout,
-            "   %-22s  %s\n",
-            drat_commands[i].name,
-            drat_commands[i].description
-        );
+    for (const drat_command_t* command = commands; command->name; command++) {
+        fprintf(stream, "  %-22s  %s\n", command->name, command->description);
     }
 }
 
 int main(int argc, char** argv) {
-    char* cmd_name = argv[1];
-    if (!cmd_name) {
-        printf(VERSION_AND_COPYRIGHT_STRING "\n");
-        print_usage(false);
+    setbuf(stdout, NULL);
+    
+    globals.program_name = strrchr(argv[0], '/');
+    if (!globals.program_name) {
+        globals.program_name = argv[0];
+    } else {
+        globals.program_name++;
+    }
+    
+    // For the unlikely event that `print_arg_parse_error()` gets
+    // called before we invoke a command.
+    globals.command_name = globals.program_name;
+    
+    if (argc == 1) {
+        // No arguments were specified
+        printf("\nDrat is a diagnostic and data recovery tool for APFS (Apple File System) partitions.\n\n");
+        print_usage(stdout);
         return 0;
     }
-
-    command_function* cmd = get_command_function(cmd_name);
-    if (!cmd) {
-        fprintf(stderr, "Unrecognised command `%s`.\n\n", cmd_name);
-        print_usage(true);
-        return -1;
+    
+    if (argp_parse(&argp_command, argc, argv, ARGP_IN_ORDER, 0, 0)) {
+        print_arg_parse_error();
+        return EX_SOFTWARE;
     }
 
-    return cmd(argc - 1, argv + 1);
+    if (!globals.command_name) {
+        // Options were specified, but no command
+        fprintf(
+            stderr,
+            "%s: no command specified; run `%s` without any arguments to see a list of commands.\n",
+            globals.program_name,
+            globals.program_name
+        );
+        return EX_USAGE;
+    }
+
+    command_function* command = get_command_function(globals.command_name);
+    if (!command) {
+        // Specified command is inavlid
+        fprintf(
+            stderr,
+            "%1$s: unrecognized command `%2$s`; run `%1$s` without any arguments to see a list of commands.\n",
+            globals.program_name,
+            globals.command_name
+        );
+        return EX_USAGE;
+    }
+
+    return command(argc, argv);
 }

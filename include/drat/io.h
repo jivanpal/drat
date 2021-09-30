@@ -4,16 +4,20 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <assert.h>
 #include <sys/errno.h>
 
-extern char*    nx_path;
-extern FILE*    nx;
-extern uint32_t nx_block_size;
+char* get_fopen_error_msg();
+char* get_fseeko_error_msg();
 
-void report_fopen_error(void);
+int open_container();
+int close_container();
+int end_of_container();
+int read_block(void* buffer, uintmax_t block_address);
+size_t read_blocks (void* buffer, uintmax_t start_block, size_t num_blocks);
 
-size_t read_blocks (void* buffer, long start_block, size_t num_blocks);
-size_t write_blocks(void* buffer, long start_block, size_t num_blocks);
+// TODO: Deprecate this function
+size_t write_blocks(void* buffer, uintmax_t start_block, size_t num_blocks);
 
 #endif // DRAT_IO_H

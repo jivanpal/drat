@@ -4,9 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <sysexits.h>
 
 #include <apfs/general.h>
 
+#include <drat/strings.h>
+#include <drat/globals.h>
+#include <drat/argp.h>
 #include <drat/io.h>
 
 #include <drat/func/boolean.h>
@@ -18,73 +22,114 @@
 #include <drat/string/omap.h>
 #include <drat/string/fs.h>
 
-/**
- * Print usage info for this program.
- */
-static void print_usage(int argc, char** argv) {
+typedef struct {
+    paddr_t omap_root_addr;
+} options_t;
+
+#define DRAT_ARG_KEY_OMAP   (DRAT_GLOBAL_ARGS_LAST_KEY - 1)
+
+#define DRAT_ARG_ERR_INVALID_OMAP   (DRAT_GLOBAL_ARGS_LAST_ERR - 1)
+#define DRAT_ARG_ERR_NO_OMAP        (DRAT_GLOBAL_ARGS_LAST_ERR - 2)
+
+static const struct argp_option argp_options[] = {
+    // char* name,  int key,            char* arg,          int flags,  char* doc
+    { "omap",       DRAT_ARG_KEY_OMAP,  "omap tree addr",   0,          "Block address of object map B-tree" },
+    {0}
+};
+
+static error_t argp_parser(int key, char* arg, struct argp_state* state) {
+    options_t* options = state->input;
+
+    switch (key) {
+        case DRAT_ARG_KEY_OMAP:
+            if (!parse_number(&options->omap_root_addr, arg)) {
+                return DRAT_ARG_ERR_INVALID_OMAP;
+            }
+            break;
+        case ARGP_KEY_END:
+            if (options->omap_root_addr == -1) {
+                return DRAT_ARG_ERR_NO_OMAP;
+            }
+            // fall through
+        default:
+            return ARGP_ERR_UNKNOWN;
+    }
+
+    return 0;
+}
+
+// TODO: Perhaps factor out from all commands
+static const struct argp argp = {
+    &argp_options,  // struct argp_option* options
+    &argp_parser,   // argp_parser_t parser
+    0,              // char* args_doc
+    0,              // char* doc
+    &argp_children  // struct argp_child* children
+};
+
+static void print_usage(FILE* stream) {
     fprintf(
-        argc == 1 ? stdout : stderr,
-        
-        "Usage:   %s <container> <root node address>\n"
-        "Example: %s /dev/disk0s2 0x3af2\n",
-        
-        argv[0],
-        argv[0]    
+        stream,
+        "Usage:   %1$s %2$s --container <container> --omap <omap tree root node address>\n"
+        "Example: %1$s %2$s --container /dev/disk0s2 --omap 0x3af2\n",
+        globals.program_name,
+        globals.command_name
     );
 }
 
 int cmd_explore_omap_tree(int argc, char** argv) {
-    if (argc == 1) {
-        print_usage(argc, argv);
+    if (argc == 2) {
+        // Command was specified with no other arguments
+        print_usage(stdout);
         return 0;
     }
 
-    // Extrapolate CLI arguments, exit if invalid
-    if (argc != 3) {
-        fprintf(stderr, "Incorrect number of arguments.\n");
-        print_usage(argc, argv);
-        return 1;
+    // Set placeholder values so that the parser can identify whether the user
+    // has set mandatory options or not
+    options_t options = {-1};
+
+    bool usage_error = true;
+    error_t parse_result = argp_parse(&argp, argc, argv, ARGP_IN_ORDER, 0, &options);
+    if (!print_global_args_error(parse_result)) {
+        switch (parse_result) {
+            case 0:
+                usage_error = false;
+                break;
+            case DRAT_ARG_ERR_INVALID_OMAP:
+                fprintf(stderr, "%s: option `--omap`" INVALID_HEX_STRING, globals.program_name);
+                break;
+            case DRAT_ARG_ERR_NO_OMAP:
+                fprintf(stderr, "%s: option `--omap` is mandatory.\n", globals.program_name);
+                break;
+            default:
+                print_arg_parse_error();
+                return EX_SOFTWARE;
+        }
     }
-    
-    char* nx_path = argv[1];
-    
-    paddr_t root_node_block_addr;
-    bool parse_success = sscanf(argv[2], "0x%"SCNx64"", &root_node_block_addr);
-    if (!parse_success) {
-        parse_success = sscanf(argv[2], "%"SCNu64"", &root_node_block_addr);
+    if (usage_error) {
+        print_usage(stderr);
+        return EX_USAGE;
     }
-    if (!parse_success) {
-        fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
-        print_usage(argc, argv);
-        return 1;
+
+    // TODO: Perhaps handle other return values and factor out
+    if (open_container() != 0) {
+        return EX_NOINPUT;
     }
-    
-    // Open (device special) file corresponding to an APFS container, read-only
-    printf("Opening file at `%s` in read-only mode ... ", nx_path);
-    nx = fopen(nx_path, "rb");
-    if (!nx) {
-        fprintf(stderr, "\nABORT: main: ");
-        report_fopen_error();
-        printf("\n");
-        return -errno;
-    }
-    printf("OK.\n\n");
 
     // Read the specified root node
-    printf("Reading block %#"PRIx64" ... ", root_node_block_addr);
-    btree_node_phys_t* root_node = malloc(nx_block_size);
-    if (!root_node) {
-        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `root_node`.\n");
+    printf("Reading block %#"PRIx64" ... ", options.omap_root_addr);
+    btree_node_phys_t* omap_root_node = malloc(globals.block_size);
+    if (!omap_root_node) {
+        fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `omap_root_node`.\n");
         return -1;
     }
 
-    if (read_blocks(root_node, root_node_block_addr, 1) == 0) {
-        printf("\nEND: Block index %s does not exist in `%s`.\n", argv[2], nx_path);
-        return 0;
+    if (read_blocks(omap_root_node, options.omap_root_addr, 1) == 0) {
+        return EX_NOINPUT;
     }
 
     printf("validating ... ");
-    if (is_cksum_valid(root_node)) {
+    if (is_cksum_valid(omap_root_node)) {
         printf("OK.\n");
     } else {
         printf("FAILED.\n");
@@ -93,28 +138,20 @@ int cmd_explore_omap_tree(int argc, char** argv) {
 
     // Allocate space for the current working node,
     // then copy the root node to this space.
-    btree_node_phys_t* node = malloc(nx_block_size);
+    btree_node_phys_t* node = malloc(globals.block_size);
     if (!node) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `node`.\n");
         return -1;
     }
-    memcpy(node, root_node, nx_block_size);
+    memcpy(node, omap_root_node, globals.block_size);
 
     // Pointers to areas of the node
     char* toc_start = (char*)node->btn_data + node->btn_table_space.off;
     char* key_start = toc_start + node->btn_table_space.len;
-    char* val_end   = (char*)node + nx_block_size;
+    char* val_end   = (char*)node + globals.block_size;
     if (node->btn_flags & BTNODE_ROOT) {
         val_end -= sizeof(btree_info_t);
     }
-
-    // // Copy the B-tree info somewhere else for easy referencing
-    // btree_info_t* bt_info = malloc(sizeof(btree_info_t));
-    // if (!bt_info) {
-    //     fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `bt_info`.\n");
-    //     return -1;
-    // }
-    // memcpy(bt_info, val_end, sizeof(btree_info_t));
 
     // Descend the tree
     while (true) {
@@ -127,11 +164,12 @@ int cmd_explore_omap_tree(int argc, char** argv) {
         kvoff_t* toc_entry = toc_start;
         // Print mapped block's details if explroing a leaf node
         if (node->btn_flags & BTNODE_LEAF) {
-            obj_phys_t* block = malloc(nx_block_size);
+            obj_phys_t* block = malloc(globals.block_size);
             if (!block) {
                 fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `block`.\n");
                 return -1;
             }
+
             for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
                 omap_key_t* key = key_start + toc_entry->k;
                 omap_val_t* val = val_end   - toc_entry->v;
@@ -156,6 +194,7 @@ int cmd_explore_omap_tree(int argc, char** argv) {
                     block->o_xid,   block->o_xid == key->ok_xid ? "YES  " : "   NO"
                 );
             }
+            
             free(block);
         } else {
             for (uint32_t i = 0;    i < node->btn_nkeys;    i++, toc_entry++) {
@@ -216,8 +255,12 @@ int cmd_explore_omap_tree(int argc, char** argv) {
 
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
-        val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
+        val_end   = (char*)node + globals.block_size;   // Always dealing with non-root node here
     }
+
+    free(node);
+    free(omap_root_node);
+    close_container();
     
     return 0;
 }

@@ -11,7 +11,9 @@
 #include <string.h>
 
 #include <apfs/j.h>     // j_key_t
-#include <drat/io.h>    // nx_block_size, read_blocks()
+
+#include <drat/globals.h>
+#include <drat/io.h>
 #include <drat/func/cksum.h>
 
 /**
@@ -44,20 +46,20 @@
  *      This pointer must be freed when it is no longer needed.
  */
 omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid, xid_t max_xid) {
-    btree_info_t* bt_info = (char*)root_node + nx_block_size - sizeof(btree_info_t);
+    btree_info_t* bt_info = (char*)root_node + globals.block_size - sizeof(btree_info_t);
     
     // Create a copy of the root node to use as the current node we're working with
-    btree_node_phys_t* node = malloc(nx_block_size);
+    btree_node_phys_t* node = malloc(globals.block_size);
     if (!node) {
         fprintf(stderr, "\nABORT: get_btree_phys_omap_val: Could not allocate sufficient memory for `node`.\n");
         exit(-1);
     }
-    memcpy(node, root_node, nx_block_size);
+    memcpy(node, root_node, globals.block_size);
 
     // Pointers to areas of the node
     char* toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
     char* key_start = toc_start + node->btn_table_space.len;
-    char* val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
+    char* val_end   = (char*)node + globals.block_size - sizeof(btree_info_t);
 
     // Descend the B-tree to find the target key–value pair
     while (true) {
@@ -147,7 +149,7 @@ omap_entry_t* get_btree_phys_omap_entry(btree_node_phys_t* root_node, oid_t oid,
 
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
-        val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
+        val_end   = (char*)node + globals.block_size;   // Always dealing with non-root node here
     }
 }
 
@@ -204,7 +206,7 @@ void free_j_rec_array(j_rec_t** records_array) {
  *      that was returned by this function to `free_j_rec_array()`.
  */
 j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_t* vol_fs_root_node, oid_t oid, xid_t max_xid) {
-    btree_info_t* bt_info = (char*)vol_fs_root_node + nx_block_size - sizeof(btree_info_t);
+    btree_info_t* bt_info = (char*)vol_fs_root_node + globals.block_size - sizeof(btree_info_t);
 
     uint16_t tree_height = vol_fs_root_node->btn_level + 1;
 
@@ -237,17 +239,17 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
      * losing access to the root node, an instance of which will still be
      * present as `vol_fs_root_node`.
      */
-    btree_node_phys_t* node = malloc(nx_block_size);
+    btree_node_phys_t* node = malloc(globals.block_size);
     if (!node) {
         fprintf(stderr, "\nABORT: get_fs_records: Could not allocate sufficient memory for `node`.\n");
         exit(-1);
     }
-    memcpy(node, vol_fs_root_node, nx_block_size);
+    memcpy(node, vol_fs_root_node, globals.block_size);
 
     // Pointers to areas of the working node
     char* toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
     char* key_start = toc_start + node->btn_table_space.len;
-    char* val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
+    char* val_end   = (char*)node + globals.block_size - sizeof(btree_info_t);
 
     /**
      * DESCENT LOOP
@@ -393,7 +395,7 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
 
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
-        val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
+        val_end   = (char*)node + globals.block_size;   // Always dealing with non-root node here
     }
 
     // Initialise the array of records which will be returned to the caller
@@ -418,10 +420,10 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
      */
     while (true) {
         // Reset working node and pointers to the root node
-        memcpy(node, vol_fs_root_node, nx_block_size);
+        memcpy(node, vol_fs_root_node, globals.block_size);
         toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
         key_start = toc_start + node->btn_table_space.len;
-        val_end   = (char*)node + nx_block_size - sizeof(btree_info_t);
+        val_end   = (char*)node + globals.block_size - sizeof(btree_info_t);
 
         // Descend to the record described by `desc_path`.
         for (uint16_t i = 0; i < tree_height; i++) {
@@ -552,7 +554,7 @@ j_rec_t** get_fs_records(btree_node_phys_t* vol_omap_root_node, btree_node_phys_
 
             toc_start = (char*)(node->btn_data) + node->btn_table_space.off;
             key_start = toc_start + node->btn_table_space.len;
-            val_end   = (char*)node + nx_block_size;    // Always dealing with non-root node here
+            val_end   = (char*)node + globals.block_size;   // Always dealing with non-root node here
         }
     }
 }
