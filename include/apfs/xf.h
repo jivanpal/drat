@@ -10,18 +10,7 @@
 
 typedef struct {
     uint16_t    xf_num_exts;
-
-    /**
-     * NOTE: Apple's spec claims that the value of `xf_used_data` is the size in
-     * bytes of the entirety of `xf_data`, including the instances of `x_field_t`
-     * that appear at the start of `xf_data`. However, based on real-world
-     * examples, this doesn't appear to be the case. Instead, `xf_used_data` is
-     * just the size in bytes of the portion of `xf_data` that contains the
-     * xfield values, not the instances of `x_field_t`. In practice, this
-     * doesn't matter, since we never actually use the value of `xf_used_data`.
-     */
     uint16_t    xf_used_data;
-
     uint8_t     xf_data[];
 } xf_blob_t;
 

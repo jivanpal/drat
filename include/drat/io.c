@@ -61,7 +61,7 @@ void report_fopen_error() {
             fprintf(stderr, "You tried to open a socket, but your system doesn't support that.\n");
             break;
         case EOVERFLOW:
-            fprintf(stderr, "The specified file is a regular file whose size exceeds %zu bytes, so it is too large to be handled.\n", sizeof(off_t));
+            fprintf(stderr, "The specified file is a regular file whose size exceeds %lu bytes, so it is too large to be handled.\n", sizeof(off_t));
             break;
         default:
             fprintf(stderr, "Unknown error.\n");
@@ -93,7 +93,7 @@ size_t read_blocks(void* buffer, long start_block, size_t num_blocks) {
                 printf("The specified starting block address, 0x%lx, is invalid, as it lies outside of the file `%s`.\n", start_block, nx_path);
                 break;
             case EOVERFLOW:
-                printf("The specified starting block address, 0x%lx, exceeds %zu bits in length, which would result in an overflow.\n", start_block, 8 * sizeof(long));
+                printf("The specified starting block address, 0x%lx, exceeds %lu bits in length, which would result in an overflow.\n", start_block, 8 * sizeof(long));
                 break;
             case ESPIPE:
                 printf("The data stream associated with the file `%s` is a pipe or FIFO, and thus cannot be seeked through.\n", nx_path);
@@ -121,7 +121,7 @@ size_t read_blocks(void* buffer, long start_block, size_t num_blocks) {
         }
 
         assert(feof(nx));
-        printf("read_blocks: Reached end-of-file after reading %zu blocks.\n", num_blocks_read);
+        printf("read_blocks: Reached end-of-file after reading %lu blocks.\n", num_blocks_read);
     }
     return num_blocks_read;
 }
@@ -153,7 +153,7 @@ size_t write_blocks(void* buffer, long start_block, size_t num_blocks) {
                 printf("The specified starting block address, 0x%lx, is invalid, as it lies outside of the file `%s`.\n", start_block, nx_path);
                 break;
             case EOVERFLOW:
-                printf("The specified starting block address, 0x%lx, exceeds %zu bits in length, which would result in an overflow.\n", start_block, 8 * sizeof(long));
+                printf("The specified starting block address, 0x%lx, exceeds %lu bits in length, which would result in an overflow.\n", start_block, 8 * sizeof(long));
                 break;
             case ESPIPE:
                 printf("The data stream associated with the file `%s` is a pipe or FIFO, and thus cannot be seeked through.\n", nx_path);
@@ -168,7 +168,7 @@ size_t write_blocks(void* buffer, long start_block, size_t num_blocks) {
     size_t num_blocks_written = fwrite(buffer, nx_block_size, num_blocks, nx);
     if (num_blocks_written != num_blocks) {
         // A write error occured
-        printf("write_blocks: An error occurred after writing %zu blocks.\n", num_blocks_written);
+        printf("write_blocks: An error occurred after writing %lu blocks.\n", num_blocks_written);
     }
     return num_blocks_written;
 }

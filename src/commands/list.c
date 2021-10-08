@@ -61,7 +61,7 @@ int cmd_list(int argc, char** argv) {
     nx_path = argv[1];
 
     uint32_t volume_id;
-    bool parse_success = sscanf(argv[2], "%"SCNu32"", &volume_id);
+    bool parse_success = sscanf(argv[2], "%u", &volume_id);
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid volume ID.\n", argv[2]);
         print_usage(argc, argv);
@@ -111,22 +111,22 @@ int cmd_list(int argc, char** argv) {
     fprintf(stderr, "Locating the checkpoint descriptor area:\n");
     
     uint32_t xp_desc_blocks = nxsb->nx_xp_desc_blocks & ~(1 << 31);
-    fprintf(stderr, "- Its length is %"PRIu32" blocks.\n", xp_desc_blocks);
+    fprintf(stderr, "- Its length is %u blocks.\n", xp_desc_blocks);
 
     char (*xp_desc)[nx_block_size] = malloc(xp_desc_blocks * nx_block_size);
     if (!xp_desc) {
-        fprintf(stderr, "ABORT: Could not allocate sufficient memory for %"PRIu32" blocks.\n", xp_desc_blocks);
+        fprintf(stderr, "ABORT: Could not allocate sufficient memory for %u blocks.\n", xp_desc_blocks);
         return -1;
     }
 
     if (nxsb->nx_xp_desc_blocks >> 31) {
         fprintf(stderr, "- It is not contiguous.\n");
-        fprintf(stderr, "- The Physical OID of the B-tree representing it is %#"PRIx64".\n", nxsb->nx_xp_desc_base);
+        fprintf(stderr, "- The Physical OID of the B-tree representing it is 0x%" PRIx64 ".\n", nxsb->nx_xp_desc_base);
         fprintf(stderr, "END: The ability to handle this case has not yet been implemented.\n\n");   // TODO: implement case when xp_desc area is not contiguous
         return 0;
     } else {
         fprintf(stderr, "- It is contiguous.\n");
-        fprintf(stderr, "- The address of its first block is %#"PRIx64".\n", nxsb->nx_xp_desc_base);
+        fprintf(stderr, "- The address of its first block is 0x%" PRIx64 ".\n", nxsb->nx_xp_desc_base);
 
         fprintf(stderr, "Loading the checkpoint descriptor area into memory ... ");
         if (read_blocks(xp_desc, nxsb->nx_xp_desc_base, xp_desc_blocks) != xp_desc_blocks) {
@@ -145,13 +145,13 @@ int cmd_list(int argc, char** argv) {
 
     for (uint32_t i = 0; i < xp_desc_blocks; i++) {
         if (!is_cksum_valid(xp_desc[i])) {
-            fprintf(stderr, "- Block at index %"PRIu32" within this area failed checksum validation. Skipping it.\n", i);
+            fprintf(stderr, "- Block at index %u within this area failed checksum validation. Skipping it.\n", i);
             continue;
         }
         
         if (is_nx_superblock(xp_desc[i])) {
             if ( ((nx_superblock_t*)xp_desc[i])->nx_magic  !=  NX_MAGIC ) {
-                fprintf(stderr, "- Container superblock at index %"PRIu32" within this area is malformed; incorrect magic number. Skipping it.\n", i);
+                fprintf(stderr, "- Container superblock at index %u within this area is malformed; incorrect magic number. Skipping it.\n", i);
                 continue;
             }
 
@@ -163,13 +163,13 @@ int cmd_list(int argc, char** argv) {
                 xid_latest_nx = ((nx_superblock_t*)xp_desc[i])->nx_o.o_xid;
             }
         } else if (!is_checkpoint_map_phys(xp_desc[i])) {
-            fprintf(stderr, "- Block at index %"PRIu32" within this area is not a container superblock or checkpoint map. Skipping it.\n", i);
+            fprintf(stderr, "- Block at index %u within this area is not a container superblock or checkpoint map. Skipping it.\n", i);
             continue;
         }
     }
 
     if (xid_latest_nx == 0) {
-        fprintf(stderr, "No container superblock with an XID that doesn't exceed %#"PRIx64" exists in the checkpoint descriptor area.\n", max_xid);
+        fprintf(stderr, "No container superblock with an XID that doesn't exceed 0x%" PRIx64 " exists in the checkpoint descriptor area.\n", max_xid);
         return 0;
     }
 
@@ -178,14 +178,8 @@ int cmd_list(int argc, char** argv) {
     // This also lets us avoid repeatedly casting to `nx_superblock_t*`.
     memcpy(nxsb, xp_desc[i_latest_nx], sizeof(nx_superblock_t));
 
-    fprintf(stderr, "- It lies at index %"PRIu32" within the checkpoint descriptor area.\n", i_latest_nx);
-    fprintf(
-        stderr,
-        "- The corresponding checkpoint starts at index %"PRIu32" within the"
-        " checkpoint descriptor area, and spans %"PRIu32" blocks.\n\n",
-        nxsb->nx_xp_desc_index,
-        nxsb->nx_xp_desc_len
-    );
+    fprintf(stderr, "- It lies at index %u within the checkpoint descriptor area.\n", i_latest_nx);
+    fprintf(stderr, "- The corresponding checkpoint starts at index %u within the checkpoint descriptor area, and spans %u blocks.\n\n", nxsb->nx_xp_desc_index, nxsb->nx_xp_desc_len);
 
     // Copy the contents of the checkpoint we are currently considering to its
     // own array for easy access. The checkpoint descriptor area is a ring
@@ -226,7 +220,7 @@ int cmd_list(int argc, char** argv) {
             xp_obj_len += ((checkpoint_map_phys_t*)xp[i])->cpm_count;
         }
     }
-    fprintf(stderr, "- There are %"PRIu32" checkpoint-mappings in this checkpoint.\n\n", xp_obj_len);
+    fprintf(stderr, "- There are %u checkpoint-mappings in this checkpoint.\n\n", xp_obj_len);
 
     fprintf(stderr, "Reading the Ephemeral objects used by this checkpoint ... ");
     char (*xp_obj)[nx_block_size] = malloc(xp_obj_len * nx_block_size);
@@ -240,7 +234,7 @@ int cmd_list(int argc, char** argv) {
             checkpoint_map_phys_t* xp_map = xp[i];  // Avoid lots of casting
             for (uint32_t j = 0; j < xp_map->cpm_count; j++) {
                 if (read_blocks(xp_obj[num_read], xp_map->cpm_map[j].cpm_paddr, 1) != 1) {
-                    fprintf(stderr, "\nABORT: Failed to read block %#"PRIx64".\n", xp_map->cpm_map[j].cpm_paddr);
+                    fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", xp_map->cpm_map[j].cpm_paddr);
                     return -1;
                 }
                 num_read++;
@@ -266,7 +260,7 @@ int cmd_list(int argc, char** argv) {
     free(xp);
     free(xp_desc);
 
-    fprintf(stderr, "The container superblock states that the container object map has Physical OID %#"PRIx64".\n", nxsb->nx_omap_oid);
+    fprintf(stderr, "The container superblock states that the container object map has Physical OID 0x%" PRIx64 ".\n", nxsb->nx_omap_oid);
 
     fprintf(stderr, "Loading the container object map ... ");
     omap_phys_t* nx_omap = malloc(nx_block_size);
@@ -295,7 +289,7 @@ int cmd_list(int argc, char** argv) {
         return -1;
     }
     if (read_blocks(nx_omap_btree, nx_omap->om_tree_oid, 1) != 1) {
-        fprintf(stderr, "\nABORT: Failed to read block %#"PRIx64".\n", nx_omap->om_tree_oid);
+        fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", nx_omap->om_tree_oid);
         return -1;
     }
     fprintf(stderr, "OK.\n");
@@ -314,9 +308,9 @@ int cmd_list(int argc, char** argv) {
         }
         num_file_systems++;
     }
-    fprintf(stderr, "The container superblock lists %"PRIu32" APFS volumes, whose superblocks have the following Virtual OIDs:\n", num_file_systems);
+    fprintf(stderr, "The container superblock lists %u APFS volumes, whose superblocks have the following Virtual OIDs:\n", num_file_systems);
     for (uint32_t i = 0; i < num_file_systems; i++) {
-        fprintf(stderr, "- %#"PRIx64"\n", nxsb->nx_fs_oid[i]);
+        fprintf(stderr, "- 0x%" PRIx64 "\n", nxsb->nx_fs_oid[i]);
     }
     fprintf(stderr, "\n");
 
@@ -329,11 +323,11 @@ int cmd_list(int argc, char** argv) {
     for (uint32_t i = 0; i < num_file_systems; i++) {
         omap_entry_t* fs_entry = get_btree_phys_omap_entry(nx_omap_btree, nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
         if (!fs_entry) {
-            fprintf(stderr, "\nABORT: No objects with Virtual OID %#"PRIx64" and maximum XID %#"PRIx64" exist in `nx_omap_btree`.\n", nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
+            fprintf(stderr, "\nABORT: No objects with Virtual OID 0x%" PRIx64 " and maximum XID 0x%" PRIx64 " exist in `nx_omap_btree`.\n", nxsb->nx_fs_oid[i], nxsb->nx_o.o_xid);
             return -1;
         }
         if (read_blocks(apsbs + i, fs_entry->val.ov_paddr, 1) != 1) {
-            fprintf(stderr, "\nABORT: Failed to read block %#"PRIx64".\n", fs_entry->val.ov_paddr);
+            fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", fs_entry->val.ov_paddr);
             return -1;
         }
     }
@@ -342,12 +336,7 @@ int cmd_list(int argc, char** argv) {
     fprintf(stderr, "Validating the APFS volume superblocks ... ");
     for (uint32_t i = 0; i < num_file_systems; i++) {
         if (!is_cksum_valid(apsbs + i)) {
-            fprintf(
-                stderr,
-                "FAILED.\n- The checksum of the APFS volume with OID %#"PRIx64" did not validate."
-                "\n- Going back to look at the previous checkpoint instead.\n",
-                nxsb->nx_fs_oid[i]
-            );
+            fprintf(stderr, "FAILED.\n- The checksum of the APFS volume with OID 0x%" PRIx64 " did not validate.\n- Going back to look at the previous checkpoint instead.\n", nxsb->nx_fs_oid[i]);
 
             // TODO: Handle case where data for a given checkpoint is malformed
             fprintf(stderr, "END: Handling of this case has not yet been implemented.\n");
@@ -355,12 +344,7 @@ int cmd_list(int argc, char** argv) {
         }
 
         if ( ((apfs_superblock_t*)(apsbs + i))->apfs_magic  !=  APFS_MAGIC ) {
-            fprintf(
-                stderr,
-                "FAILED.\n- The magic string of the APFS volume with OID %#"PRIx64" did not validate."
-                "\n- Going back to look at the previous checkpoint instead.\n",
-                nxsb->nx_fs_oid[i]
-            );
+            fprintf(stderr, "FAILED.\n- The magic string of the APFS volume with OID 0x%" PRIx64 " did not validate.\n- Going back to look at the previous checkpoint instead.\n", nxsb->nx_fs_oid[i]);
 
             // TODO: Handle case where data for a given checkpoint is malformed
             fprintf(stderr, "END: Handling of this case has not yet been implemented.\n");
@@ -371,16 +355,16 @@ int cmd_list(int argc, char** argv) {
 
     fprintf(stderr, "\n Volume list\n================\n");
     for (uint32_t i = 0; i < num_file_systems; i++) {
-        fprintf(stderr, "%2"PRIu32": %s\n", i, ((apfs_superblock_t*)(apsbs + i))->apfs_volname);
+        fprintf(stderr, "%2u: %s\n", i, ((apfs_superblock_t*)(apsbs + i))->apfs_volname);
     }
 
     if (volume_id >= num_file_systems) {
-        fprintf(stderr, "The specified volume ID (%"PRIu32") does not exist in the list above. Exiting.\n", volume_id);
+        fprintf(stderr, "The specified volume ID (%u) does not exist in the list above. Exiting.\n", volume_id);
         return 0;
     }
     apfs_superblock_t* apsb = apsbs + volume_id;
 
-    fprintf(stderr, "The volume object map has Physical OID %#"PRIx64".\n", apsb->apfs_omap_oid);
+    fprintf(stderr, "The volume object map has Physical OID 0x%" PRIx64 ".\n", apsb->apfs_omap_oid);
 
     fprintf(stderr, "Reading the volume object map ... ");
     omap_phys_t* fs_omap = malloc(nx_block_size);
@@ -389,7 +373,7 @@ int cmd_list(int argc, char** argv) {
         return -1;
     }
     if (read_blocks(fs_omap, apsb->apfs_omap_oid, 1) != 1) {
-        fprintf(stderr, "\nABORT: Failed to read block %#"PRIx64".\n", apsb->apfs_omap_oid);
+        fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", apsb->apfs_omap_oid);
         return -1;
     }
     fprintf(stderr, "OK.\n");
@@ -413,7 +397,7 @@ int cmd_list(int argc, char** argv) {
         return -1;
     }
     if (read_blocks(fs_omap_btree, fs_omap->om_tree_oid, 1) != 1) {
-        fprintf(stderr, "\nABORT: Failed to read block %#"PRIx64".\n", fs_omap->om_tree_oid);
+        fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", fs_omap->om_tree_oid);
         return -1;
     }
     fprintf(stderr, "OK.\n");
@@ -429,16 +413,10 @@ int cmd_list(int argc, char** argv) {
     fprintf(stderr, "Looking up this Virtual OID in the volume object map ... ");
     omap_entry_t* fs_root_entry = get_btree_phys_omap_entry(fs_omap_btree, apsb->apfs_root_tree_oid, apsb->apfs_o.o_xid);
     if (!fs_root_entry) {
-        fprintf(
-            stderr,
-            "\nABORT: No objects with Virtual OID %#"PRIx64" and"
-            " maximum XID %#"PRIx64" exist in `fs_omap_btree`.\n",
-            apsb->apfs_root_tree_oid,
-            apsb->apfs_o.o_xid
-        );
+        fprintf(stderr, "\nABORT: No objects with Virtual OID 0x%" PRIx64 " and maximum XID 0x%" PRIx64 " exist in `fs_omap_btree`.\n", apsb->apfs_root_tree_oid, apsb->apfs_o.o_xid);
         return -1;
     }
-    fprintf(stderr, "corresponding block address is %#"PRIx64".\n", fs_root_entry->val.ov_paddr);
+    fprintf(stderr, "corresponding block address is 0x%" PRIx64 ".\n", fs_root_entry->val.ov_paddr);
 
     fprintf(stderr, "Reading ... ");
     btree_node_phys_t* fs_root_btree = malloc(nx_block_size);
@@ -447,7 +425,7 @@ int cmd_list(int argc, char** argv) {
         return -1;
     }
     if (read_blocks(fs_root_btree, fs_root_entry->val.ov_paddr, 1) != 1) {
-        fprintf(stderr, "\nABORT: Failed to read block %#"PRIx64".\n", fs_root_entry->val.ov_paddr);
+        fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", fs_root_entry->val.ov_paddr);
         return -1;
     }
     free(fs_root_entry);  // No longer need the block address of the file-system root.
@@ -463,7 +441,7 @@ int cmd_list(int argc, char** argv) {
 
     j_rec_t** fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, (xid_t)(~0) );
     if (!fs_records) {
-        fprintf(stderr, "No records found with OID %#"PRIx64".\n", fs_oid);
+        fprintf(stderr, "No records found with OID 0x%" PRIx64 ".\n", fs_oid);
         return -1;
     }
 
@@ -510,7 +488,7 @@ int cmd_list(int argc, char** argv) {
         fs_records = get_fs_records(fs_omap_btree, fs_root_btree, fs_oid, (xid_t)(~0) );
     }
 
-    fprintf(stderr, "\nRecords for file-system object %#"PRIx64" -- `%s` --\n", fs_oid, path_stack);
+    fprintf(stderr, "\nRecords for file-system object %#" PRIx64 " -- `%s` --\n", fs_oid, path_stack);
     // `fs_records` now contains the records for the item at the specified path
     print_fs_records(fs_records);
 

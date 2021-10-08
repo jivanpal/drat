@@ -24,7 +24,7 @@
  *          successfully, and non-zero if it fails to do so.
  */
 uint64_t fletcher_cksum(uint32_t* block, bool compute) {
-    int num_words = nx_block_size / 4;  // Using 32-bit (4-byte) words.
+    int num_words = nx_block_size / 4;  // Using 32-bit words.
     uint32_t modulus = ~0;  // all ones; = 2^32 - 1
 
     // These are 32-bit values, but we need at least 33 bits of memory for each
@@ -43,7 +43,7 @@ uint64_t fletcher_cksum(uint32_t* block, bool compute) {
     }
 
     /**
-     * APFS uses a variant of the traditional Fletcher-64 checksum.
+     * APFS uses a variant of the traditional Flecther-64 checksum.
      * See: https://blog.cugu.eu/post/apfs/#checksum
      * 
      * In particular:
@@ -93,5 +93,5 @@ bool is_cksum_valid(uint32_t* block) {
     // return fletcher_cksum(block, 0) == 0;
 
     // The following gives the correct result.
-    return compute_block_cksum(block) == *(uint64_t*)block;
+    return compute_block_cksum(block) == *(uint64_t*)block; // dereference of cast give
 }

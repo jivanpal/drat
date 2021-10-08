@@ -167,7 +167,7 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
         '\0'
     };
     printf("Magic string:                           %s\n",  magic_string);
-    printf("Index within container volume array:    %"PRIu32"\n",  apsb->apfs_fs_index);
+    printf("Index within container volume array:    %u\n",  apsb->apfs_fs_index);
     printf("\n");
 
     printf("Volume name:        ### %s ###\n",  apsb->apfs_volname);
@@ -200,17 +200,17 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("Last modification time:             %s",    apfs_timestamp_to_string(apsb->apfs_last_mod_time));
     printf("\n");
 
-    printf("Reserved blocks:                    %"PRIu64" blocks\n",    apsb->apfs_fs_reserve_block_count);
-    printf("Block quota:                        %"PRIu64" blocks\n",    apsb->apfs_fs_quota_block_count);
-    printf("Allocated blocks:                   %"PRIu64" blocks\n",    apsb->apfs_fs_alloc_count);
+    printf("Reserved blocks:                    %" PRIu64 " blocks\n", apsb->apfs_fs_reserve_block_count);
+    printf("Block quota:                        %" PRIu64 " blocks\n", apsb->apfs_fs_quota_block_count);
+    printf("Allocated blocks:                   %" PRIu64 " blocks\n", apsb->apfs_fs_alloc_count);
     printf("\n");
 
-    printf("Volume object map Physical OID:     %#"PRIx64"\n",  apsb->apfs_omap_oid);
+    printf("Volume object map Physical OID:     0x%" PRIx64 "\n",    apsb->apfs_omap_oid);
     printf("\n");
     
     printf("Root tree info:\n");
-    printf("- OID:              %#"PRIx64"\n",  apsb->apfs_root_tree_oid);
-    printf("- Storage type:     %s\n",          o_storage_type_to_string(apsb->apfs_root_tree_type));
+    printf("- OID:              0x%" PRIx64 "\n",  apsb->apfs_root_tree_oid);
+    printf("- Storage type:     %s\n",      o_storage_type_to_string(apsb->apfs_root_tree_type));
     
     tmp_string = get_o_type_flags_string(apsb->apfs_root_tree_type);
     printf("- Type flags:       %s\n",  tmp_string);
@@ -223,8 +223,8 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("\n");
 
     printf("Extent-reference tree info:\n");
-    printf("- OID:              %#"PRIx64"\n",  apsb->apfs_extentref_tree_oid);
-    printf("- Storage type:     %s\n",          o_storage_type_to_string(apsb->apfs_extentref_tree_type));
+    printf("- OID:              0x%" PRIx64 "\n",  apsb->apfs_extentref_tree_oid);
+    printf("- Storage type:     %s\n",      o_storage_type_to_string(apsb->apfs_extentref_tree_type));
     
     tmp_string = get_o_type_flags_string(apsb->apfs_extentref_tree_type);
     printf("- Type flags:       %s\n",  tmp_string);
@@ -237,8 +237,8 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("\n");
 
     printf("Snapshot metadata tree info:\n");
-    printf("- OID:              %#"PRIx64"\n",  apsb->apfs_snap_meta_tree_oid);
-    printf("- Storage type:     %s\n",          o_storage_type_to_string(apsb->apfs_snap_meta_tree_type));
+    printf("- OID:              0x%" PRIx64 "\n",  apsb->apfs_snap_meta_tree_oid);
+    printf("- Storage type:     %s\n",      o_storage_type_to_string(apsb->apfs_snap_meta_tree_type));
     
     tmp_string = get_o_type_flags_string(apsb->apfs_snap_meta_tree_type);
     printf("- Type flags:       %s\n",  tmp_string);
@@ -251,24 +251,24 @@ void print_apfs_superblock(apfs_superblock_t* apsb) {
     printf("\n");
 
     printf("On next mount, revert to:\n");
-    printf("- snapshot with this XID:                           %#"PRIx64"\n",  apsb->apfs_revert_to_xid);
-    printf("- APFS volume superblock with this Physical OID:    %#"PRIx64"\n",  apsb->apfs_revert_to_sblock_oid);
+    printf("- snapshot with this XID:                           0x%" PRIx64 "\n",  apsb->apfs_revert_to_xid);
+    printf("- APFS volume superblock with this Physical OID:    0x%" PRIx64 "\n",  apsb->apfs_revert_to_sblock_oid);
     printf("\n");
 
-    printf("Next file-system object ID that will be assigned:   %#"PRIx64"\n",  apsb->apfs_next_obj_id);
-    printf("Next document ID that will be assigned:             %#"PRIx32"\n",  apsb->apfs_next_doc_id);
+    printf("Next file-system object ID that will be assigned:   0x%" PRIx64 "\n",  apsb->apfs_next_obj_id);
+    printf("Next document ID that will be assigned:             0x%x\n",    apsb->apfs_next_doc_id);
     printf("\n");
 
     printf("Number of:\n");
     printf("\n");
-    printf("- regular files:                %"PRIu64"\n",   apsb->apfs_num_files);
-    printf("- directories:                  %"PRIu64"\n",   apsb->apfs_num_directories);
-    printf("- symbolic links:               %"PRIu64"\n",   apsb->apfs_num_symlinks);
-    printf("- other file-system objects:    %"PRIu64"\n",   apsb->apfs_num_other_fsobjects);
+    printf("- regular files:                %" PRIu64 "\n",    apsb->apfs_num_files);
+    printf("- directories:                  %" PRIu64 "\n",    apsb->apfs_num_directories);
+    printf("- symbolic links:               %" PRIu64 "\n",    apsb->apfs_num_symlinks);
+    printf("- other file-system objects:    %" PRIu64 "\n",    apsb->apfs_num_other_fsobjects);
     printf("\n");
-    printf("- snapshots:                    %"PRIu64"\n",   apsb->apfs_num_snapshots);
-    printf("- block allocations ever made:  %"PRIu64"\n",   apsb->apfs_total_block_alloced);
-    printf("- block liberations ever made:  %"PRIu64"\n",   apsb->apfs_total_blocks_freed);
+    printf("- snapshots:                    %" PRIu64 "\n",    apsb->apfs_num_snapshots);
+    printf("- block allocations ever made:  %" PRIu64 "\n",    apsb->apfs_total_block_alloced);
+    printf("- block liberations ever made:  %" PRIu64 "\n",    apsb->apfs_total_blocks_freed);
     printf("\n");
 
     printf("UUID:   ");

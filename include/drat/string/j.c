@@ -50,7 +50,7 @@
 
 // Helper function for printing objects which have xfields
 static void print_xf_details(bool has_xfields, xf_blob_t* xfields) {
-    printf("Number of extended fields:  %"PRIu16"\n", has_xfields ? xfields->xf_num_exts : 0);
+    printf("Number of extended fields:  %u\n", has_xfields ? xfields->xf_num_exts : 0);
     if (has_xfields) {
         printf("Details of extended fields:\n\n");
         xf_pair_t** xf_pairs_array = get_xf_pairs_array(xfields);
@@ -104,8 +104,8 @@ char* j_key_type_to_string(uint8_t j_key_type) {
 }
 
 void print_j_key(j_key_t* key) {
-    printf("Virtual OID:    %#"PRIx64"\n",  key->obj_id_and_type & OBJ_ID_MASK);
-    printf("Object type:    %s\n",          j_key_type_to_string(
+    printf("Virtual OID:    0x%llx\n",  key->obj_id_and_type & OBJ_ID_MASK);
+    printf("Object type:    %s\n",      j_key_type_to_string(
             (key->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT
     ));
 }
@@ -196,19 +196,21 @@ char *get_j_inode_type(j_inode_val_t* val) {
 }
 
 void print_j_inode_val(j_inode_val_t* val, uint16_t val_len) {
-    printf("Parent ID:      %#"PRIx64"\n",  val->parent_id);
-    printf("Private ID:     %#"PRIx64"\n",  val->private_id);
+    printf("Parent ID:      0x%" PRIx64 "\n",  val->parent_id);
+    printf("Private ID:     0x%" PRIx64 "\n",  val->private_id);
     printf("\n");
 
     char* tmp_string = NULL;
     if (val->internal_flags & INODE_HAS_UNCOMPRESSED_SIZE) {
-        asprintf(&tmp_string, "%"PRIu64" bytes", val->uncompressed_size);
+        if (asprintf(&tmp_string, "%" PRIu64 " bytes", val->uncompressed_size) < 0) {
+            fprintf(stderr, "ABORT: %s:%d: call to asprintf() couldn't allocate sufficient memory", __func__, __LINE__);
+            exit(-1);
+        }
     } else {
-        asprintf(&tmp_string, "(none)");
-    }
-    if (!tmp_string) {
-        fprintf(stderr, "ABORT: %s: call to asprintf() couldn't allocate sufficient memory", __func__);
-        exit(-1);
+        if (asprintf(&tmp_string, "(none)") < 0) {
+            fprintf(stderr, "ABORT: %s:%d: call to asprintf() couldn't allocate sufficient memory", __func__, __LINE__);
+            exit(-1);
+        }
     }
     printf("Uncompressed size:      %s\n", tmp_string);
     free(tmp_string);
@@ -218,11 +220,11 @@ void print_j_inode_val(j_inode_val_t* val, uint16_t val_len) {
     printf("Last access time:       %s",    apfs_timestamp_to_string(val->change_time));
     printf("\n");
 
-    printf("Number of children / hard links:    %"PRId32"\n", val->nchildren);
+    printf("Number of children / hard links:    %u\n", val->nchildren);
     printf("\n");
     
-    printf("Owner UID:  %"PRIu32"\n",   val->owner);
-    printf("Group GID:  %"PRIu32"\n",   val->group);
+    printf("Owner UID:  %u\n",  val->owner);
+    printf("Group GID:  %u\n",  val->group);
     printf("\n");
 
     printf("Mode:   %s\n",  j_inode_mode_to_string(val->mode));
@@ -244,15 +246,15 @@ void print_j_inode_val(j_inode_val_t* val, uint16_t val_len) {
 void print_j_file_extent_key(j_file_extent_key_t* key) {
     print_j_key(key);   // `key` equals `&(key->hdr)`
     printf("\n");
-    printf("Extent offset within file:  %#"PRIx64"\n", key->logical_addr);
+    printf("Extent offset within file:  %#" PRIx64 "\n", key->logical_addr);
 }
 
 void print_j_file_extent_val(j_file_extent_val_t* val) {
     // TODO: Print flags
     // TODO: Print crypto ID
 
-    printf("Length:         %"PRIu64" bytes\n", val->len_and_flags & J_FILE_EXTENT_LEN_MASK);
-    printf("Start block:    %#"PRIx64"\n",      val->phys_block_num);
+    printf("Length (bytes): %llu\n",    val->len_and_flags & J_FILE_EXTENT_LEN_MASK);
+    printf("Start block:    %#" PRIx64 "\n",   val->phys_block_num);
 }
 
 void print_j_drec_hashed_key(j_drec_hashed_key_t* key) {
@@ -263,10 +265,11 @@ void print_j_drec_hashed_key(j_drec_hashed_key_t* key) {
     uint16_t name_len = key->name_len_and_hash & J_DREC_LEN_MASK;
     // 22-bit value; next smallest datatype is 32 bits
     uint32_t name_hash = (key->name_len_and_hash & J_DREC_HASH_MASK) >> J_DREC_HASH_SHIFT;
+    // TODO: validate the hash?
     
-    printf("Dentry name length:     %"PRIu16" UTF-8 bytes (including terminating NULL (U+0000) byte)\n",  name_len);
-    printf("Dentry name hash:       %#06"PRIx32"\n",    name_hash);
-    printf("Dentry name:            ### %s ###\n",      key->name);
+    printf("Dentry name length:     %u UTF-8 bytes (including terminating NULL (U+0000) byte)\n",  name_len);
+    printf("Dentry name hash:       0x%06x\n",          name_hash);
+    printf("Dentry name:            ### %s ####\n",     key->name);
 }
 
 char* drec_val_to_type_string(j_drec_val_t* val) {
@@ -301,9 +304,9 @@ char* drec_val_to_short_type_string(j_drec_val_t* val) {
 }
 
 void print_j_drec_val(j_drec_val_t* val, uint16_t val_len) {
-    printf("Dentry Virtual OID:     %#"PRIx64"\n",  val->file_id);
-    printf("Time added:             %s",            apfs_timestamp_to_string(val->date_added));
-    printf("Dentry type:            %s\n",          drec_val_to_type_string(val));
+    printf("Dentry Virtual OID:     0x%" PRIx64 "\n", val->file_id);
+    printf("Time added:             %s",    apfs_timestamp_to_string(val->date_added));
+    printf("Dentry type:            %s\n",  drec_val_to_type_string(val));
     print_xf_details(val_len != sizeof(j_drec_val_t), val->xfields);
 }
 

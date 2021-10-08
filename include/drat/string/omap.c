@@ -61,7 +61,7 @@ void print_omap_phys(omap_phys_t* omap) {
     printf("- Storage type:         %s\n",          o_storage_type_to_string(omap->om_tree_type));
     printf("- Type flags:           %s\n",          type_flags_string);
     printf("- Type:                 %s\n",          type_string);
-    printf("- Object ID:            %#"PRIx64"\n",  omap->om_tree_oid);
+    printf("- Object ID:            0x%" PRIx64 "\n",      omap->om_tree_oid);
     free(type_flags_string);
     free(type_string);
 
@@ -71,15 +71,15 @@ void print_omap_phys(omap_phys_t* omap) {
     printf("- Storage type:         %s\n",          o_storage_type_to_string(omap->om_snapshot_tree_type));
     printf("- Type flags:           %s\n",          type_flags_string);
     printf("- Type:                 %s\n",          type_string);
-    printf("- Object ID:            %#"PRIx64"\n",  omap->om_snapshot_tree_oid);
+    printf("- Object ID:            0x%" PRIx64 "\n",      omap->om_snapshot_tree_oid);
     free(type_flags_string);
     free(type_string);
 
-    printf("- Number of snapshots:  %"PRIu32" snapshots\n", omap->om_snap_count);
-    printf("- Latest snapshot XID:  %#"PRIx64"\n",          omap->om_most_recent_snap);
+    printf("- Number of snapshots:  %u snapshots\n",    omap->om_snap_count);
+    printf("- Latest snapshot XID:  0x%" PRIx64 "\n",          omap->om_most_recent_snap);
     printf("In-progress revert:\n");
-    printf("- Minimum XID:          %#"PRIx64"\n",          omap->om_pending_revert_min);
-    printf("- Maximum XID:          %#"PRIx64"\n",          omap->om_pending_revert_max);
+    printf("- Minimum XID:          0x%" PRIx64 "\n",      omap->om_pending_revert_min);
+    printf("- Maximum XID:          0x%" PRIx64 "\n",      omap->om_pending_revert_max);
 }
 
 /**
@@ -87,8 +87,8 @@ void print_omap_phys(omap_phys_t* omap) {
  * map key.
  */
 void print_omap_key(omap_key_t* omap_key) {
-    printf("  - OID:                            %#"PRIx64"\n",  omap_key->ok_oid);
-    printf("  - XID:                            %#"PRIx64"\n",  omap_key->ok_xid);
+    printf("  - OID:                            0x%" PRIx64 "\n",      omap_key->ok_oid);
+    printf("  - XID:                            0x%" PRIx64 "\n",      omap_key->ok_xid);
 }
 
 /**
@@ -97,6 +97,6 @@ void print_omap_key(omap_key_t* omap_key) {
  */
 void print_omap_val(omap_val_t* omap_val) {
     // TODO: Print flags
-    printf("  - Object size:                    %"PRIu32" bytes\n", omap_val->ov_size);
-    printf("  - Object address in container:    %#"PRIx64"\n",      omap_val->ov_paddr);
+    printf("  - Object size:                    %u bytes\n",    omap_val->ov_size);
+    printf("  - Object address in container:    0x%" PRIx64 "\n",      omap_val->ov_paddr);
 }

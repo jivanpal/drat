@@ -81,16 +81,16 @@ void print_btree_info(btree_info_t* bt_info) {
     printf("- Flags:\n%s", flags_string);
     free(flags_string);
 
-    printf("- Node size:                %"PRIu32" bytes\n",     bt_info->bt_fixed.bt_node_size);
-    printf("- Key size:                 %"PRIu32" bytes\n",     bt_info->bt_fixed.bt_key_size);
-    printf("- Value size:               %"PRIu32" bytes\n",     bt_info->bt_fixed.bt_val_size);
+    printf("- Node size:                %u bytes\n",    bt_info->bt_fixed.bt_node_size);
+    printf("- Key size:                 %u bytes\n",    bt_info->bt_fixed.bt_key_size);
+    printf("- Value size:               %u bytes\n",    bt_info->bt_fixed.bt_val_size);
     printf("\n");
 
 
-    printf("- Length of longest key:    %"PRIu32" bytes\n",     bt_info->bt_longest_key);
-    printf("- Length of longest value:  %"PRIu32" bytes\n",     bt_info->bt_longest_val);
-    printf("- Number of keys:           %"PRIu64"\n",           bt_info->bt_key_count);
-    printf("- Number of nodes:          %"PRIu64"\n",           bt_info->bt_node_count);
+    printf("- Length of longest key:    %u bytes\n",    bt_info->bt_longest_key);
+    printf("- Length of longest value:  %u bytes\n",    bt_info->bt_longest_val);
+    printf("- Number of keys:           %" PRIu64 "\n",        bt_info->bt_key_count);
+    printf("- Number of nodes:          %" PRIu64 "\n",        bt_info->bt_node_count);
 }
 
 /**
@@ -105,16 +105,16 @@ void print_btree_node_phys(btree_node_phys_t* btn) {
     printf("Flags:\n%s", flags_string);
     free(flags_string);
 
-    printf("Number of child levels:         %"PRIu16"\n",   btn->btn_level);
-    printf("Number of keys in this node:    %"PRIu32"\n",   btn->btn_nkeys);
+    printf("Number of child levels:         %u\n",  btn->btn_level);
+    printf("Number of keys in this node:    %u\n",  btn->btn_nkeys);
     
     printf("Location of table of contents:\n");
-    printf("- Offset from start of node data area:  %#"PRIx16" = %"PRIu16"\n",  btn->btn_table_space.off,   btn->btn_table_space.off);
-    printf("- Length (bytes):                       %#"PRIx16" = %"PRIu16"\n",  btn->btn_table_space.len,   btn->btn_table_space.len);
+    printf("- Offset from start of node data area:  0x%x = %u\n",   btn->btn_table_space.off,   btn->btn_table_space.off);
+    printf("- Length (bytes):                       0x%x = %u\n",   btn->btn_table_space.len,   btn->btn_table_space.len);
 
     printf("Location of key–value shared free space:\n");
-    printf("- Offset from start of keys area:       %#"PRIx16" = %"PRIu16"\n",  btn->btn_free_space.off,    btn->btn_free_space.off);
-    printf("- Length (bytes):                       %#"PRIx16" = %"PRIu16"\n",  btn->btn_free_space.len,    btn->btn_free_space.len);
+    printf("- Offset from start of keys area:       0x%x = %u\n",   btn->btn_free_space.off,    btn->btn_free_space.off);
+    printf("- Length (bytes):                       0x%x = %u\n",   btn->btn_free_space.len,    btn->btn_free_space.len);
 
     if (is_btree_node_phys_root(btn)) {
         printf("\n");

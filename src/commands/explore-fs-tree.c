@@ -54,9 +54,9 @@ int cmd_explore_fs_tree(int argc, char** argv) {
     
     // Capture <fs tree root node address>
     paddr_t fs_root_addr;
-    bool parse_success = sscanf(argv[2], "0x%"SCNx64"", &fs_root_addr);
+    bool parse_success = sscanf(argv[2], "0x%" PRIx64 "", &fs_root_addr);
     if (!parse_success) {
-        parse_success = sscanf(argv[2], "%"SCNu64"", &fs_root_addr);
+        parse_success = sscanf(argv[2], "%" PRIu64, &fs_root_addr);
     }
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid block address.\n", argv[2]);
@@ -66,9 +66,9 @@ int cmd_explore_fs_tree(int argc, char** argv) {
 
     // Capture <omap tree root node address>
     paddr_t omap_root_addr;
-    parse_success = sscanf(argv[3], "0x%"SCNx64"", &omap_root_addr);
+    parse_success = sscanf(argv[3], "0x%" PRIx64 "", &omap_root_addr);
     if (!parse_success) {
-        parse_success = sscanf(argv[3], "%"SCNu64"", &omap_root_addr);
+        parse_success = sscanf(argv[3], "%" PRIu64, &omap_root_addr);
     }
     if (!parse_success) {
         fprintf(stderr, "%s is not a valid block address.\n", argv[3]);
@@ -88,7 +88,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
     printf("OK.\n\n");
 
     // Read the specified root nodes
-    printf("Reading the file-system tree root node (block %#"PRIx64") ... ", fs_root_addr);
+    printf("Reading the file-system tree root node (block 0x%" PRIx64 ") ... ", fs_root_addr);
     btree_node_phys_t* fs_root_node = malloc(nx_block_size);
     if (!fs_root_node) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `fs_root_node`.\n");
@@ -108,7 +108,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
     }
     printf("\n");
 
-    printf("Reading the object map root node (block %#"PRIx64") ... ", omap_root_addr);
+    printf("Reading the object map root node (block 0x%" PRIx64 ") ... ", omap_root_addr);
     btree_node_phys_t* omap_root_node = malloc(nx_block_size);
     if (!omap_root_node) {
         fprintf(stderr, "\nABORT: Could not allocate sufficient memory for `omap_root_node`.\n");
@@ -166,7 +166,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
         printf("--------------------------------------------------------------------------------\n");
         printf("\n");
 
-        printf("\nNode has %"PRIu32" entries, as follows:\n", node->btn_nkeys);
+        printf("\nNode has %u entries, as follows:\n", node->btn_nkeys);
         assert(node->btn_nkeys > 0);
 
         kvloc_t* toc_entry = toc_start;
@@ -175,11 +175,8 @@ int cmd_explore_fs_tree(int argc, char** argv) {
             uint8_t type = (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT;
 
             printf(
-                "- %3"PRIu32":  %#15"PRIx64" = Virtual OID   ||   %2"PRIu8" = %#1"PRIx8" = Type",
-                i,
-                hdr->obj_id_and_type & OBJ_ID_MASK,
-                type,
-                type
+                "- %3u:  %#15llx = Virtual OID   ||   %2u = %#1x = Type",
+                i, hdr->obj_id_and_type & OBJ_ID_MASK, type, type
             );
 
             if (node->btn_flags & BTNODE_LEAF) {
@@ -187,14 +184,11 @@ int cmd_explore_fs_tree(int argc, char** argv) {
                     j_drec_hashed_key_t* key = hdr;
                     j_drec_val_t* val = val_end - toc_entry->v.off;
 
-                    printf(
-                        " = `dentry`   ||   Dentry Virtual OID = %#16"PRIx64"   ||   Dentry name = %s",
-                        val->file_id, key->name
-                    );
+                    printf(" = `dentry`   ||   Dentry Virtual OID = %#16" PRIx64 "   ||   Dentry name = %s", val->file_id, key->name);
                 }
             } else {
                 oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
-                printf("   ||   Target child node Virtual OID = %#16"PRIx64"", *child_node_virt_oid);
+                printf("   ||   Target child node Virtual OID = %#16" PRIx64 "", *child_node_virt_oid);
                 omap_entry_t* child_node_omap_entry = get_btree_phys_omap_entry(omap_root_node, *child_node_virt_oid, (xid_t)(~0));
                 if (!child_node_omap_entry) {
                     printf("  ||  UNRESOLVABLE");
@@ -205,7 +199,7 @@ int cmd_explore_fs_tree(int argc, char** argv) {
                         return -1;
                     }
                     if (read_blocks(child_node, child_node_omap_entry->val.ov_paddr, 1) != 1) {
-                        fprintf(stderr, "\nABORT: Failed to read block %#"PRIx64".\n", child_node_omap_entry->val.ov_paddr);
+                        fprintf(stderr, "\nABORT: Failed to read block %#" PRIx64 ".\n", child_node_omap_entry->val.ov_paddr);
                         return -1;
                     }
 
@@ -223,11 +217,11 @@ int cmd_explore_fs_tree(int argc, char** argv) {
         }
         
         uint32_t entry_index;
-        printf("Choose an entry [0-%"PRIu32"]: ", node->btn_nkeys - 1);
-        scanf("%"SCNu32"", &entry_index);
+        printf("Choose an entry [0-%u]: ", node->btn_nkeys - 1);
+        scanf("%u", &entry_index);
         while (entry_index >= node->btn_nkeys) {
-            printf("Invalid choice; choose an entry [0-%"PRIu32"]: ", node->btn_nkeys - 1);
-            scanf("%"SCNu32"", &entry_index);
+            printf("Invalid choice; choose an entry [0-%u]: ", node->btn_nkeys - 1);
+            scanf("%u", &entry_index);
         }
 
         toc_entry = (kvloc_t*)toc_start + entry_index;
@@ -254,9 +248,9 @@ int cmd_explore_fs_tree(int argc, char** argv) {
             );
 
             j_key_t* hdr = fs_rec->data;
-            printf("Key size:           %"PRIu16" bytes\n", fs_rec->key_len);
-            printf("Value size:         %"PRIu16" bytes\n", fs_rec->val_len);
-            printf("ID and type field:  %#016"PRIx64"\n",   hdr->obj_id_and_type);
+            printf("Key size:           %u bytes\n",    fs_rec->key_len);
+            printf("Value size:         %u bytes\n",    fs_rec->val_len);
+            printf("ID and type field:  0x%016" PRIx64 "\n",   hdr->obj_id_and_type);
             printf("\n");
 
             switch ( (hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT ) {
@@ -333,22 +327,17 @@ int cmd_explore_fs_tree(int argc, char** argv) {
 
         // Else, read the corresponding child node into `node` and loop
         oid_t* child_node_virt_oid = val_end - toc_entry->v.off;
-        printf("Child node has Virtual OID %#"PRIx64".\n", *child_node_virt_oid);
+        printf("Child node has Virtual OID 0x%" PRIx64 ".\n", *child_node_virt_oid);
         
         omap_entry_t* child_node_omap_entry = get_btree_phys_omap_entry(omap_root_node, *child_node_virt_oid, fs_root_node->btn_o.o_xid);
         if (!child_node_omap_entry) {
-            printf(
-                "Need to descend to node with Virtual OID %#"PRIx64" and maximum XID %#"PRIx64","
-                " but the object map lists no objects with this Virtual OID.\n",
-                *child_node_virt_oid,
-                fs_root_node->btn_o.o_xid
-            );
+            printf("Need to descend to node with Virtual OID %#" PRIx64 " and maximum XID %#" PRIx64 ", but the object map lists no objects with this Virtual OID.\n", *child_node_virt_oid, fs_root_node->btn_o.o_xid);
             return 0;
         }
 
-        printf("The object map resolved this Virtual OID to block address %#"PRIx64". Reading ... ", child_node_omap_entry->val.ov_paddr);
+        printf("The object map resolved this Virtual OID to block address %#" PRIx64 ". Reading ... ", child_node_omap_entry->val.ov_paddr);
         if (read_blocks(node, child_node_omap_entry->val.ov_paddr, 1) != 1) {
-            fprintf(stderr, "\nABORT: Failed to read block %#"PRIx64".\n", child_node_omap_entry->val.ov_paddr);
+            fprintf(stderr, "\nABORT: Failed to read block 0x%" PRIx64 ".\n", child_node_omap_entry->val.ov_paddr);
             return -1;
         }
 
