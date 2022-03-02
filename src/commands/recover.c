@@ -36,13 +36,15 @@
 
 typedef struct {
     int64_t fsoid;  // Needs to be `int64_t to work with `parse_number()`
-    char* path;
-    char* output;
+    char*   path;
+    char*   output;
+    bool    skip_multilinked_inodes;
 } options_t;
 
 #define DRAT_ARG_KEY_FSOID  (DRAT_GLOBAL_ARGS_LAST_KEY - 1)
 #define DRAT_ARG_KEY_PATH   (DRAT_GLOBAL_ARGS_LAST_KEY - 2)
 #define DRAT_ARG_KEY_OUTPUT (DRAT_GLOBAL_ARGS_LAST_KEY - 3)
+#define DRAT_ARG_KEY_SKIP_MULTILINKED_INODES (DRAT_GLOBAL_ARGS_LAST_KEY - 4)
 
 #define DRAT_ARG_ERR_INVALID_FSOID  (DRAT_GLOBAL_ARGS_LAST_ERR - 1)
 #define DRAT_ARG_ERR_INVALID_PATH   (DRAT_GLOBAL_ARGS_LAST_ERR - 2)
@@ -54,6 +56,7 @@ static const struct argp_option argp_options[] = {
     { "fsoid",      DRAT_ARG_KEY_FSOID,     "fsoid",        0,          "Filesystem object ID" },
     { "path",       DRAT_ARG_KEY_PATH,      "path",         0,          "File path" },
     { "output",     DRAT_ARG_KEY_OUTPUT,    "output path",  0,          "Path where the recovered file will be written" },
+    { "skip-multilinked-inodes", DRAT_ARG_KEY_SKIP_MULTILINKED_INODES, 0, 0, "Recover multilinked files (files which have more than one hardlink) as empty files"},
     {0}
 };
 
@@ -74,6 +77,9 @@ static error_t argp_parser(int key, char* arg, struct argp_state* state) {
             break;
         case DRAT_ARG_KEY_OUTPUT:
             options->output = arg;
+            break;
+        case DRAT_ARG_KEY_SKIP_MULTILINKED_INODES:
+            options->skip_multilinked_inodes = true;
             break;
         case ARGP_KEY_END:
             if (globals.volume == -1) {
@@ -555,60 +561,84 @@ int cmd_recover(int argc, char** argv) {
 
         if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_INODE ) {
             j_inode_val_t* inode = fs_rec->data + fs_rec->key_len;
+
+            // Check if this inode is linked to by multiple paths. If so, check whether the user wants to recover the file data.
+            if (inode->nlink > 1) {
+                if (options.skip_multilinked_inodes) {
+                    break;
+                } else {
+                    char answer = '\0';
+                    while (true) {
+                        fprintf(info_stream, "This inode is multilinked. Do you still want to recover the file data? (y/n) ");
+                        scanf("%c*\n", &answer);
+                        if (answer == 'y' || answer == 'n') {
+                            break;
+                        }
+                        fprintf(info_stream, "  Invalid input.\n");
+                    }
+                    if (answer == 'n') {
+                        break;
+                    }
+                }
+            }
+            
             file_size = get_file_size(inode, fs_rec->val_len);
             break;
         }
     }
+
     if (file_size == 0) {
-        // Not a file, or file size couldn't be found; abort.
-        return -1;  // TODO: Proper error code?
-    }
+        if (fwrite(buffer, 0, 0, file_stream) != 0) {
+            fprintf(stderr, "\n\nEncountered an error writing empty file. Exiting.\n\n");
+            return -1;
+        }
+    } else {
+        // Keep track of how many bytes we still need to output
+        uint64_t bytes_remaining = file_size;
 
-    // Keep track of how many bytes we still need to output
-    uint64_t bytes_remaining = file_size;
+        bool found_file_extent = false;
+        // Go through all the fs records
+        for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
+            j_rec_t* fs_rec = *fs_rec_cursor;
+            j_key_t* hdr = fs_rec->data;
 
-    bool found_file_extent = false;
-    // Go through all the fs records
-    for (j_rec_t** fs_rec_cursor = fs_records; *fs_rec_cursor; fs_rec_cursor++) {
-        j_rec_t* fs_rec = *fs_rec_cursor;
-        j_key_t* hdr = fs_rec->data;
+            // Go through all the extent records
+            if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_FILE_EXTENT ) {
+                found_file_extent = true;
+                j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
 
-        // Go through all the extent records
-        if ( ((hdr->obj_id_and_type & OBJ_TYPE_MASK) >> OBJ_TYPE_SHIFT)  ==  APFS_TYPE_FILE_EXTENT ) {
-            found_file_extent = true;
-            j_file_extent_val_t* val = fs_rec->data + fs_rec->key_len;
+                // Output the content from this particular file extent
+                uint64_t block_addr = val->phys_block_num;
 
-            // Output the content from this particular file extent
-            uint64_t block_addr = val->phys_block_num;
+                uint64_t extent_len_blocks = (val->len_and_flags & J_FILE_EXTENT_LEN_MASK) / globals.block_size;
+                for (uint64_t i = 0;   i < extent_len_blocks;   i++, block_addr++) {
+                    if (read_blocks(buffer, block_addr, 1) != 1) {
+                        fprintf(stderr, "\n\nEncountered an error reading block %#"PRIx64" (block %"PRIu64" of %"PRIu64"). Exiting.\n\n", block_addr, i+1, extent_len_blocks);
+                        return -1;
+                    }
+                    
+                    uint64_t bytes_to_write = bytes_remaining < (uint64_t)globals.block_size ? bytes_remaining : (uint64_t)globals.block_size;
+                    if (fwrite(buffer, bytes_to_write, 1, file_stream) != 1) {
+                        fprintf(stderr, "\n\nEncountered an error writing block %"PRIu64" of %"PRIu64". Exiting.\n\n", i+1, extent_len_blocks);
+                        return -1;
+                    }
+                    bytes_remaining -= bytes_to_write;
 
-            uint64_t extent_len_blocks = (val->len_and_flags & J_FILE_EXTENT_LEN_MASK) / globals.block_size;
-            for (uint64_t i = 0;   i < extent_len_blocks;   i++, block_addr++) {
-                if (read_blocks(buffer, block_addr, 1) != 1) {
-                    fprintf(stderr, "\n\nEncountered an error reading block %#"PRIx64" (block %"PRIu64" of %"PRIu64"). Exiting.\n\n", block_addr, i+1, extent_len_blocks);
-                    return -1;
-                }
-                
-                uint64_t bytes_to_write = bytes_remaining < (uint64_t)globals.block_size ? bytes_remaining : (uint64_t)globals.block_size;
-                if (fwrite(buffer, bytes_to_write, 1, file_stream) != 1) {
-                    fprintf(stderr, "\n\nEncountered an error writing block %"PRIu64" of %"PRIu64" to `stdout`. Exiting.\n\n", i+1, extent_len_blocks);
-                    return -1;
-                }
-                bytes_remaining -= bytes_to_write;
-
-                if (bytes_remaining == 0) {
-                    // We've written the whole file, exit extent loop
-                    break;
+                    if (bytes_remaining == 0) {
+                        // We've written the whole file, exit extent loop
+                        break;
+                    }
                 }
             }
-        }
 
-        if (bytes_remaining == 0) {
-            // We've written the whole file, exit fs record loop
-            break;
+            if (bytes_remaining == 0) {
+                // We've written the whole file, exit fs record loop
+                break;
+            }
         }
-    }
-    if (!found_file_extent) {
-        fprintf(info_stream, "Could not find any file extents for the specified path.\n");
+        if (!found_file_extent) {
+            fprintf(info_stream, "Could not find any file extents for the specified path.\n");
+        }
     }
 
     // Move recovered file to its proper destination
