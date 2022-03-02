@@ -157,7 +157,7 @@ int cmd_recover(int argc, char** argv) {
     char* target_dir    = NULL; // This is just the dirname of the output file (not the entire path), without trailing slash
     char* target_name   = NULL; // This is just the basename of the output file (not the entire path)
     char* file_path     = NULL; // Path to the file to write to
-    FILE* file_stream   = stdout;
+    FILE* file_stream   = stdout; // Stream to write the file data to
     FILE* info_stream   = stderr;
 
     if (strcmp(options.output, "-") != 0) {
@@ -230,7 +230,7 @@ int cmd_recover(int argc, char** argv) {
     setbuf(stdout, NULL);
 
     // TODO: Perhaps handle other return values and factor out
-    if (open_container() != 0) {
+    if (open_container__info_stream(info_stream) != 0) {
         return EX_NOINPUT;
     }
     fprintf(info_stream, "\n");
@@ -626,6 +626,7 @@ int cmd_recover(int argc, char** argv) {
     free(nx_omap);
     free(nxsb);
     close_container();
+    fclose(file_stream);
     free(file_path);
 
     return 0;

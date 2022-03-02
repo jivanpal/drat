@@ -59,7 +59,7 @@ char* get_fseeko_error_msg() {
  * is called, the block size will be automatically determined from the value
  * stored in block 0, and this value will be stored in `globals.block_size`.
  * 
- * Informational messages are printed on `stdout`.
+ * Informational messages are printed on `info_stream`.
  * 
  * RETURN VALUE:
  *  On success, returns 0. On failure, returns a non-zero value: either an
@@ -68,22 +68,22 @@ char* get_fseeko_error_msg() {
  *  size, or -2 if `globals.container_path` is not set; and prints an error
  *  message describing the particular error on `stderr`.
  */
-int open_container() {
+int open_container__info_stream(FILE* info_stream) {
     if (!globals.container_path) {
         fprintf(stderr, "%s: ERROR: `globals.container_path` is not set.\n", __func__);
         return -2;
     }
 
-    printf("Opening `%s` in read-only mode ... ", globals.container_path);
+    fprintf(info_stream, "Opening `%s` in read-only mode ... ", globals.container_path);
     nx = fopen(globals.container_path, "rb");
     if (!nx) {
         fprintf(stderr, "%s: ERROR: %s\n", __func__, get_fopen_error_msg());
         return errno;
     }
-    printf("OK.\n");
+    fprintf(info_stream, "OK.\n");
 
     if (globals.block_size == 0) {
-        printf("Determining block size ... ");
+        fprintf(info_stream, "Determining block size ... ");
         
         globals.block_size = NX_DEFAULT_BLOCK_SIZE;
         char buffer[globals.block_size];
@@ -95,13 +95,21 @@ int open_container() {
 
         if (superblock->nx_block_size != 0) {
             globals.block_size = superblock->nx_block_size;
-            printf("%"PRId64" bytes.\n", globals.block_size);
+            fprintf(info_stream, "%"PRId64" bytes.\n", globals.block_size);
         } else {
-            printf("field says 0 bytes, using default size of %"PRIu64" bytes instead.\n", globals.block_size);
+            fprintf(info_stream, "field says 0 bytes, using default size of %"PRIu64" bytes instead.\n", globals.block_size);
         }
     }
 
     return 0;
+}
+
+/**
+ * Identical to `open_container__info_stream()`, but informational messages are
+ * printed to `stdout`.
+ */
+int open_container() {
+    return open_container__info_stream(stdout);
 }
 
 int close_container() {

@@ -11,6 +11,7 @@
 char* get_fopen_error_msg();
 char* get_fseeko_error_msg();
 
+int open_container__info_stream();
 int open_container();
 int close_container();
 int end_of_container();
