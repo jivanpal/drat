@@ -266,18 +266,10 @@ int cmd_inspect(int argc, char** argv) {
     printf("OK.\n");
     assert(num_read = xp_obj_len);
 
-    printf("Validating the Ephemeral objects ... ");
+    printf("Validating the Ephemeral objects ... \n");
     for (uint32_t i = 0; i < xp_obj_len; i++) {
-        if (!is_cksum_valid(xp_obj[i])) {
-            printf("FAILED.\n");
-            printf("An Ephemeral object used by this checkpoint is malformed. Going back to look at the previous checkpoint instead.\n");
-            
-            // TODO: Handle case where data for a given checkpoint is malformed
-            printf("END: Handling of this case has not yet been implemented.\n");
-            return 0;
-        }
+        printf("- Object %"PRIu32" ... %s.\n", i, is_cksum_valid(xp_obj[i]) ? "OK" : "FAILED");
     }
-    printf("OK.\n");
 
     free(xp);
     free(xp_desc);
