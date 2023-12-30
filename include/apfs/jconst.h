@@ -173,6 +173,8 @@ typedef enum {
  */
 typedef uint16_t    apfs_mode_t;
 
+// These constants are usually already defined on Linux
+#ifndef S_IFSOCK
 #define S_IFMT      0170000
 
 #define S_IFIFO     0010000
@@ -182,6 +184,7 @@ typedef uint16_t    apfs_mode_t;
 #define S_IFREG     0100000
 #define S_IFLNK     0120000
 #define S_IFSOCK    0140000
+#endif
 #define S_IFWHT     0160000
 
 /** Directory Entry File Types **/

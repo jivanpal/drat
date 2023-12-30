@@ -659,7 +659,7 @@ int cmd_inspect(int argc, char** argv) {
                 printf("\n");
             }
 
-            // printf("- Found %zu records with FSOID %#"PRIx64".\n", num_records, fs_oid);
+            printf("- Found %zu records with FSOID %#"PRIx64".\n", num_records, fs_oid);
             free_j_rec_array(fs_records);
         }
         
