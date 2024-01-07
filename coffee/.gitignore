@@ -1,0 +1,50 @@
+dist
+output
+tmp
+mlib
+
+
+# .开头的
+.*
+
+# ~结尾的
+*~  
+
+# nodejs的
+node_modules/
+package-lock.json
+
+
+
+# 自己做实验要用的
+log/
+
+
+# log文件
+*.log
+log.*
+
+
+# png文件夹也不能上传
+png/
+
+
+# 压缩文件一般情况也是不必版本控制的
+
+*.zip
+*.tar
+
+# 各种lock文件也不该被版本控制, 这些都是自动生成的.
+*.lock
+
+
+# 不能忽略的js文件
+!package.json
+#不能忽略node的配置文件
+!.eslintrc.js
+
+#不能忽略gitingnore文件:
+!.gitignore
+
+#不能忽略vscode的配置文件
+!.vscode
